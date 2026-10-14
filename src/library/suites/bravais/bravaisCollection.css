@@ -301,7 +301,9 @@
     height: 100%;
     flex-direction: column;
     gap: 10px;
-    padding: 22px 22px 0;
+    /* 顶部 42px 而不是 22px：列表面板（歌单 / 目录树）顶部的面包屑在 Electron 里会被毛玻璃标题栏
+       （约 32px）盖住，与完整信息条（.bravais-seam-full）和左上角返回按钮对齐下移 20px（用户实测：歌单页面包屑没往下）。 */
+    padding: 42px 22px 0;
     box-sizing: border-box;
 }
 

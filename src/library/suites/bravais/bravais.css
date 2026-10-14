@@ -249,11 +249,14 @@
     flex-direction: column;
     align-items: center;
     gap: 18px;
-    padding: 22px 10px 0;
+    /* 顶部 42px 而不是 22px：Electron 毛玻璃标题栏（约 32px）会盖住页头；bravaisHome.css 里有同值覆盖
+       （.bravais-seam 前缀、特异性更高），这里一并改掉，避免兜底规则与覆盖规则不一致。
+       与左上角返回按钮（.lattice-back，top 42px）的顶线统一。 */
+    padding: 42px 10px 0;
     box-sizing: border-box;
 }
 
-.bravais-seam-home.is-compact { gap: 12px; padding: 16px 8px 0; }
+.bravais-seam-home.is-compact { gap: 12px; padding: 42px 8px 0; }
 
 .bravais-seam-tabs {
     display: flex;
@@ -295,7 +298,10 @@
     height: 100%;
     flex-direction: column;
     gap: 14px;
-    padding: 22px 22px 0;
+    /* 顶部 42px 而不是 22px：集合 / 歌单编辑页的完整信息条（面包屑、过滤输入位）在 Electron 里会被
+       顶部毛玻璃标题栏（约 32px）盖住（用户实测：歌单页「书库 > 新建歌单」这行没往下移），
+       与首页缝（.bravais-seam-home）和左上角返回按钮对齐下移 20px。 */
+    padding: 42px 22px 0;
     box-sizing: border-box;
 }
 
@@ -438,7 +444,9 @@
     flex-direction: column;
     align-items: center;
     gap: 12px;
-    padding: 16px 8px 0;
+    /* 顶部 42px 而不是 16px：书脊顶部的返回 / 竖排标题在 Electron 里同样会被毛玻璃标题栏（约 32px）盖住，
+       与其它缝形态和左上角返回按钮统一往下移。 */
+    padding: 42px 8px 0;
     box-sizing: border-box;
 }
 

@@ -18,15 +18,20 @@
     --bravais-home-pad-x: 10px;
     position: relative;
     gap: 10px;
-    padding: 16px var(--bravais-home-pad-x) 0;
+    /* 顶边由下面 .bravais-seam 下的那条规则统一决定：单类名写在这里会被 bravais.css 里
+       同名规则（padding: 22px 10px 0，注入顺序更晚）盖住，实测不生效。 */
 }
 
-.bravais-seam-home.is-compact { --bravais-home-pad-x: 8px; gap: 10px; padding: 14px var(--bravais-home-pad-x) 0; }
+.bravais-seam-home.is-compact { --bravais-home-pad-x: 8px; gap: 10px; }
 
 /* fb3：段间距写成变量（中段的上内边距要与它相等，内容才在页签与工具格之间真正居中）。数值沿用此前实际生效的
    bravais.css（18 / 12；上面两条的 gap 被它盖住了）。 */
-.bravais-seam .bravais-seam-home { --bravais-home-gap: 18px; gap: var(--bravais-home-gap); }
-.bravais-seam .bravais-seam-home.is-compact { --bravais-home-gap: 12px; }
+/* 顶边 42px 而不是 bravais.css 的 22px：顶部悬停时出现的毛玻璃标题栏（Electron，约 32px 高）会盖住页头，
+   下移 20px 让「书库」标题与折叠按钮完整露出（桌面端实测反馈）。
+   必须写在 .bravais-seam 下提高特异性：bravais.css 的同名规则（.bravais-seam-home，padding: 22px 10px 0）
+   注入顺序更晚，单类名写在这里会被它盖住（浏览器实测 padding-top 仍是 22px）。 */
+.bravais-seam .bravais-seam-home { --bravais-home-gap: 18px; gap: var(--bravais-home-gap); padding: 42px var(--bravais-home-pad-x) 0; }
+.bravais-seam .bravais-seam-home.is-compact { --bravais-home-gap: 12px; padding: 42px var(--bravais-home-pad-x) 0; }
 .bravais-seam-home > * { flex: none; }
 
 .bravais-seam-home > .bravais-seam-home-nav {
@@ -398,12 +403,14 @@
 
 /* ---------- 全局搜索框 ---------- */
 
+/* 顶部 42px 而不是 22px：缝内搜索面板打开时（鼠标常在顶部，Electron 毛玻璃标题栏约 32px 高会遮住
+   「书库 > 搜索」面包屑，实测反馈「贴的太近」），下移 20px 让头部完整露出，与左上角返回按钮对齐。 */
 .bravais-seam-search {
     display: flex;
     height: 100%;
     flex-direction: column;
     gap: 16px;
-    padding: 22px 22px 0;
+    padding: 42px 22px 0;
     box-sizing: border-box;
 }
 

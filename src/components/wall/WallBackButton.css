@@ -3,10 +3,13 @@
    隐藏式用法：平时不显示，鼠标进入左上角热区或键盘聚焦时出现（与播放页 VisualizerShell 左上角那颗的行为一致）。 */
 
 /* Same shape and weight as the grid and player back buttons, and the one place the wall's
-   square-everything rule is deliberately overridden. */
+   square-everything rule is deliberately overridden.
+   top: 42px 而不是 20px：顶部悬停时出现的毛玻璃标题栏（Electron，约 32px 高，含向下扩散的阴影）会盖住按钮，
+   下移 22px 让它完整露出并留出余量（桌面端实测反馈：36px 只差 4px、太贴边，用户仍觉得被压）。
+   与播放页返回按钮（VisualizerShell top-[42px]）和信息条顶部（.bravais-seam-* padding-top）统一。 */
 .lattice-back {
     position: absolute;
-    top: 20px;
+    top: 42px;
     left: 24px;
     z-index: 5;
     display: grid;
@@ -56,5 +59,5 @@
 :root[data-reduce-motion~='lattice'] .lattice-back.is-concealed { transition: none; }
 
 @media (max-width: 640px) {
-    .lattice-back { top: 14px; left: 16px; }
+    .lattice-back { top: 42px; left: 16px; }
 }
