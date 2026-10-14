@@ -75,6 +75,7 @@ export const SETTINGS_ANCHOR_DEFINITIONS = {
     // LabSettingsModal
     labPlayerUi: { section: 'lab', labelKey: 'options.labPlayerUiSection' },
     labWindowAndTools: { section: 'lab', labelKey: 'options.labWindowAndToolsSection' },
+    factoryReset: { section: 'lab', labelKey: 'options.factoryReset' },
 } as const satisfies Record<string, { section: SettingsSubviewId; labelKey: string; electronOnly?: boolean; requiresLibrarySuiteChoice?: boolean; requiresBravaisSuite?: boolean }>;
 
 export type SettingsAnchorId = keyof typeof SETTINGS_ANCHOR_DEFINITIONS;

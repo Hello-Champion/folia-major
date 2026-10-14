@@ -1,11 +1,13 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Boxes, Check, ChevronLeft, ChevronsLeftRight, GamepadDirectional, Mic, Monitor, Moon, Play, Settings2 } from 'lucide-react';
+import { Boxes, Check, ChevronLeft, ChevronsLeftRight, GamepadDirectional, Mic, Monitor, Moon, Play, RotateCcw, Settings2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/react/shallow';
 import type { Theme } from '../../../types';
 import { SettingsAnchor } from './navigation/SettingsAnchorContext';
 import SettingsSectionHeading from './navigation/SettingsSectionHeading';
+import ConfirmDialog from '../../shared/ConfirmDialog';
+import { clearAllData } from '../../../services/db';
 import { useAudioSettingsStore } from '../../../stores/useAudioSettingsStore';
 import { useTypographySettingsStore } from '../../../stores/useTypographySettingsStore';
 import { usePlayerChromeSettingsStore } from '../../../stores/usePlayerChromeSettingsStore';
@@ -108,6 +110,38 @@ const LabSettingsModal: React.FC<LabSettingsModalProps> = ({
         : 'border-white/10 bg-white/5 hover:bg-white/10';
     const isElectron = typeof window !== 'undefined' && Boolean(window.electron);
     const isMacElectron = window.electron?.platform === 'darwin';
+
+    const [isFactoryResetConfirmOpen, setIsFactoryResetConfirmOpen] = useState(false);
+
+    // 恢复出厂设置：清空 IndexedDB（缓存/本地库）与全部 localStorage 持久化设置，然后重载应用，
+    // 让所有 store 回到初始默认值。各平台登录会话（online_provider:* 前缀及旧版 cookie 键）会保留，
+    // 恢复出厂后无需重新登录。项目此前没有全局重置入口，只有各分区单项「恢复默认」。
+    const handleFactoryReset = async () => {
+        setIsFactoryResetConfirmOpen(false);
+        try {
+            await clearAllData();
+        } catch (error) {
+            console.error('[FactoryReset] Failed to clear database:', error);
+        }
+        try {
+            const keptKeys = new Set<string>(['active_online_provider_id', 'netease_cookie', 'netease_anonymous_cookie']);
+            const allKeys: string[] = [];
+            for (let i = 0; i < localStorage.length; i += 1) {
+                const key = localStorage.key(i);
+                if (key) allKeys.push(key);
+            }
+            const removed: string[] = [];
+            for (const key of allKeys) {
+                if (keptKeys.has(key) || key.startsWith('online_provider:')) continue;
+                localStorage.removeItem(key);
+                removed.push(key);
+            }
+            console.info(`[FactoryReset] Removed ${removed.length} localStorage keys, kept provider sessions.`);
+        } catch (error) {
+            console.error('[FactoryReset] Failed to clear localStorage:', error);
+        }
+        window.location.reload();
+    };
 
     const renderToggle = (checked: boolean, onChange: () => void) => (
         <button
@@ -302,6 +336,40 @@ const LabSettingsModal: React.FC<LabSettingsModalProps> = ({
                                     </div>
                                 )}
                 </SettingsAnchor>
+
+                {/* 恢复出厂设置：与「播放器界面」「窗口与工具」并列的独立分区，同一层级，不在任何分区内部 */}
+                <SettingsAnchor anchorId="factoryReset" label={t('options.factoryReset')} className="space-y-4">
+                    <SettingsSectionHeading icon={RotateCcw} label={t('options.factoryReset')} divider />
+                    <div className={`p-4 rounded-xl border space-y-3 ${settingsCardClass}`}>
+                        <div className="space-y-1">
+                            <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                                {t('options.factoryReset')}
+                            </div>
+                            <div className="text-xs opacity-50 max-w-[420px]" style={{ color: 'var(--text-secondary)' }}>
+                                {t('options.factoryResetDesc')}
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setIsFactoryResetConfirmOpen(true)}
+                            className="inline-flex items-center gap-2 rounded-full border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-500 transition-colors hover:bg-red-500/20"
+                        >
+                            <RotateCcw size={14} />
+                            <span>{t('options.factoryReset')}</span>
+                        </button>
+                    </div>
+                </SettingsAnchor>
+
+                <ConfirmDialog
+                    isOpen={isFactoryResetConfirmOpen}
+                    title={t('options.factoryReset')}
+                    description={t('options.factoryResetConfirmDesc')}
+                    confirmText={t('options.factoryResetConfirm')}
+                    confirmVariant="danger"
+                    isDaylight={isDaylight}
+                    onConfirm={handleFactoryReset}
+                    onClose={() => setIsFactoryResetConfirmOpen(false)}
+                />
             </div>
             </div>
         </>
