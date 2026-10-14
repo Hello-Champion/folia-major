@@ -24,6 +24,10 @@ const PlayerControlSlotButton: React.FC<PlayerControlSlotButtonProps> = ({
     className = '',
 }) => {
     const { t } = useTranslation();
+    // 「隐藏」槽位不占位、不渲染，直接让这个按钮从布局里消失。
+    if (actionId === 'hidden') {
+        return null;
+    }
     const slot = resolvePlayerControlSlot(actionId, context);
     const Icon = slot.icon;
     const disabled = slot.disabled || controlsDisabled;

@@ -13,6 +13,9 @@ export default function LatticeExtraControls({ disabled }: { disabled: boolean }
     const actions: PlayerControlSlotActionId[] = ['prev', primary, secondary, 'next'];
     return <div className="lattice-chrome-actions">
         {actions.map((action, index) => {
+            if (action === 'hidden') {
+                return null;
+            }
             const slot = resolvePlayerControlSlot(action, context);
             const Icon = slot.icon;
             return <button key={index} type="button" data-action={action} className={slot.active ? 'is-active' : ''}

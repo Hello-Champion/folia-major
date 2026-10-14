@@ -19,6 +19,22 @@ import { setStatusMessage } from './useStatusMessageStore';
 const PLAYER_BOTTOM_BAR_OFFSET_STORAGE_KEY = 'player_bottom_bar_offset';
 const PLAYER_CONTROL_SLOT_PRIMARY_STORAGE_KEY = 'player_control_slot_primary';
 const PLAYER_CONTROL_SLOT_SECONDARY_STORAGE_KEY = 'player_control_slot_secondary';
+const PLAYER_VOLUME_BUTTON_LAYOUT_STORAGE_KEY = 'player_volume_button_layout';
+
+/** 音量按钮在底部控制条上的位置。 */
+export type PlayerVolumeButtonLayout = 'row' | 'corner';
+
+const isPlayerVolumeButtonLayout = (value: string | null): value is PlayerVolumeButtonLayout =>
+    value === 'row' || value === 'corner';
+
+/** row = 与进度条同一排（进度条右侧）；corner = 展开态右上角槽位。默认 row，与用户当前看到的布局一致。 */
+const readStoredVolumeButtonLayout = (): PlayerVolumeButtonLayout => {
+    if (typeof window === 'undefined') {
+        return 'row';
+    }
+    const saved = localStorage.getItem(PLAYER_VOLUME_BUTTON_LAYOUT_STORAGE_KEY);
+    return isPlayerVolumeButtonLayout(saved) ? saved : 'row';
+};
 
 /** Reads the persisted lower-bounded offset; the viewport-dependent upper bound is applied by consumers. */
 const readStoredPlayerBottomBarOffset = (): number => {
@@ -62,6 +78,10 @@ export type PlayerChromeSettingsState = {
     autoHidePlayerChrome: boolean;
     autoHideCursorWithPlayerChrome: boolean;
     showOpenPanelCloseButton: boolean;
+    /** 底部胶囊展开态右侧是否显示常驻的竖向音量滑块。默认关闭，和槽位里的音量按钮并存。 */
+    showPlayerVolumeSlider: boolean;
+    /** 音量按钮位置：row = 与进度条同一排（右侧）；corner = 展开态右上角槽位。 */
+    volumeButtonLayout: PlayerVolumeButtonLayout;
     setTransparentPlayerBackgroundFromSystem: (enabled: boolean) => void;
     handleTogglePlayerPageNativeBlur: (enable: boolean) => void;
     handleToggleHidePlayerProgressBar: (enable: boolean) => void;
@@ -78,6 +98,8 @@ export type PlayerChromeSettingsState = {
     handleToggleAutoHidePlayerChrome: (enable: boolean) => void;
     handleToggleAutoHideCursorWithPlayerChrome: (enable: boolean) => void;
     handleToggleOpenPanelCloseButton: (enable: boolean) => void;
+    handleTogglePlayerVolumeSlider: (enable: boolean) => void;
+    handleSetVolumeButtonLayout: (layout: PlayerVolumeButtonLayout) => void;
 };
 
 export const usePlayerChromeSettingsStore = create<PlayerChromeSettingsState>((set, get) => ({
@@ -104,6 +126,8 @@ export const usePlayerChromeSettingsStore = create<PlayerChromeSettingsState>((s
     // controls it would have clicked. Opt-out, so auto-hide can keep the pointer if wanted.
     autoHideCursorWithPlayerChrome: getStoredBoolean('auto_hide_cursor_with_player_chrome', true),
     showOpenPanelCloseButton: getStoredBoolean('show_open_panel_close_button', true),
+    showPlayerVolumeSlider: getStoredBoolean('show_player_volume_slider', false),
+    volumeButtonLayout: readStoredVolumeButtonLayout(),
     setTransparentPlayerBackgroundFromSystem: (enabled) => {
         setStoredBoolean('transparent_player_background', enabled);
         set({ transparentPlayerBackground: enabled });
@@ -222,6 +246,19 @@ export const usePlayerChromeSettingsStore = create<PlayerChromeSettingsState>((s
             text: i18n.t('notifications.' + (enable ? 'panelCloseBtnShown' : 'panelCloseBtnHidden')),
         });
     },
+    handleTogglePlayerVolumeSlider: (enable) => {
+        setStoredBoolean('show_player_volume_slider', enable);
+        set({ showPlayerVolumeSlider: enable });
+    },
+    handleSetVolumeButtonLayout: (layout) => {
+        if (!isPlayerVolumeButtonLayout(layout)) {
+            return;
+        }
+        if (typeof window !== 'undefined') {
+            localStorage.setItem(PLAYER_VOLUME_BUTTON_LAYOUT_STORAGE_KEY, layout);
+        }
+        set({ volumeButtonLayout: layout });
+    },
 }));
 
 /**
@@ -244,6 +281,8 @@ export const selectPlayerChromeSettingsSnapshot = (state: PlayerChromeSettingsSt
     autoHidePlayerChrome: state.autoHidePlayerChrome,
     autoHideCursorWithPlayerChrome: state.autoHideCursorWithPlayerChrome,
     showOpenPanelCloseButton: state.showOpenPanelCloseButton,
+    showPlayerVolumeSlider: state.showPlayerVolumeSlider,
+    volumeButtonLayout: state.volumeButtonLayout,
     handleToggleHidePlayerProgressBar: state.handleToggleHidePlayerProgressBar,
     handleSetPlayerBottomBarOffset: state.handleSetPlayerBottomBarOffset,
     handleSetPlayerControlSlot: state.handleSetPlayerControlSlot,
@@ -259,5 +298,7 @@ export const selectPlayerChromeSettingsSnapshot = (state: PlayerChromeSettingsSt
     handleToggleAutoHidePlayerChrome: state.handleToggleAutoHidePlayerChrome,
     handleToggleAutoHideCursorWithPlayerChrome: state.handleToggleAutoHideCursorWithPlayerChrome,
     handleToggleOpenPanelCloseButton: state.handleToggleOpenPanelCloseButton,
+    handleTogglePlayerVolumeSlider: state.handleTogglePlayerVolumeSlider,
+    handleSetVolumeButtonLayout: state.handleSetVolumeButtonLayout,
     handleWallpaperTransparentRefused: state.handleWallpaperTransparentRefused,
 });

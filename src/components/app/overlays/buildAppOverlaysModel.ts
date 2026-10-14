@@ -75,6 +75,7 @@ type AppOverlaysAmbient = {
     playerControlSlotSecondary: PlayerControlSlotActionId;
     playerControlSlotContext: SlotContextFromApp;
     onCommitPlayerBottomBarOffset: (offsetPx: number) => void;
+    showVolumeSlider: boolean;
 };
 
 // What only the caller can supply: controller callbacks and values App.tsx computes.
@@ -119,6 +120,8 @@ export type AppOverlaysDeps = {
     stageTrackPillOnScreen: boolean;
     /** 点卡片时展开右侧面板的歌曲卡片（切到 cover 页并打开） */
     openSongCardPanel: () => void;
+    /** 音量滑块拖动时的实时预览（只碰增益节点）。 */
+    previewVolume: (volume: number) => void;
 };
 
 type BuildAppOverlaysModelParams = AppOverlaysAmbient & AppOverlaysDeps;
@@ -185,6 +188,8 @@ export const buildAppOverlaysModel = ({
     playerControlSlotSecondary,
     playerControlSlotContext,
     onCommitPlayerBottomBarOffset,
+    showVolumeSlider,
+    previewVolume,
 }: BuildAppOverlaysModelParams): AppOverlaysModel => ({
     // Gated on stageTrackPillOnScreen (computed in App: display mode plus which page allows the
     // card) rather than on the view directly, so the countdown that feeds the "up next" preview
@@ -296,6 +301,8 @@ export const buildAppOverlaysModel = ({
             slotSecondary: playerControlSlotSecondary,
             slotContext: playerControlSlotContext,
             onCommitBottomBarOffset: onCommitPlayerBottomBarOffset,
+            previewVolume,
+            showVolumeSlider,
             trackNavigation: ((): FloatingControlsProps['trackNavigation'] => {
                 const neighbors = resolvePlaybackNeighbors({
                     playQueue,

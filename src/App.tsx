@@ -2327,6 +2327,7 @@ export default function App() {
         stageIsNextUp,
         stageTrackPillOnScreen,
         openSongCardPanel,
+        previewVolume: handlePreviewVolume,
     });
     const settingsDialog = useSettingsDialogModel({
         themeController,

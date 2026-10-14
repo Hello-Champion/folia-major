@@ -43,6 +43,7 @@ export const useAppOverlaysModel = (deps: AppOverlaysDeps): AppOverlaysModel => 
     const playerControlSlotPrimary = usePlayerChromeSettingsStore(state => state.playerControlSlotPrimary);
     const playerControlSlotSecondary = usePlayerChromeSettingsStore(state => state.playerControlSlotSecondary);
     const handleSetPlayerBottomBarOffset = usePlayerChromeSettingsStore(state => state.handleSetPlayerBottomBarOffset);
+    const showPlayerVolumeSlider = usePlayerChromeSettingsStore(state => state.showPlayerVolumeSlider);
     const audioSrc = usePlaybackStore(state => state.audioSrc);
     const playQueue = usePlaybackStore(state => state.playQueue);
     const isFmMode = usePlaybackStore(state => state.isFmMode);
@@ -111,6 +112,7 @@ export const useAppOverlaysModel = (deps: AppOverlaysDeps): AppOverlaysModel => 
         playerControlSlotSecondary,
         playerControlSlotContext,
         onCommitPlayerBottomBarOffset: handleSetPlayerBottomBarOffset,
+        showVolumeSlider: showPlayerVolumeSlider,
         // Spread rather than `deps`: the caller passes an object literal, so depending on the object
         // itself would rebuild this on every render and defeat the memo entirely. The key set is
         // fixed by the call site, so the array keeps a constant length.
@@ -138,6 +140,7 @@ export const useAppOverlaysModel = (deps: AppOverlaysDeps): AppOverlaysModel => 
         playerControlSlotSecondary,
         playerControlSlotContext,
         handleSetPlayerBottomBarOffset,
+        showPlayerVolumeSlider,
         t,
     ]);
 };

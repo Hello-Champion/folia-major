@@ -8,6 +8,7 @@ import { PlayerState, LyricData, Theme } from '../types';
 import LyricsTimelineModal from './modal/LyricsTimelineModal';
 import TrackTitleNavigator from './floating-player/TrackTitleNavigator';
 import PlayerControlSlotButton from './floating-player/PlayerControlSlotButton';
+import PlayerBarVolumeControl from './floating-player/PlayerBarVolumeControl';
 import PlayerBottomBarPositioner from './floating-player/PlayerBottomBarPositioner';
 import { usePlayerBottomBarBottomPx } from '../hooks/usePlayerBottomBarBottomPx';
 import { playerBottomBarLiveOffset } from '../stores/motionSignals';
@@ -86,6 +87,10 @@ interface FloatingPlayerControlsProps {
     slotContext: SlotContextFromApp;
     /** 提交定位结果；由 App 写回持久化设置。 */
     onCommitBottomBarOffset: (offsetPx: number) => void;
+    /** 音量滑块拖动时的实时预览；只碰增益节点，不持久化。 */
+    previewVolume?: (volume: number) => void;
+    /** 是否在展开态右侧常驻竖向音量滑块。 */
+    showVolumeSlider?: boolean;
 }
 
 
@@ -118,6 +123,8 @@ const FloatingPlayerControls: React.FC<FloatingPlayerControlsProps> = ({
     slotSecondary,
     slotContext,
     onCommitBottomBarOffset,
+    previewVolume = () => { },
+    showVolumeSlider = false,
 }) => {
     const { t } = useTranslation();
     // const isDaylight = theme?.name === 'Daylight Default'; // Deprecated, passed as prop
@@ -133,6 +140,7 @@ const FloatingPlayerControls: React.FC<FloatingPlayerControlsProps> = ({
 
     const [isHovered, setIsHovered] = useState(false);
     const [isTimelineOpen, setIsTimelineOpen] = useState(false);
+    const [volumePopoverOpen, setVolumePopoverOpen] = useState(false);
     const expandTimeoutRef = useRef<number | null>(null);
     const collapseTimeoutRef = useRef<number | null>(null);
 
@@ -150,8 +158,15 @@ const FloatingPlayerControls: React.FC<FloatingPlayerControlsProps> = ({
 
     const canAutoExpand = canTogglePlay && duration > 0;
     // 定位模式强制展开：用户要看到的是最终形态的胶囊，而不是一条细进度条。
-    const showExpanded = isPositioning || isHovered || (canAutoExpand && playerState !== PlayerState.PLAYING && currentView !== 'home');
+    // 鼠标移出控制栏后 isHovered 与 volumePopoverOpen 都会复位，播放中即整体收回（含音量滑块）。
+    const showExpanded = isPositioning || isHovered || volumePopoverOpen || (canAutoExpand && playerState !== PlayerState.PLAYING && currentView !== 'home');
 
+    // row 布局点击音量按钮时，内联滑块在进度条行内展开（按钮与进度条同一排）。胶囊整体向右变长
+    // 136px（滑块 96 + 间距 4 + 百分比 36），恰好容纳滑块+百分比，进度条保持原宽不被压缩。
+    // 注意：四个 max-w 类名必须写成完整字面量，Tailwind JIT 只生成源码中完整的类名，
+    // 拼接出来的类名不会产出 CSS（此前 row 布局展开时胶囊始终不变长就是这个原因）。
+    const volumeButtonLayout = usePlayerChromeSettingsStore(state => state.volumeButtonLayout);
+    const inlineVolumeExpanded = volumeButtonLayout === 'row' && volumePopoverOpen;
     // 上限依赖视口高度，窗口变矮时要跟着收，否则虚线框会画到屏幕外。
     useEffect(() => {
         if (!isPositioning) {
@@ -301,6 +316,11 @@ const FloatingPlayerControls: React.FC<FloatingPlayerControlsProps> = ({
         collapseTimeoutRef.current = window.setTimeout(() => {
             setIsHovered(false);
             collapseTimeoutRef.current = null;
+            // 鼠标确认已离开控制栏：音量滑块一并收回，控制栏整体收起。
+            // （点击别处 / 再次点喇叭的收回由 PlayerBarVolumeControl 的 outside-click + onOpenChange 负责。）
+            if (volumePopoverOpen) {
+                setVolumePopoverOpen(false);
+            }
         }, HOVER_COLLAPSE_DELAY_MS);
     };
 
@@ -329,10 +349,15 @@ const FloatingPlayerControls: React.FC<FloatingPlayerControlsProps> = ({
                 所以挂在这一层不会干扰居中。
             */}
             <motion.div
-                className={`absolute left-1/2 -translate-x-1/2 z-60 w-full flex justify-center pointer-events-none
-                    ${currentView === 'home'
-                        ? 'max-w-[calc(100vw-120px)] md:max-w-[min(calc(32rem_+_var(--folium-player-bar-extra,0px)),calc(100vw-120px))]'
-                        : 'max-w-[min(calc(32rem_+_var(--folium-player-bar-extra,0px)),100vw)] px-4'}`}
+                className={`absolute left-1/2 -translate-x-1/2 z-60 w-full flex justify-center pointer-events-none ${
+                    currentView === 'home'
+                        ? `max-w-[calc(100vw-120px)] ${inlineVolumeExpanded
+                            ? 'md:max-w-[min(calc(32rem_+_var(--folium-player-bar-extra,0px)_+_136px),calc(100vw-120px))]'
+                            : 'md:max-w-[min(calc(32rem_+_var(--folium-player-bar-extra,0px)),calc(100vw-120px))]'}`
+                        : inlineVolumeExpanded
+                            ? 'max-w-[min(calc(32rem_+_var(--folium-player-bar-extra,0px)_+_136px),100vw)] px-4'
+                            : 'max-w-[min(calc(32rem_+_var(--folium-player-bar-extra,0px)),100vw)] px-4'
+                }`}
                 style={{ bottom: bottomBarBottomPx }}
             >
             <motion.div
@@ -401,6 +426,9 @@ const FloatingPlayerControls: React.FC<FloatingPlayerControlsProps> = ({
                                     slotPrimary={slotPrimary}
                                     slotSecondary={slotSecondary}
                                     slotContext={resolvedSlotContext}
+                                    previewVolume={previewVolume}
+                                    showVolumeSlider={showVolumeSlider}
+                                    onVolumePopoverOpenChange={setVolumePopoverOpen}
                                 />
                             ) : (
                                 <CollapsedView
@@ -473,6 +501,9 @@ interface ExpandedViewProps {
     slotPrimary: PlayerControlSlotActionId;
     slotSecondary: PlayerControlSlotActionId;
     slotContext: PlayerControlSlotContext;
+    previewVolume: (volume: number) => void;
+    showVolumeSlider: boolean;
+    onVolumePopoverOpenChange: (open: boolean) => void;
 }
 
 const ExpandedView: React.FC<ExpandedViewProps> = ({
@@ -494,7 +525,24 @@ const ExpandedView: React.FC<ExpandedViewProps> = ({
     slotPrimary,
     slotSecondary,
     slotContext,
+    previewVolume,
+    showVolumeSlider,
+    onVolumePopoverOpenChange,
 }) => {
+    // 音量按钮位置由设置里的「音量按钮位置」开关控制：row = 与进度条同一排；corner = 右上角槽位。
+    const volumeButtonLayout = usePlayerChromeSettingsStore(state => state.volumeButtonLayout);
+    const volumeButton = showVolumeSlider ? (
+        <PlayerBarVolumeControl
+            previewVolume={previewVolume}
+            primaryColor={primaryColor}
+            trackColor={trackColor}
+            isDaylight={isDaylight}
+            controlsDisabled={controlsDisabled}
+            onOpenChange={onVolumePopoverOpenChange}
+            layout={volumeButtonLayout}
+        />
+    ) : null;
+
     return (
         <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-x-4 gap-y-2 sm:grid-cols-[auto_minmax(0,1fr)_auto]">
             {/* Desktop Layout - responsive grid positions apply from the sm breakpoint */}
@@ -563,19 +611,31 @@ const ExpandedView: React.FC<ExpandedViewProps> = ({
                     controlsDisabled={controlsDisabled}
                     className="col-start-3 row-start-2 justify-self-start sm:justify-self-auto"
                 />
+
+                {volumeButtonLayout === 'corner' && (
+                    <div className="hidden items-center pl-1 sm:flex">
+                        {volumeButton}
+                    </div>
+                )}
             </div>
 
-            {/* Row 2: Current Time, Progress Bar, Duration */}
+            {/* Row 2: Current Time, Progress Bar, Duration（音量按钮可选与进度条同一排，位于最右侧。
+                展开时胶囊整体 +136px，恰好等于滑块+百分比的展开宽度，进度条不会被压缩。） */}
             <div className="col-span-3 row-start-3 w-full px-2 sm:col-start-2 sm:col-span-1 sm:row-start-2">
-                <ProgressBar
-                    currentTime={currentTime}
-                    duration={duration}
-                    onSeek={onSeek}
-                    primaryColor={primaryColor}
-                    secondaryColor={secondaryColor}
-                    trackColor={trackColor}
-                    disabled={controlsDisabled}
-                />
+                <div className="flex items-center gap-2">
+                    <div className="min-w-0 flex-1">
+                        <ProgressBar
+                            currentTime={currentTime}
+                            duration={duration}
+                            onSeek={onSeek}
+                            primaryColor={primaryColor}
+                            secondaryColor={secondaryColor}
+                            trackColor={trackColor}
+                            disabled={controlsDisabled}
+                        />
+                    </div>
+                    {volumeButtonLayout === 'row' && volumeButton}
+                </div>
             </div>
         </div>
     );

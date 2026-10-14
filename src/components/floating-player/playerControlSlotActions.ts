@@ -1,4 +1,4 @@
-import { ChartBar, Heart, ListMusic, PanelsTopLeft, Repeat, Repeat1, RepeatOff, Shuffle, SkipBack, SkipForward, Timer, Volume2 } from 'lucide-react';
+import { ChartBar, EyeOff, Heart, ListMusic, PanelsTopLeft, Repeat, Repeat1, RepeatOff, Shuffle, SkipBack, SkipForward, Timer, Volume2 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { PlayerControlSlotActionId } from '../../types/playerControlSlots';
 import { noteLoopButtonPress } from '../../services/ponder/loopShuffleHint';
@@ -54,6 +54,7 @@ export type ResolvedPlayerControlSlot = {
 
 /** 设置下拉里的静态展示项：图标固定取一个代表态，不需要运行时状态。 */
 export const PLAYER_CONTROL_SLOT_OPTIONS: readonly { id: PlayerControlSlotActionId; icon: LucideIcon; labelKey: string; }[] = [
+    { id: 'hidden', icon: EyeOff, labelKey: 'options.playerControlSlotAction_hidden' },
     { id: 'loop', icon: Repeat, labelKey: 'options.playerControlSlotAction_loop' },
     { id: 'prev', icon: SkipBack, labelKey: 'options.playerControlSlotAction_prev' },
     { id: 'next', icon: SkipForward, labelKey: 'options.playerControlSlotAction_next' },
@@ -175,6 +176,16 @@ export const resolvePlayerControlSlot = (
                 disabled: !context.canInvokeCommandById('sleep-timer'),
                 onActivate: () => context.invokeCommandById('sleep-timer'),
                 labelKey: 'options.playerControlSlotAction_sleepTimer',
+            };
+        case 'hidden':
+            // 「隐藏」不是可点动作，渲染层据此跳过该槽位；这里兜底一个占位，避免误显示成别的动作。
+            return {
+                icon: EyeOff,
+                filled: false,
+                active: false,
+                disabled: true,
+                onActivate: () => {},
+                labelKey: 'options.playerControlSlotAction_hidden',
             };
         case 'lyrics-timeline':
         default:
