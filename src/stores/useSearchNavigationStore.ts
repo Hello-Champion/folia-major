@@ -9,6 +9,7 @@ import {
 } from '../services/playbackAdapters';
 import { omni } from '../services/onlineMusic/omni';
 import { isLocalPlaybackSong, isNavidromePlaybackSong } from '../utils/appPlaybackGuards';
+import { useOnlineProviderAccountStore } from './useOnlineProviderAccountStore';
 
 const LAST_HOME_VIEW_TAB_KEY = 'last_home_view_tab';
 const DEFAULT_SEARCH_LIMIT = 30;
@@ -70,7 +71,9 @@ export const resolveSearchSource = (tab: HomeViewTab | SearchSource): SearchSour
         return tab;
     }
     if (tab !== 'playlist' && tab !== 'albums' && tab !== 'radio') return tab as OnlineProviderId;
-    return 'netease';
+    // 在线页签（歌单 / 专辑 / 电台）默认搜当前激活的在线平台（QQ 音乐等），而不是写死的网易云：
+    // 搜索页的来源选项是 [激活平台, 本地, Navidrome]，落回 netease 会让三个选项一个都没选中。
+    return useOnlineProviderAccountStore.getState().activeProviderId || 'netease';
 };
 
 export const resolveCommandPaletteSearchSource = (

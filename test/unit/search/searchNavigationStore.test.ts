@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { resolveCommandPaletteSearchSource, useSearchNavigationStore } from '@/stores/useSearchNavigationStore';
+import { resolveCommandPaletteSearchSource, resolveSearchSource, useSearchNavigationStore } from '@/stores/useSearchNavigationStore';
+import { useOnlineProviderAccountStore } from '@/stores/useOnlineProviderAccountStore';
 import { neteaseApi } from '@/services/netease';
 import { getNavidromeConfig, navidromeApi } from '@/services/navidromeService';
 import type { LocalLibraryAssignment, LocalLibraryEntity } from '@/types/localLibrary';
@@ -52,6 +53,20 @@ describe('useSearchNavigationStore', () => {
             scrollTop: 0,
             searchCache: {},
         });
+        useOnlineProviderAccountStore.setState({ activeProviderId: 'qq' });
+    });
+
+    it('uses the active online provider for home seam searches', () => {
+        expect(resolveSearchSource('playlist')).toBe('qq');
+        expect(resolveSearchSource('albums')).toBe('qq');
+        expect(resolveSearchSource('radio')).toBe('qq');
+        expect(resolveSearchSource('local')).toBe('local');
+        expect(resolveSearchSource('navidrome')).toBe('navidrome');
+    });
+
+    it('falls back to netease when no online provider is active', () => {
+        useOnlineProviderAccountStore.setState({ activeProviderId: '' });
+        expect(resolveSearchSource('playlist')).toBe('netease');
     });
 
     it('uses the active online provider for command palette searches', () => {
