@@ -444,6 +444,15 @@
 
 .bravais-search-form input::-webkit-search-cancel-button { display: none; }
 
+/* 玻璃开关（.has-glass，底部控制台同款 Mineradio 配方）：搜索面板换更通透的底 + 磨砂模糊 + 白色内发光描边。 */
+.bravais-seam-search.has-glass {
+    background: rgb(12 12 15 / 48%);
+    backdrop-filter: blur(12px) saturate(1.8) brightness(1.16);
+    box-shadow: inset 0 0 2px 1px rgb(255 255 255 / 35%), inset 0 0 10px 4px rgb(255 255 255 / 15%),
+        0 4px 16px rgb(17 17 26 / 5%), 0 8px 24px rgb(17 17 26 / 5%), 0 16px 56px rgb(17 17 26 / 5%),
+        inset 0 4px 16px rgb(17 17 26 / 5%), inset 0 8px 24px rgb(17 17 26 / 5%), inset 0 16px 56px rgb(17 17 26 / 5%);
+}
+
 /* ---------- 目录树面板 ---------- */
 
 .bravais-seam .bravais-dir-select {

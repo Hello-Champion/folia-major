@@ -12,6 +12,8 @@ import {
 import SearchResultsList from './SearchResultsList';
 import { useCollectionNavigationStore } from '../../../stores/useCollectionNavigationStore';
 import { useOnlineProviderAccountStore } from '../../../stores/useOnlineProviderAccountStore';
+import { usePlayerChromeSettingsStore } from '../../../stores/usePlayerChromeSettingsStore';
+import { PLAYER_BAR_GLASS_STYLE } from '../../../utils/playerBarGlass';
 import { omni } from '../../../services/onlineMusic/omni';
 
 // src/components/app/search/SearchWorkspace.tsx
@@ -47,6 +49,8 @@ const SearchWorkspace: React.FC<SearchWorkspaceProps> = ({
     resolveTrackDisplay,
 }) => {
     const { t } = useTranslation();
+    // 搜索页与底部控制台同族：玻璃开关打开时换 Mineradio 配方（更通透底 + 磨砂模糊 + 白色内发光描边）。
+    const bottomBarGlassEnabled = usePlayerChromeSettingsStore(state => state.playerBottomBarGlass);
     const {
         searchQuery,
         searchSourceTab,
@@ -109,8 +113,11 @@ const SearchWorkspace: React.FC<SearchWorkspaceProps> = ({
                     }`}
                     style={{
                         color: theme.primaryColor,
-                        backgroundColor: isDaylight ? 'rgba(250,250,250,0.96)' : 'rgba(8,8,10,0.94)',
-                        backdropFilter: 'blur(24px)',
+                        backgroundColor: bottomBarGlassEnabled
+                            ? (isDaylight ? 'rgba(250,250,250,0.45)' : 'rgba(8,8,10,0.35)')
+                            : (isDaylight ? 'rgba(250,250,250,0.96)' : 'rgba(8,8,10,0.94)'),
+                        backdropFilter: bottomBarGlassEnabled ? 'blur(12px) saturate(1.8) brightness(1.16)' : 'blur(24px)',
+                        ...(bottomBarGlassEnabled ? { WebkitBackdropFilter: 'blur(12px) saturate(1.8) brightness(1.16)', boxShadow: PLAYER_BAR_GLASS_STYLE.boxShadow } : undefined),
                     }}
                 >
                     <header className="mx-auto flex w-full max-w-5xl shrink-0 flex-col gap-3">

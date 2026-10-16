@@ -33,6 +33,7 @@ import { openPonderNavigation } from '../../services/ponder/pagePonderTarget';
 import ReleaseNotesDialog from './ReleaseNotesDialog';
 import { JoinCommunityButton } from '../shared/JoinCommunityButton';
 import { copyTextToClipboard } from '../../utils/clipboard';
+import { PLAYER_BAR_GLASS_STYLE } from '../../utils/playerBarGlass';
 import { BUILD_KIND_TAGS, getBuildKind } from '../../utils/buildProvenance';
 import meowImageUrl from '../../../build/miao.png';
 import type { LyricData } from '../../types';
@@ -1028,6 +1029,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
         || 'Unknown server';
 
     // const isDaylight = theme?.name === 'Daylight Default'; // Deprecated, passed as prop
+    // 设置主窗口与底部控制台同族：玻璃开关打开时换 Mineradio 配方（更通透底 + 磨砂模糊 + 白色内发光描边）。
+    const bottomBarGlassEnabled = usePlayerChromeSettingsStore(state => state.playerBottomBarGlass);
     const glassBg = isDaylight ? 'bg-white' : 'bg-[#18181b]';
     const subviewPanelBg = isDaylight ? 'bg-zinc-50' : 'bg-[#18181b]';
     const borderColor = isDaylight ? 'border-black/5' : 'border-white/10';
@@ -1360,6 +1363,11 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 {...panelMotion}
                 transition={shellTransition}
                 className={`${glassBg} border ${borderColor} p-6 md:p-8 rounded-3xl ${activeTab === 'options' ? 'w-full md:max-w-4xl md:w-[900px] h-[90vh] md:h-[85vh]' : 'w-full md:max-w-lg'} relative shadow-2xl overflow-hidden flex flex-col max-h-[90vh] transition-all duration-300`}
+                style={bottomBarGlassEnabled ? {
+                    ...PLAYER_BAR_GLASS_STYLE,
+                    backgroundColor: isDaylight ? 'rgba(255,255,255,0.55)' : 'rgba(24,24,27,0.5)',
+                    borderColor: isDaylight ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.12)',
+                } : undefined}
                 onClick={(event) => event.stopPropagation()}
             >
                 {/* Decorative background blobs */}
