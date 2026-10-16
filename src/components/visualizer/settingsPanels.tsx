@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { DEFAULT_CAPPELLA_TUNING, DEFAULT_CLASSIC_TUNING, DEFAULT_CLADDAGH_TUNING, DEFAULT_DIORAMA_TUNING, DEFAULT_FUME_TUNING, DEFAULT_PARTITA_TUNING, DEFAULT_TILT_TUNING, DIORAMA_PARTICLE_DENSITY_MAX, DIORAMA_PARTICLE_DENSITY_MIN, DIORAMA_PARTICLE_GLOW_INTENSITY_MAX, DIORAMA_PARTICLE_GLOW_INTENSITY_MIN, DIORAMA_PARTICLE_SIZE_MAX, DIORAMA_PARTICLE_SIZE_MIN, type CappellaTuning, type ClassicTuning, type CladdaghTuning, type DioramaTuning, type FumeTuning, type PartitaTuning, type TiltColorScheme, type TiltTuning } from '../../types';
 import { colorWithAlpha } from './colorMix';
 import { type VisualizerSettingsPanelProps } from './definition';
@@ -269,7 +269,25 @@ export const FumeSettingsPanel: React.FC<VisualizerSettingsPanelProps> = ({
         cameraSpeed: Math.min(1.85, Math.max(0.55, fumeTuning.cameraSpeed)),
         glowIntensity: Math.min(1.8, Math.max(0, fumeTuning.glowIntensity)),
         heroScale: Math.min(1.32, Math.max(0.82, fumeTuning.heroScale)),
+        printStampWidth: Math.min(2, Math.max(0.4, fumeTuning.printStampWidth ?? DEFAULT_FUME_TUNING.printStampWidth)),
+        printStampHeight: Math.min(2, Math.max(0.4, fumeTuning.printStampHeight ?? DEFAULT_FUME_TUNING.printStampHeight)),
+        printStampOffsetX: Math.min(200, Math.max(-200, fumeTuning.printStampOffsetX ?? DEFAULT_FUME_TUNING.printStampOffsetX)),
+        printStampOffsetY: Math.min(200, Math.max(-200, fumeTuning.printStampOffsetY ?? DEFAULT_FUME_TUNING.printStampOffsetY)),
+        printStampOpacity: Math.min(1, Math.max(0, fumeTuning.printStampOpacity ?? DEFAULT_FUME_TUNING.printStampOpacity)),
+        printStampColor: typeof fumeTuning.printStampColor === 'string'
+            ? fumeTuning.printStampColor
+            : DEFAULT_FUME_TUNING.printStampColor,
     };
+    // 取色器拖动是高频事件：先写本地草稿即时显示，防抖后再提交 store，避免每帧重建渲染。
+    const [printStampColorDraft, setPrintStampColorDraft] = useState<string | null>(null);
+    const printStampColorCommitRef = useRef<number>(0);
+    useEffect(() => {
+        setPrintStampColorDraft(null);
+    }, [resolvedFumeTuning.printStampColor]);
+    useEffect(() => () => window.clearTimeout(printStampColorCommitRef.current), []);
+    // 跟随主题（未设置固定颜色）时显示主题强调色，与方块实际基础色对应。
+    const stampColorValue = printStampColorDraft
+        ?? (resolvedFumeTuning.printStampColor || theme.accentColor);
     const visibilityOptions: PresetOption<boolean>[] = useMemo(() => ([
         { value: false, label: t('options.partitaGuideLinesOn')  },
         { value: true, label: t('options.partitaGuideLinesOff')  },
@@ -352,6 +370,138 @@ export const FumeSettingsPanel: React.FC<VisualizerSettingsPanelProps> = ({
                     onPointerUp={onSliderCommit}
                     className={rangeInputClass}
                 />
+            </div>
+
+            <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm" style={{ color: 'var(--text-primary)' }}>
+                    <span>{t('options.fumePrintStampWidth') }</span>
+                    <span className="font-mono opacity-70" style={{ color: 'var(--text-secondary)' }}>
+                        {Math.round(resolvedFumeTuning.printStampWidth * 100)}%
+                    </span>
+                </div>
+                <input
+                    type="range"
+                    min="0.4"
+                    max="2"
+                    step="0.01"
+                    value={resolvedFumeTuning.printStampWidth}
+                    onChange={(event) => handleFumeTuningChange({ printStampWidth: parseFloat(event.target.value) })}
+                    onPointerDown={onSliderPointerDown}
+                    onPointerUp={onSliderCommit}
+                    className={rangeInputClass}
+                />
+            </div>
+
+            <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm" style={{ color: 'var(--text-primary)' }}>
+                    <span>{t('options.fumePrintStampHeight') }</span>
+                    <span className="font-mono opacity-70" style={{ color: 'var(--text-secondary)' }}>
+                        {Math.round(resolvedFumeTuning.printStampHeight * 100)}%
+                    </span>
+                </div>
+                <input
+                    type="range"
+                    min="0.4"
+                    max="2"
+                    step="0.01"
+                    value={resolvedFumeTuning.printStampHeight}
+                    onChange={(event) => handleFumeTuningChange({ printStampHeight: parseFloat(event.target.value) })}
+                    onPointerDown={onSliderPointerDown}
+                    onPointerUp={onSliderCommit}
+                    className={rangeInputClass}
+                />
+            </div>
+
+            <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm" style={{ color: 'var(--text-primary)' }}>
+                    <span>{t('options.fumePrintStampOffsetX') }</span>
+                    <span className="font-mono opacity-70" style={{ color: 'var(--text-secondary)' }}>
+                        {resolvedFumeTuning.printStampOffsetX > 0 ? '+' : ''}{resolvedFumeTuning.printStampOffsetX}px
+                    </span>
+                </div>
+                <input
+                    type="range"
+                    min="-200"
+                    max="200"
+                    step="1"
+                    value={resolvedFumeTuning.printStampOffsetX}
+                    onChange={(event) => handleFumeTuningChange({ printStampOffsetX: parseFloat(event.target.value) })}
+                    onPointerDown={onSliderPointerDown}
+                    onPointerUp={onSliderCommit}
+                    className={rangeInputClass}
+                />
+            </div>
+
+            <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm" style={{ color: 'var(--text-primary)' }}>
+                    <span>{t('options.fumePrintStampOffsetY') }</span>
+                    <span className="font-mono opacity-70" style={{ color: 'var(--text-secondary)' }}>
+                        {resolvedFumeTuning.printStampOffsetY > 0 ? '+' : ''}{resolvedFumeTuning.printStampOffsetY}px
+                    </span>
+                </div>
+                <input
+                    type="range"
+                    min="-200"
+                    max="200"
+                    step="1"
+                    value={resolvedFumeTuning.printStampOffsetY}
+                    onChange={(event) => handleFumeTuningChange({ printStampOffsetY: parseFloat(event.target.value) })}
+                    onPointerDown={onSliderPointerDown}
+                    onPointerUp={onSliderCommit}
+                    className={rangeInputClass}
+                />
+            </div>
+
+            <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm" style={{ color: 'var(--text-primary)' }}>
+                    <span>{t('options.fumePrintStampOpacity') }</span>
+                    <span className="font-mono opacity-70" style={{ color: 'var(--text-secondary)' }}>
+                        {Math.round(resolvedFumeTuning.printStampOpacity * 100)}%
+                    </span>
+                </div>
+                <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                    value={resolvedFumeTuning.printStampOpacity}
+                    onChange={(event) => handleFumeTuningChange({ printStampOpacity: parseFloat(event.target.value) })}
+                    onPointerDown={onSliderPointerDown}
+                    onPointerUp={onSliderCommit}
+                    className={rangeInputClass}
+                />
+            </div>
+
+            <div className="flex items-center justify-between gap-2 text-sm" style={{ color: 'var(--text-primary)' }}>
+                <span>{t('options.fumePrintStampColor') }</span>
+                <div className="flex items-center gap-2">
+                    <input
+                        type="color"
+                        value={stampColorValue}
+                        onChange={(event) => {
+                            const value = event.target.value;
+                            setPrintStampColorDraft(value);
+                            window.clearTimeout(printStampColorCommitRef.current);
+                            printStampColorCommitRef.current = window.setTimeout(() => {
+                                handleFumeTuningChange({ printStampColor: value });
+                            }, 180);
+                        }}
+                        className="h-8 w-8 shrink-0 cursor-pointer rounded-lg border border-white/10 bg-transparent p-0"
+                        aria-label={t('options.fumePrintStampColor')}
+                    />
+                    <button
+                        type="button"
+                        onClick={() => {
+                            window.clearTimeout(printStampColorCommitRef.current);
+                            setPrintStampColorDraft(null);
+                            handleFumeTuningChange({ printStampColor: '' });
+                        }}
+                        className="rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-xs opacity-70 transition-opacity hover:opacity-100"
+                        style={{ color: 'var(--text-secondary)' }}
+                    >
+                        {t('options.fumePrintStampColorReset') }
+                    </button>
+                </div>
             </div>
 
             <div className="space-y-2">

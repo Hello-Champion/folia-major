@@ -22,6 +22,12 @@ export interface FumeStageScene {
     glowIntensity: number;
     backgroundObjectOpacity: number;
     showPrintStamp: boolean;
+    printStampWidth: number;
+    printStampHeight: number;
+    printStampOffsetX: number;
+    printStampOffsetY: number;
+    printStampOpacity: number;
+    printStampColor: string;
     textHoldRatio: number;
     showText: boolean;
     staticMode: boolean;

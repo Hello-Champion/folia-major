@@ -109,6 +109,18 @@ export interface FumeLiveBlockParams {
     activeGlowBoost: number;
     passedGlowBase: number;
     showPrintStamp: boolean;
+    /** 打印方块宽度乘数（1 = 默认）。 */
+    printStampWidth: number;
+    /** 打印方块高度乘数（1 = 默认）。 */
+    printStampHeight: number;
+    /** 打印方块水平偏移 px（世界坐标）。 */
+    printStampOffsetX: number;
+    /** 打印方块垂直偏移 px（世界坐标）。 */
+    printStampOffsetY: number;
+    /** 打印方块不透明度乘数（1 = 默认）。 */
+    printStampOpacity: number;
+    /** 打印方块颜色（hex），空字符串 = 跟随激活色。 */
+    printStampColor: string;
 }
 
 /**
@@ -119,7 +131,7 @@ export const drawFumeLiveBlock = (
     context: CanvasRenderingContext2D,
     block: FumeBlock,
     timing: FumeBlockTiming,
-    { time, theme, glowIntensity, activeGlowBoost, passedGlowBase, showPrintStamp }: FumeLiveBlockParams,
+    { time, theme, glowIntensity, activeGlowBoost, passedGlowBase, showPrintStamp, printStampWidth, printStampHeight, printStampOffsetX, printStampOffsetY, printStampOpacity, printStampColor }: FumeLiveBlockParams,
 ) => {
     const {
         waitingOpacity, activeOpacity, transitionPassedStyle, baselineOffset, linePassCutoffTime,
@@ -344,20 +356,22 @@ export const drawFumeLiveBlock = (
                             );
                             const blockCenterX = baseX + segment.x + resolveSegmentGlyphOffset(segment, globalOffset) + glyphAdvance * 0.5;
                             const dropDistance = block.lineHeight * (block.variant === 'hero' ? 0.24 : 0.2);
-                            const activationBlockAlpha = blockPulse * (block.variant === 'hero' ? 0.82 : 0.72);
-                            const activationBlockWidth = glyphVisualWidth + block.fontPx * (block.variant === 'hero' ? 0.18 : 0.12);
-                            const activationBlockHeight = block.fontPx * (block.variant === 'hero' ? 0.72 : 0.62);
+                            const activationBlockAlpha = blockPulse * (block.variant === 'hero' ? 0.82 : 0.72) * printStampOpacity;
+                            const activationBlockWidth = (glyphVisualWidth + block.fontPx * (block.variant === 'hero' ? 0.18 : 0.12)) * printStampWidth;
+                            const activationBlockHeight = block.fontPx * (block.variant === 'hero' ? 0.72 : 0.62) * printStampHeight;
                             const activationBlockY = baseY
                                 - block.fontPx * 0.38
-                                - mix(dropDistance, 0, dropProgress);
+                                - mix(dropDistance, 0, dropProgress)
+                                + printStampOffsetY;
                             const activationBlockBlur = (8 + block.fontPx * 0.24) * blockPulse * activeGlowBoost;
 
                             if (activationBlockWidth > 0) {
-                                const blockLeft = blockCenterX - activationBlockWidth * 0.5;
+                                const blockLeft = blockCenterX - activationBlockWidth * 0.5 + printStampOffsetX;
+                                const stampColor = printStampColor && printStampColor.length > 0 ? printStampColor : activeColor;
                                 context.save();
-                                context.fillStyle = colorWithAlpha(activeColor, activationBlockAlpha);
+                                context.fillStyle = colorWithAlpha(stampColor, activationBlockAlpha);
                                 context.shadowBlur = activationBlockBlur;
-                                context.shadowColor = colorWithAlpha(activeColor, 0.56 * blockPulse);
+                                context.shadowColor = colorWithAlpha(stampColor, 0.56 * blockPulse);
                                 context.fillRect(
                                     blockLeft,
                                     activationBlockY - activationBlockHeight * 0.5,

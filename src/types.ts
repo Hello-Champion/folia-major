@@ -445,6 +445,18 @@ export interface FumeTuning {
   cameraSpeed: number;
   glowIntensity: number;
   heroScale: number;
+  /** 打印方块（字符激活块）宽度乘数，1 = 默认。 */
+  printStampWidth: number;
+  /** 打印方块高度乘数，1 = 默认。 */
+  printStampHeight: number;
+  /** 打印方块水平偏移（px，世界坐标）。 */
+  printStampOffsetX: number;
+  /** 打印方块垂直偏移（px，世界坐标）。 */
+  printStampOffsetY: number;
+  /** 打印方块不透明度乘数，1 = 默认。 */
+  printStampOpacity: number;
+  /** 打印方块颜色（hex，如 '#00e5ff'），空字符串 = 跟随激活色。 */
+  printStampColor: string;
 }
 
 export const DEFAULT_FUME_TUNING: FumeTuning = {
@@ -456,6 +468,12 @@ export const DEFAULT_FUME_TUNING: FumeTuning = {
   cameraSpeed: 1,
   glowIntensity: 1,
   heroScale: 1,
+  printStampWidth: 1,
+  printStampHeight: 1,
+  printStampOffsetX: 0,
+  printStampOffsetY: 0,
+  printStampOpacity: 1,
+  printStampColor: '',
 };
 
 export interface CladdaghTuning {

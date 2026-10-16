@@ -131,6 +131,14 @@ const VisualizerFume: React.FC<VisualizerProps> = (props) => {
         cameraSpeed: clamp(fumeTuning?.cameraSpeed ?? DEFAULT_FUME_TUNING.cameraSpeed, 0.55, 1.85),
         glowIntensity: clamp(fumeTuning?.glowIntensity ?? DEFAULT_FUME_TUNING.glowIntensity, 0, 1.8),
         heroScale: clamp(fumeTuning?.heroScale ?? DEFAULT_FUME_TUNING.heroScale, 0.82, 1.32),
+        printStampWidth: clamp(fumeTuning?.printStampWidth ?? DEFAULT_FUME_TUNING.printStampWidth, 0.4, 2),
+        printStampHeight: clamp(fumeTuning?.printStampHeight ?? DEFAULT_FUME_TUNING.printStampHeight, 0.4, 2),
+        printStampOffsetX: clamp(fumeTuning?.printStampOffsetX ?? DEFAULT_FUME_TUNING.printStampOffsetX, -200, 200),
+        printStampOffsetY: clamp(fumeTuning?.printStampOffsetY ?? DEFAULT_FUME_TUNING.printStampOffsetY, -200, 200),
+        printStampOpacity: clamp(fumeTuning?.printStampOpacity ?? DEFAULT_FUME_TUNING.printStampOpacity, 0, 1),
+        printStampColor: typeof fumeTuning?.printStampColor === 'string'
+            ? fumeTuning.printStampColor
+            : DEFAULT_FUME_TUNING.printStampColor,
     }), [fumeTuning]);
     const layoutTheme = useMemo(
         () => ({
@@ -258,6 +266,12 @@ const VisualizerFume: React.FC<VisualizerProps> = (props) => {
         glowIntensity,
         backgroundObjectOpacity,
         showPrintStamp,
+        printStampWidth: resolvedFumeTuning.printStampWidth,
+        printStampHeight: resolvedFumeTuning.printStampHeight,
+        printStampOffsetX: resolvedFumeTuning.printStampOffsetX,
+        printStampOffsetY: resolvedFumeTuning.printStampOffsetY,
+        printStampOpacity: resolvedFumeTuning.printStampOpacity,
+        printStampColor: resolvedFumeTuning.printStampColor,
         textHoldRatio,
         showText,
         staticMode,
@@ -273,6 +287,12 @@ const VisualizerFume: React.FC<VisualizerProps> = (props) => {
         passedFadeDuration,
         resolvedFumeTuning.cameraTrackingMode,
         showPrintStamp,
+        resolvedFumeTuning.printStampWidth,
+        resolvedFumeTuning.printStampHeight,
+        resolvedFumeTuning.printStampOffsetX,
+        resolvedFumeTuning.printStampOffsetY,
+        resolvedFumeTuning.printStampOpacity,
+        resolvedFumeTuning.printStampColor,
         showText,
         staticMode,
         textHoldRatio,

@@ -356,6 +356,12 @@ export const useVisualizerSettingsStore = create<VisualizerSettingsState>((set, 
             cameraSpeed: clampFumeCameraSpeed(patch.cameraSpeed ?? prev.cameraSpeed, prev.cameraSpeed),
             glowIntensity: clampFumeGlowIntensity(patch.glowIntensity ?? prev.glowIntensity, prev.glowIntensity),
             heroScale: clampFumeHeroScale(patch.heroScale ?? prev.heroScale, prev.heroScale),
+            printStampWidth: Math.min(2, Math.max(0.4, patch.printStampWidth ?? prev.printStampWidth)),
+            printStampHeight: Math.min(2, Math.max(0.4, patch.printStampHeight ?? prev.printStampHeight)),
+            printStampOffsetX: Math.min(200, Math.max(-200, patch.printStampOffsetX ?? prev.printStampOffsetX)),
+            printStampOffsetY: Math.min(200, Math.max(-200, patch.printStampOffsetY ?? prev.printStampOffsetY)),
+            printStampOpacity: Math.min(1, Math.max(0, patch.printStampOpacity ?? prev.printStampOpacity)),
+            printStampColor: typeof patch.printStampColor === 'string' ? patch.printStampColor : prev.printStampColor,
         };
         if (typeof window !== 'undefined') {
             localStorage.setItem('fume_tuning', JSON.stringify(next));

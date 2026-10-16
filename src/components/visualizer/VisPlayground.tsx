@@ -450,6 +450,33 @@ const VisPlayground: React.FC<VisPlaygroundProps> = ({
     const fontUploadInputRef = React.useRef<HTMLInputElement>(null);
     const isDraggingSlider = useRef(false);
     const pendingCommitRef = useRef<(() => void) | null>(null);
+    // 拖拽滑块时把同帧内多次 onChange 的草稿更新合并为一次（latest wins）：
+    // 1% 步进让事件频率翻了 5 倍，若每次都 setDraftX，会反复重建预览场景并重启画布 RAF 循环。
+    const pendingDraftFlushRef = useRef<Array<() => void>>([]);
+    const draftFlushRafRef = useRef<number | null>(null);
+    const flushPendingDraftUpdates = useCallback(() => {
+        if (draftFlushRafRef.current !== null) {
+            window.cancelAnimationFrame(draftFlushRafRef.current);
+            draftFlushRafRef.current = null;
+        }
+        const updaters = pendingDraftFlushRef.current;
+        pendingDraftFlushRef.current = [];
+        for (const updater of updaters) {
+            updater();
+        }
+    }, []);
+    const scheduleDraftUpdate = useCallback((updater: () => void) => {
+        pendingDraftFlushRef.current.push(updater);
+        if (draftFlushRafRef.current === null) {
+            draftFlushRafRef.current = window.requestAnimationFrame(flushPendingDraftUpdates);
+        }
+    }, [flushPendingDraftUpdates]);
+    useEffect(() => () => {
+        if (draftFlushRafRef.current !== null) {
+            window.cancelAnimationFrame(draftFlushRafRef.current);
+            draftFlushRafRef.current = null;
+        }
+    }, []);
 
     const audioBands = useMemo<AudioBands>(() => ({
         bass,
@@ -524,6 +551,14 @@ const VisPlayground: React.FC<VisPlaygroundProps> = ({
         cameraSpeed: clampFumeCameraSpeed(draftFumeTuning.cameraSpeed),
         glowIntensity: clampFumeGlowIntensity(draftFumeTuning.glowIntensity),
         heroScale: clampFumeHeroScale(draftFumeTuning.heroScale),
+        printStampWidth: Math.min(2, Math.max(0.4, draftFumeTuning.printStampWidth ?? DEFAULT_FUME_TUNING.printStampWidth)),
+        printStampHeight: Math.min(2, Math.max(0.4, draftFumeTuning.printStampHeight ?? DEFAULT_FUME_TUNING.printStampHeight)),
+        printStampOffsetX: Math.min(200, Math.max(-200, draftFumeTuning.printStampOffsetX ?? DEFAULT_FUME_TUNING.printStampOffsetX)),
+        printStampOffsetY: Math.min(200, Math.max(-200, draftFumeTuning.printStampOffsetY ?? DEFAULT_FUME_TUNING.printStampOffsetY)),
+        printStampOpacity: Math.min(1, Math.max(0, draftFumeTuning.printStampOpacity ?? DEFAULT_FUME_TUNING.printStampOpacity)),
+        printStampColor: typeof draftFumeTuning.printStampColor === 'string'
+            ? draftFumeTuning.printStampColor
+            : DEFAULT_FUME_TUNING.printStampColor,
     }), [draftFumeTuning]);
     const resolvedCladdaghTuning = useMemo<CladdaghTuning>(() => ({
         focusScaleRatio: clampCladdaghFocusScaleRatio(
@@ -837,66 +872,73 @@ const VisPlayground: React.FC<VisPlaygroundProps> = ({
 
     /** Update draft only during slider drag; commit immediately for buttons. */
     const handleFumeTuningChange = (patch: Partial<FumeTuning>) => {
-        setDraftFumeTuning(previous => ({ ...previous, ...patch }));
-        if (!isDraggingSlider.current) {
-            onFumeTuningChange?.(patch);
-        } else {
+        if (isDraggingSlider.current) {
+            scheduleDraftUpdate(() => setDraftFumeTuning(previous => ({ ...previous, ...patch })));
             pendingCommitRef.current = () => onFumeTuningChange?.(patch);
+            return;
         }
+        setDraftFumeTuning(previous => ({ ...previous, ...patch }));
+        onFumeTuningChange?.(patch);
     };
 
     const handleCladdaghTuningChange = (patch: Partial<CladdaghTuning>) => {
-        setDraftCladdaghTuning(previous => ({ ...previous, ...patch }));
-        if (!isDraggingSlider.current) {
-            onCladdaghTuningChange?.(patch);
-        } else {
+        if (isDraggingSlider.current) {
+            scheduleDraftUpdate(() => setDraftCladdaghTuning(previous => ({ ...previous, ...patch })));
             pendingCommitRef.current = () => onCladdaghTuningChange?.(patch);
+            return;
         }
+        setDraftCladdaghTuning(previous => ({ ...previous, ...patch }));
+        onCladdaghTuningChange?.(patch);
     };
 
     const handleBackgroundOpacityDraft = (opacity: number) => {
-        setDraftBackgroundOpacity(opacity);
-        if (!isDraggingSlider.current) {
-            backgroundActions?.common?.onOpacityChange?.(opacity);
-        } else {
+        if (isDraggingSlider.current) {
+            scheduleDraftUpdate(() => setDraftBackgroundOpacity(opacity));
             pendingCommitRef.current = () => backgroundActions?.common?.onOpacityChange?.(opacity);
+            return;
         }
+        setDraftBackgroundOpacity(opacity);
+        backgroundActions?.common?.onOpacityChange?.(opacity);
     };
 
     const handleVisualizerOpacityDraft = (opacity: number) => {
-        setDraftVisualizerOpacity(opacity);
-        if (!isDraggingSlider.current) {
-            onVisualizerOpacityChange?.(opacity);
-        } else {
+        if (isDraggingSlider.current) {
+            scheduleDraftUpdate(() => setDraftVisualizerOpacity(opacity));
             pendingCommitRef.current = () => onVisualizerOpacityChange?.(opacity);
+            return;
         }
+        setDraftVisualizerOpacity(opacity);
+        onVisualizerOpacityChange?.(opacity);
     };
 
     const handleSubtitleOverlayOpacityDraft = (opacity: number) => {
-        setDraftSubtitleOverlayOpacity(opacity);
-        if (!isDraggingSlider.current) {
-            onSubtitleOverlayOpacityChange?.(opacity);
-        } else {
+        if (isDraggingSlider.current) {
+            scheduleDraftUpdate(() => setDraftSubtitleOverlayOpacity(opacity));
             pendingCommitRef.current = () => onSubtitleOverlayOpacityChange?.(opacity);
+            return;
         }
+        setDraftSubtitleOverlayOpacity(opacity);
+        onSubtitleOverlayOpacityChange?.(opacity);
     };
 
     const handleFontScaleDraft = (scale: number) => {
-        setDraftFontScale(scale);
-        if (!isDraggingSlider.current) {
-            onFontScaleChange(scale);
-        } else {
+        if (isDraggingSlider.current) {
+            scheduleDraftUpdate(() => setDraftFontScale(scale));
             pendingCommitRef.current = () => onFontScaleChange(scale);
+            return;
         }
+        setDraftFontScale(scale);
+        onFontScaleChange(scale);
     };
 
     const handleSubtitleFontScaleDraft = (scale: number) => {
-        setDraftSubtitleFontScale(scale);
-        if (!isDraggingSlider.current) {
-            onSubtitleFontScaleChange?.(scale);
-        } else {
+        if (isDraggingSlider.current) {
+            scheduleDraftUpdate(() => setDraftSubtitleFontScale(scale));
             pendingCommitRef.current = () => onSubtitleFontScaleChange?.(scale);
+            return;
         }
+        setDraftSubtitleFontScale(scale);
+        onSubtitleFontScaleChange?.(scale);
     };
 
     const handleFontWeightDraft = (weight: number | null) => {
@@ -930,118 +972,130 @@ const VisPlayground: React.FC<VisPlaygroundProps> = ({
     };
 
     const handleClassicTuningDraft = (patch: Partial<ClassicTuning>) => {
-        setDraftClassicTuning(prev => ({ ...prev, ...patch }));
-        if (!isDraggingSlider.current) {
-            onClassicTuningChange?.(patch);
-        } else {
+        if (isDraggingSlider.current) {
+            scheduleDraftUpdate(() => setDraftClassicTuning(prev => ({ ...prev, ...patch })));
             pendingCommitRef.current = () => onClassicTuningChange?.(patch);
+            return;
         }
+        setDraftClassicTuning(prev => ({ ...prev, ...patch }));
+        onClassicTuningChange?.(patch);
     };
 
     const handlePartitaTuningDraft = (patch: Partial<PartitaTuning>) => {
         const nextTuning = resolvePartitaTuningPatch(draftPartitaTuning, patch);
-        setDraftPartitaTuning(nextTuning);
-        if (!isDraggingSlider.current) {
-            onPartitaTuningChange?.(nextTuning);
-        } else {
+        if (isDraggingSlider.current) {
+            scheduleDraftUpdate(() => setDraftPartitaTuning(previous => resolvePartitaTuningPatch(previous, patch)));
             pendingCommitRef.current = () => onPartitaTuningChange?.(nextTuning);
+            return;
         }
+        setDraftPartitaTuning(nextTuning);
+        onPartitaTuningChange?.(nextTuning);
     };
 
     const handleTiltTuningDraft = (patch: Partial<TiltTuning>) => {
-        setDraftTiltTuning(prev => ({ ...prev, ...patch }));
-        if (!isDraggingSlider.current) {
-            onTiltTuningChange?.(patch);
-        } else {
+        if (isDraggingSlider.current) {
+            scheduleDraftUpdate(() => setDraftTiltTuning(prev => ({ ...prev, ...patch })));
             pendingCommitRef.current = () => onTiltTuningChange?.(patch);
+            return;
         }
+        setDraftTiltTuning(prev => ({ ...prev, ...patch }));
+        onTiltTuningChange?.(patch);
     };
 
     const handleDioramaTuningDraft = (patch: Partial<DioramaTuning>) => {
-        setDraftDioramaTuning(prev => ({ ...prev, ...patch }));
-        if (!isDraggingSlider.current) {
-            onDioramaTuningChange?.(patch);
-        } else {
+        if (isDraggingSlider.current) {
+            scheduleDraftUpdate(() => setDraftDioramaTuning(prev => ({ ...prev, ...patch })));
             pendingCommitRef.current = () => onDioramaTuningChange?.(patch);
+            return;
         }
+        setDraftDioramaTuning(prev => ({ ...prev, ...patch }));
+        onDioramaTuningChange?.(patch);
     };
 
     const handleMonetBackgroundTuningDraft = (patch: Partial<MonetBackgroundTuning>) => {
         const next = { ...draftMonetBackgroundTuning, ...patch };
-        setDraftMonetBackgroundTuning(next);
-        if (!isDraggingSlider.current) {
-            backgroundActions?.monet?.onTuningChange?.(patch);
-        } else {
+        if (isDraggingSlider.current) {
+            scheduleDraftUpdate(() => setDraftMonetBackgroundTuning(previous => ({ ...previous, ...patch })));
             pendingCommitRef.current = () => backgroundActions?.monet?.onTuningChange?.(patch);
+            return;
         }
+        setDraftMonetBackgroundTuning(next);
+        backgroundActions?.monet?.onTuningChange?.(patch);
     };
 
     const handleNomandBackgroundTuningDraft = (patch: Partial<NomandBackgroundTuning>) => {
         const next = { ...draftNomandBackgroundTuning, ...patch };
-        setDraftNomandBackgroundTuning(next);
-        if (!isDraggingSlider.current) {
-            backgroundActions?.nomand?.onTuningChange?.(patch);
-        } else {
+        if (isDraggingSlider.current) {
+            scheduleDraftUpdate(() => setDraftNomandBackgroundTuning(previous => ({ ...previous, ...patch })));
             pendingCommitRef.current = () => backgroundActions?.nomand?.onTuningChange?.(patch);
+            return;
         }
+        setDraftNomandBackgroundTuning(next);
+        backgroundActions?.nomand?.onTuningChange?.(patch);
     };
 
     const handleLatentBackgroundTuningDraft = (patch: Partial<LatentBackgroundTuning>) => {
-        setDraftLatentBackgroundTuning(prev => ({ ...prev, ...patch }));
-        if (!isDraggingSlider.current) {
-            backgroundActions?.latent?.onTuningChange?.(patch);
-        } else {
+        if (isDraggingSlider.current) {
+            scheduleDraftUpdate(() => setDraftLatentBackgroundTuning(prev => ({ ...prev, ...patch })));
             pendingCommitRef.current = () => backgroundActions?.latent?.onTuningChange?.(patch);
+            return;
         }
+        setDraftLatentBackgroundTuning(prev => ({ ...prev, ...patch }));
+        backgroundActions?.latent?.onTuningChange?.(patch);
     };
 
     const handleMonetTuningDraft = (patch: Partial<MonetTuning>) => {
         const next = { ...draftMonetTuning, ...patch };
-        setDraftMonetTuning(next);
-        if (!isDraggingSlider.current) {
-            onMonetTuningChange?.(patch);
-        } else {
+        if (isDraggingSlider.current) {
+            scheduleDraftUpdate(() => setDraftMonetTuning(previous => ({ ...previous, ...patch })));
             pendingCommitRef.current = () => onMonetTuningChange?.(patch);
+            return;
         }
+        setDraftMonetTuning(next);
+        onMonetTuningChange?.(patch);
     };
 
     const handlePendoloTuningDraft = (patch: Partial<PendoloTuning>) => {
         const next = { ...draftPendoloTuning, ...patch };
-        setDraftPendoloTuning(next);
-        if (!isDraggingSlider.current) {
-            onPendoloTuningChange?.(patch);
-        } else {
+        if (isDraggingSlider.current) {
+            scheduleDraftUpdate(() => setDraftPendoloTuning(previous => ({ ...previous, ...patch })));
             pendingCommitRef.current = () => onPendoloTuningChange?.(patch);
+            return;
         }
+        setDraftPendoloTuning(next);
+        onPendoloTuningChange?.(patch);
     };
 
     const handleSonnetTuningDraft = (patch: Partial<SonnetTuning>) => {
         const next = { ...draftSonnetTuning, ...patch };
-        setDraftSonnetTuning(next);
-        if (!isDraggingSlider.current) {
-            onSonnetTuningChange?.(patch);
-        } else {
+        if (isDraggingSlider.current) {
+            scheduleDraftUpdate(() => setDraftSonnetTuning(previous => ({ ...previous, ...patch })));
             pendingCommitRef.current = () => onSonnetTuningChange?.(patch);
+            return;
         }
+        setDraftSonnetTuning(next);
+        onSonnetTuningChange?.(patch);
     };
 
     const handleTemperaTuningDraft = (patch: Partial<TemperaTuning>) => {
         const next = { ...draftTemperaTuning, ...patch };
-        setDraftTemperaTuning(next);
-        if (!isDraggingSlider.current) {
-            onTemperaTuningChange?.(patch);
-        } else {
+        if (isDraggingSlider.current) {
+            scheduleDraftUpdate(() => setDraftTemperaTuning(previous => ({ ...previous, ...patch })));
             pendingCommitRef.current = () => onTemperaTuningChange?.(patch);
+            return;
         }
+        setDraftTemperaTuning(next);
+        onTemperaTuningChange?.(patch);
     };
 
     const handleLumiereTuningDraft = (patch: Partial<LumiereTuning>) => {
-        setDraftLumiereTuning(prev => ({ ...prev, ...patch }));
-        if (!isDraggingSlider.current) {
-            onLumiereTuningChange?.(patch);
-        } else {
+        if (isDraggingSlider.current) {
+            scheduleDraftUpdate(() => setDraftLumiereTuning(prev => ({ ...prev, ...patch })));
             pendingCommitRef.current = () => onLumiereTuningChange?.(patch);
+            return;
         }
+        setDraftLumiereTuning(prev => ({ ...prev, ...patch }));
+        onLumiereTuningChange?.(patch);
     };
 
     const handleResetSubtitleSettings = () => {
@@ -1088,9 +1142,11 @@ const VisPlayground: React.FC<VisPlaygroundProps> = ({
     const handleSliderCommit = useCallback(() => {
         if (!isDraggingSlider.current) return;
         isDraggingSlider.current = false;
+        // 先同步应用最后一帧草稿，再提交持久化 store，保证显示与落盘一致。
+        flushPendingDraftUpdates();
         pendingCommitRef.current?.();
         pendingCommitRef.current = null;
-    }, []);
+    }, [flushPendingDraftUpdates]);
     const draftBackgroundConfig: VisualizerBackgroundConfig = {
         ...backgroundConfig,
         common: {
@@ -1148,7 +1204,7 @@ const VisPlayground: React.FC<VisPlaygroundProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.22, ease: 'easeOut' }}
-            className="fixed inset-0 z-[140] backdrop-blur-xl p-3 sm:p-5"
+            className="fixed inset-0 z-[140] backdrop-blur-xl p-3 sm:px-5 sm:py-16"
             style={{ backgroundColor: overlayBackground }}
             onClick={onClose}
         >

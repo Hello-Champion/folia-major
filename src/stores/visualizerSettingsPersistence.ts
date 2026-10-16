@@ -230,6 +230,14 @@ export const readStoredFumeTuning = (): FumeTuning => {
             cameraSpeed: clampFumeCameraSpeed(parsed.cameraSpeed ?? DEFAULT_FUME_TUNING.cameraSpeed, DEFAULT_FUME_TUNING.cameraSpeed),
             glowIntensity: clampFumeGlowIntensity(parsed.glowIntensity ?? DEFAULT_FUME_TUNING.glowIntensity, DEFAULT_FUME_TUNING.glowIntensity),
             heroScale: clampFumeHeroScale(parsed.heroScale ?? DEFAULT_FUME_TUNING.heroScale, DEFAULT_FUME_TUNING.heroScale),
+            printStampWidth: Math.min(2, Math.max(0.4, parsed.printStampWidth ?? DEFAULT_FUME_TUNING.printStampWidth)),
+            printStampHeight: Math.min(2, Math.max(0.4, parsed.printStampHeight ?? DEFAULT_FUME_TUNING.printStampHeight)),
+            printStampOffsetX: Math.min(200, Math.max(-200, parsed.printStampOffsetX ?? DEFAULT_FUME_TUNING.printStampOffsetX)),
+            printStampOffsetY: Math.min(200, Math.max(-200, parsed.printStampOffsetY ?? DEFAULT_FUME_TUNING.printStampOffsetY)),
+            printStampOpacity: Math.min(1, Math.max(0, parsed.printStampOpacity ?? DEFAULT_FUME_TUNING.printStampOpacity)),
+            printStampColor: typeof parsed.printStampColor === 'string'
+                ? parsed.printStampColor
+                : DEFAULT_FUME_TUNING.printStampColor,
         };
     } catch {
         return DEFAULT_FUME_TUNING;
