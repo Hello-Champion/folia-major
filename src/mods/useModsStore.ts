@@ -11,6 +11,7 @@ import {
     subscribeExportProgress,
     subscribeModLogs,
     subscribeModsState,
+    uninstallMod,
 } from './ipc';
 import type { ModExportProgress, ModFfmpegStatus, ModLogEntry, ModRuntimeInfo, ModSetEnabledResult } from './types';
 import { reconcileFoliumClients } from './folium/clientLoader';
@@ -40,6 +41,7 @@ interface ModsStoreState {
     cancelActiveExport: () => Promise<void>;
     openModsDirectory: () => Promise<{ ok: boolean; directory?: string; error?: string }>;
     installModFromZip: (zipPath: string) => Promise<{ ok: boolean; id?: string; error?: string }>;
+    uninstallMod: (modId: string) => Promise<ModSetEnabledResult>;
     bindEvents: () => void;
 }
 
@@ -103,6 +105,17 @@ export const useModsStore = create<ModsStoreState>((set, get) => ({
         const result = await installModFromZip(zipPath);
         if (result.ok) {
             await get().refresh();
+        }
+        return result;
+    },
+
+    uninstallMod: async (modId) => {
+        const result = await uninstallMod(modId);
+        if (result.mods.length > 0) {
+            set((state) => ({
+                mods: result.mods,
+                selectedModId: state.selectedModId === modId ? null : state.selectedModId,
+            }));
         }
         return result;
     },

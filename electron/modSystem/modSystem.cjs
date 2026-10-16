@@ -158,6 +158,7 @@ const IPC = {
     ffmpegStatus: 'folia-mods:ffmpeg-status',
     openDirectory: 'folia-mods:open-directory',
     installZip: 'folia-mods:install-zip',
+    uninstall: 'folia-mods:uninstall',
     fStateChanged: 'folia-mods:state-changed',
     fExportProgress: 'folia-mods:export-progress',
     fLog: 'folia-mods:log',
@@ -1304,6 +1305,62 @@ const createModSystem = ({ app, BrowserWindow, getMainWindow, getLocaleKey, isFe
         }
     };
 
+    /*
+     * Uninstalls a user-installed mod by deleting its directory. Only copies
+     * under userData/mods are removable: repo mods (development build) and
+     * resources/mods (packaged) are part of the app and rejected. The mod is
+     * unloaded first so its timers and listeners do not outlive the folder.
+     */
+    const uninstallMod = (modId) => {
+        const userModsDir = path.join(app.getPath('userData'), 'mods');
+        let entryPath = null;
+        let dirEntries = [];
+        try {
+            dirEntries = fs.readdirSync(userModsDir, { withFileTypes: true });
+        } catch {
+            return { ok: false, error: 'mod-not-found', mods: listMods() };
+        }
+        for (const entry of dirEntries) {
+            if (!entry.isDirectory() || entry.name.startsWith('.')) {
+                continue;
+            }
+            const candidate = path.join(userModsDir, entry.name);
+            const modDirectory = resolveModRoot(candidate);
+            let raw = null;
+            try {
+                raw = JSON.parse(fs.readFileSync(path.join(modDirectory, 'mod.json'), 'utf8'));
+            } catch {
+                continue;
+            }
+            const validation = validateManifest(raw);
+            if (validation.ok && validation.value.id === modId) {
+                entryPath = candidate;
+                break;
+            }
+        }
+        if (!entryPath) {
+            // Present in the list but not under userData: a repo/dev or packaged
+            // mod that ships with the app and must not be deleted.
+            if (listMods().some((mod) => mod.id === modId)) {
+                return { ok: false, error: 'mod-not-removable', mods: listMods() };
+            }
+            return { ok: false, error: 'mod-not-found', mods: listMods() };
+        }
+        const runtime = mods.get(modId);
+        if (runtime && runtime.status === 'loaded' && typeof runtime.unload === 'function') {
+            runtime.unload();
+        }
+        try {
+            fs.rmSync(entryPath, { recursive: true, force: true });
+        } catch (error) {
+            emitLog(modId, 'error', `failed to uninstall mod: ${serializeError(error)}`);
+            return { ok: false, error: 'mod-uninstall-failed', mods: listMods() };
+        }
+        const modsAfterUninstall = loadAll();
+        emitLog(modId, 'info', `uninstalled mod ${modId}`);
+        return { ok: true, mods: modsAfterUninstall };
+    };
+
     const notifyStateChanged = () => sendToRenderer(IPC.fStateChanged, listMods());
 
     const probeFfmpeg = () => {
@@ -1374,6 +1431,7 @@ const createModSystem = ({ app, BrowserWindow, getMainWindow, getLocaleKey, isFe
         handle(IPC.ffmpegStatus, async () => ({ ffmpeg: await probeFfmpeg() }));
         handle(IPC.openDirectory, () => openModsDirectory());
         handle(IPC.installZip, (_event, zipPath) => installModFromZip(zipPath));
+        handle(IPC.uninstall, (_event, modId) => uninstallMod(modId));
     };
 
     const dispose = () => {

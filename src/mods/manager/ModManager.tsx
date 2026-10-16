@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { AlertCircle, Boxes, CheckSquare, CircleCheck, ExternalLink, FolderOpen, Power, RefreshCw, Store, TriangleAlert, Upload, X } from 'lucide-react';
+import { AlertCircle, Boxes, CheckSquare, CircleCheck, ExternalLink, FolderOpen, Power, RefreshCw, Store, Trash2, TriangleAlert, Upload, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { Theme } from '@/types';
 import { DEFAULT_THEME } from '@/services/baseThemes';
@@ -9,6 +9,7 @@ import { FOLIUM_VERSION } from '../folium/contract';
 import { useDesktopSettingsStore } from '../../stores/useDesktopSettingsStore';
 import { ModListItem, translateModError } from './ModListItem';
 import type { ModManagerClasses } from './modManagerClasses';
+import ConfirmDialog from '../../components/shared/ConfirmDialog';
 
 // src/mods/manager/ModManager.tsx
 // The mod list and everything that acts on it: toolbar, zip drop install, batch selection, ffmpeg
@@ -52,6 +53,8 @@ export const ModManager: React.FC<ModManagerProps> = ({ classes, isDaylight, the
     const [selectionMode, setSelectionMode] = useState(false);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [batchPending, setBatchPending] = useState(false);
+    const [uninstallPending, setUninstallPending] = useState(false);
+    const [confirmUninstallOpen, setConfirmUninstallOpen] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
     const [installing, setInstalling] = useState(false);
     const [notice, setNotice] = useState<Notice | null>(null);
@@ -167,6 +170,43 @@ export const ModManager: React.FC<ModManagerProps> = ({ classes, isDaylight, the
     const exitSelectionMode = () => {
         setSelectionMode(false);
         setSelectedIds(new Set());
+    };
+
+    // Uninstall selected mods one at a time. Each successful call reloads the
+    // list in the main process and the store mirrors it, so the panel always
+    // shows the live state. Built-in (repo / packaged) mods are rejected by the
+    // main process and reported through the same notice.
+    const handleUninstallSelected = async () => {
+        setConfirmUninstallOpen(false);
+        const ids = [...selectedIds];
+        if (ids.length === 0) {
+            return;
+        }
+        setUninstallPending(true);
+        let succeeded = 0;
+        let failed = 0;
+        let firstError: string | undefined;
+        try {
+            for (const modId of ids) {
+                const result = await useModsStore.getState().uninstallMod(modId);
+                if (result.ok) {
+                    succeeded += 1;
+                } else {
+                    failed += 1;
+                    firstError ??= result.error;
+                }
+            }
+            if (failed === 0) {
+                setNotice({ kind: 'ok', text: t('mods.uninstallSuccess', { count: succeeded }) });
+            } else if (succeeded === 0) {
+                setNotice({ kind: 'error', text: translateModError(t, firstError ?? 'uninstall-failed', 'uninstall-failed') });
+            } else {
+                setNotice({ kind: 'error', text: t('mods.uninstallPartial', { success: succeeded, failed }) });
+            }
+        } finally {
+            setUninstallPending(false);
+            exitSelectionMode();
+        }
     };
 
     const toolbarButtonClass = `inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40`;
@@ -330,6 +370,16 @@ export const ModManager: React.FC<ModManagerProps> = ({ classes, isDaylight, the
                                 >
                                     {t('mods.batchDisable')}
                                 </button>
+                                <button
+                                    type="button"
+                                    disabled={uninstallPending || batchPending || selectedIds.size === 0}
+                                    onClick={() => setConfirmUninstallOpen(true)}
+                                    className={`${toolbarButtonClass} ${classes.ghostButton}`}
+                                    style={{ color: isDaylight ? '#dc2626' : 'rgba(248,113,113,0.92)' }}
+                                >
+                                    <Trash2 size={12} />
+                                    {uninstallPending ? t('mods.uninstalling') : t('mods.uninstall')}
+                                </button>
                             </div>
                         </div>
                     </motion.div>
@@ -375,6 +425,17 @@ export const ModManager: React.FC<ModManagerProps> = ({ classes, isDaylight, the
                     ))}
                 </div>
             ) : null}
+
+            <ConfirmDialog
+                isOpen={confirmUninstallOpen}
+                title={t('mods.uninstallConfirmTitle')}
+                description={t('mods.uninstallConfirm', { count: selectedIds.size })}
+                confirmText={t('mods.uninstall')}
+                confirmVariant="danger"
+                isDaylight={isDaylight}
+                onConfirm={() => { void handleUninstallSelected(); }}
+                onClose={() => setConfirmUninstallOpen(false)}
+            />
         </div>
     );
 };

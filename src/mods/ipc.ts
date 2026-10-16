@@ -147,6 +147,24 @@ export const installModFromZip = async (
     return response ?? { ok: false, error: 'no-electron-bridge' };
 };
 
+/**
+ * Uninstalls a user-installed mod. The main process unloads it first, deletes
+ * its directory (userData/mods only) and reloads the loader; built-in repo and
+ * packaged mods are rejected.
+ */
+export const uninstallMod = async (modId: string): Promise<ModSetEnabledResult> => {
+    const api = bridge();
+    if (!api) {
+        return { ok: false, error: 'no-electron-bridge', mods: [] };
+    }
+    const response = await api.uninstallMod(modId);
+    return {
+        ok: Boolean(response?.ok),
+        error: response?.error,
+        mods: Array.isArray(response?.mods) ? response.mods : [],
+    };
+};
+
 export const subscribeModsState = (callback: (mods: ModRuntimeInfo[]) => void): (() => void) =>
     bridge()?.onModsStateChanged(callback) ?? (() => {});
 
