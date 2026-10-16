@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ChevronLeft } from 'lucide-react';
+import { usePlayerChromeSettingsStore } from '../../stores/usePlayerChromeSettingsStore';
 import './WallBackButton.css';
 
 // src/components/wall/WallBackButton.tsx
@@ -49,7 +50,9 @@ type WallBackButtonProps = {
 
 export default function WallBackButton({ label, onBack, concealed = false }: WallBackButtonProps) {
     const revealed = useCornerReveal(concealed);
-    const className = concealed ? `lattice-back is-concealed${revealed ? ' is-revealed' : ''}` : 'lattice-back';
+    // 与播放页返回按钮同族：玻璃开关打开时挂 has-glass，CSS 换 Mineradio 配方。
+    const bottomBarGlassEnabled = usePlayerChromeSettingsStore(state => state.playerBottomBarGlass);
+    const className = `${concealed ? `lattice-back is-concealed${revealed ? ' is-revealed' : ''}` : 'lattice-back'}${bottomBarGlassEnabled ? ' has-glass' : ''}`;
     return (
         <button type="button" className={className} onClick={onBack} aria-label={label} title={label}>
             <ChevronLeft size={20} />

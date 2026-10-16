@@ -14,6 +14,8 @@ import OnlineProviderConnectPanel from '../account/OnlineProviderConnectPanel';
 import OnlineProviderAccountlessPanel from '../account/OnlineProviderAccountlessPanel';
 import type { ProviderAccountSummary, ProviderCollection, ProviderUser } from '../../../../types/onlineMusic';
 import { useThemeSettingsStore } from '../../../../stores/useThemeSettingsStore';
+import { usePlayerChromeSettingsStore } from '../../../../stores/usePlayerChromeSettingsStore';
+import { PLAYER_BAR_GLASS_STYLE } from '../../../../utils/playerBarGlass';
 import { countRender } from '../../../../dev/renderCount';
 import type { LibraryAccountController } from '../../../core/contracts/account';
 import type { LibraryDirectoryBatchController } from '../../../core/contracts/directory';
@@ -127,6 +129,8 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
     } = props;
 
     const { t } = useTranslation();
+    // 扫描进度详情盒与底部控制台同族：玻璃开关打开时换用同一套 Mineradio 配方。
+    const bottomBarGlassEnabled = usePlayerChromeSettingsStore(state => state.playerBottomBarGlass);
     const {
         isDaylight,
     } = useThemeSettingsStore(useShallow(state => ({
@@ -343,8 +347,9 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
                                             initial={{ opacity: 0, y: -6 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             exit={{ opacity: 0, y: -6 }}
-                                            className={`absolute left-0 top-full mt-2 w-72 p-4 rounded-2xl border backdrop-blur-xl shadow-xl ${isDaylight ? 'bg-white/85 border-black/10 text-zinc-800' : 'bg-black/60 border-white/10 text-zinc-100'
+                                            className={`absolute left-0 top-full mt-2 w-72 p-4 rounded-2xl border backdrop-blur-xl shadow-xl ${isDaylight ? (bottomBarGlassEnabled ? 'bg-white/40 border-white/25 text-zinc-800' : 'bg-white/85 border-black/10 text-zinc-800') : (bottomBarGlassEnabled ? 'bg-black/10 border-white/10 text-zinc-100' : 'bg-black/60 border-white/10 text-zinc-100')
                                                 }`}
+                                            style={bottomBarGlassEnabled ? PLAYER_BAR_GLASS_STYLE : undefined}
                                         >
                                             <div className="text-sm font-semibold truncate">
                                                 {t('options.scanningFolder', { folderName: scanProgress.folderName })}
