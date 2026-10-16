@@ -18,6 +18,8 @@ import type { OnlineLyricsState } from '../types';
 import type { AudioQualityPreference } from '../types/onlineMusic';
 import type { ThemeSourceModel } from '../hooks/themeControllerState';
 import { getPlaybackSourceRef } from '../utils/appPlaybackGuards';
+import { usePlayerChromeSettingsStore } from '../stores/usePlayerChromeSettingsStore';
+import { PLAYER_BAR_GLASS_STYLE } from '../utils/playerBarGlass';
 import { canSaveQueueAsLocalPlaylist } from '../utils/queueReorder';
 import { resolveLikeAvailability } from '../utils/playerLikeAvailability';
 import { usePlayerBottomBarBottomPx } from '../hooks/usePlayerBottomBarBottomPx';
@@ -250,6 +252,8 @@ const UnifiedPanel: React.FC<UnifiedPanelProps> = ({
     const playbackSourceRef = currentSong ? getPlaybackSourceRef(currentSong) : null;
     const isOnline = playbackSourceRef?.kind === 'online';
     const bottomBarBottomPx = usePlayerBottomBarBottomPx();
+    // 右侧面板的滑动开关按钮与底部控制台同族：玻璃开关打开时换用同一套 Mineradio 配方（收起态）。
+    const bottomBarGlassEnabled = usePlayerChromeSettingsStore(state => state.playerBottomBarGlass);
     const panelMaxHeight = useTransform(
         bottomBarBottomPx,
         bottom => `calc(100dvh - ${bottom + 64}px)`,
@@ -1035,9 +1039,9 @@ const UnifiedPanel: React.FC<UnifiedPanelProps> = ({
                                 onPointerUp={clearToggleButtonGesture}
                                 onPointerCancel={clearToggleButtonGesture}
                                 onClick={handleToggleButtonClick}
-                                style={{ touchAction: canSlideOpenCommandPalette ? 'none' : undefined }}
+                                style={{ touchAction: canSlideOpenCommandPalette ? 'none' : undefined, ...(!isOpen && bottomBarGlassEnabled ? PLAYER_BAR_GLASS_STYLE : undefined) }}
                                 className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg backdrop-blur-md transform
-                                    border-none absolute right-0 top-0 z-10 ${isOpen ? 'bg-white text-black' : (isDaylight ? 'bg-white/70 text-zinc-900' : 'bg-black/40 text-white')}`}
+                                    border-none absolute right-0 top-0 z-10 ${isOpen ? 'bg-white text-black' : (bottomBarGlassEnabled ? (isDaylight ? 'bg-white/40 text-zinc-900' : 'bg-black/10 text-white') : (isDaylight ? 'bg-white/70 text-zinc-900' : 'bg-black/40 text-white'))}`}
                             >
                                 {isOpen ? <X size={20} /> : <Settings2 size={20} />}
                             </button>
