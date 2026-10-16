@@ -14,6 +14,7 @@ import { usePlayerBottomBarBottomPx } from '../hooks/usePlayerBottomBarBottomPx'
 import { playerBottomBarLiveOffset } from '../stores/motionSignals';
 import { usePlayerBottomBarLayoutStore } from '../stores/usePlayerBottomBarLayoutStore';
 import { usePlayerChromeSettingsStore } from '../stores/usePlayerChromeSettingsStore';
+import { PLAYER_BAR_GLASS_STYLE } from '../utils/playerBarGlass';
 import { PLAYER_BOTTOM_BAR_BASE_OFFSET_PX, clampPlayerBottomBarOffset, resolvePlayerBottomBarMaxOffset } from '../utils/playerBottomBarLayout';
 import type { PlayerControlSlotActionId, PlayerControlSlotContext } from './floating-player/playerControlSlotActions';
 
@@ -130,6 +131,17 @@ const FloatingPlayerControls: React.FC<FloatingPlayerControlsProps> = ({
     // const isDaylight = theme?.name === 'Daylight Default'; // Deprecated, passed as prop
     const glassBgExpanded = isDaylight ? 'bg-white/60 border border-white/20 shadow-xl' : 'bg-black/40 border border-white/5';
     const glassBgCollapsed = isDaylight ? 'bg-white/40 border border-white/20 shadow-lg hover:bg-white/50' : 'bg-black/20 border border-white/5 hover:bg-black/30';
+    // 玻璃开关（设置「底部控制条玻璃效果」）：开启后换用更通透的底色，backdrop-filter 与
+    // box-shadow 由下方内联样式覆盖 Tailwind 的 backdrop-blur-xl / shadow-2xl，复刻 Mineradio
+    // 的 blur(12px) saturate(1.8) brightness(1.16) + 白色内发光描边。
+    const bottomBarGlassEnabled = usePlayerChromeSettingsStore(state => state.playerBottomBarGlass);
+    const bottomBarBgExpanded = bottomBarGlassEnabled
+        ? (isDaylight ? 'bg-white/40 border border-white/25' : 'bg-black/10 border border-white/10')
+        : glassBgExpanded;
+    const bottomBarBgCollapsed = bottomBarGlassEnabled
+        ? (isDaylight ? 'bg-white/30 border border-white/20 hover:bg-white/45' : 'bg-black/10 border border-white/10 hover:bg-black/20')
+        : glassBgCollapsed;
+    const bottomBarGlassStyle = bottomBarGlassEnabled ? PLAYER_BAR_GLASS_STYLE : undefined;
     const trackColor = isDaylight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.1)';
     // Button bg logic
     const buttonBg = isDaylight ? { backgroundColor: primaryColor, color: 'var(--bg-color)' } : { backgroundColor: primaryColor, color: 'var(--bg-color)' }; // Keep primary for play button, looks good
@@ -395,10 +407,10 @@ const FloatingPlayerControls: React.FC<FloatingPlayerControlsProps> = ({
                         onPointerMove={handlePositionDragMove}
                         onPointerUp={handlePositionDragEnd}
                         onPointerCancel={handlePositionDragEnd}
-                        style={{ touchAction: isPositioning ? 'none' : undefined }}
+                        style={{ touchAction: isPositioning ? 'none' : undefined, ...bottomBarGlassStyle }}
                         className={`backdrop-blur-xl shadow-2xl overflow-hidden rounded-full relative transition-colors duration-300
                             ${isPositioning ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}
-                            ${showExpanded ? `p-3 ${glassBgExpanded} w-full` : `px-4 py-2 ${glassBgCollapsed} ${COLLAPSED_WIDTH_CLASS}`}`}
+                            ${showExpanded ? `p-3 ${bottomBarBgExpanded} w-full` : `px-4 py-2 ${bottomBarBgCollapsed} ${COLLAPSED_WIDTH_CLASS}`}`}
                     >
                         <motion.div
                             layout

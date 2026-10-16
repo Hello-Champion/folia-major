@@ -20,6 +20,7 @@ const PLAYER_BOTTOM_BAR_OFFSET_STORAGE_KEY = 'player_bottom_bar_offset';
 const PLAYER_CONTROL_SLOT_PRIMARY_STORAGE_KEY = 'player_control_slot_primary';
 const PLAYER_CONTROL_SLOT_SECONDARY_STORAGE_KEY = 'player_control_slot_secondary';
 const PLAYER_VOLUME_BUTTON_LAYOUT_STORAGE_KEY = 'player_volume_button_layout';
+const PLAYER_BOTTOM_BAR_GLASS_STORAGE_KEY = 'player_bottom_bar_glass';
 
 /** 音量按钮在底部控制条上的位置。 */
 export type PlayerVolumeButtonLayout = 'row' | 'corner';
@@ -82,6 +83,8 @@ export type PlayerChromeSettingsState = {
     showPlayerVolumeSlider: boolean;
     /** 音量按钮位置：row = 与进度条同一排（右侧）；corner = 展开态右上角槽位。 */
     volumeButtonLayout: PlayerVolumeButtonLayout;
+    /** 底部控制条是否启用玻璃效果：更通透的底色 + 磨砂/饱和/增亮 + 白色内发光描边。 */
+    playerBottomBarGlass: boolean;
     setTransparentPlayerBackgroundFromSystem: (enabled: boolean) => void;
     handleTogglePlayerPageNativeBlur: (enable: boolean) => void;
     handleToggleHidePlayerProgressBar: (enable: boolean) => void;
@@ -100,6 +103,7 @@ export type PlayerChromeSettingsState = {
     handleToggleOpenPanelCloseButton: (enable: boolean) => void;
     handleTogglePlayerVolumeSlider: (enable: boolean) => void;
     handleSetVolumeButtonLayout: (layout: PlayerVolumeButtonLayout) => void;
+    handleTogglePlayerBottomBarGlass: (enable: boolean) => void;
 };
 
 export const usePlayerChromeSettingsStore = create<PlayerChromeSettingsState>((set, get) => ({
@@ -128,6 +132,7 @@ export const usePlayerChromeSettingsStore = create<PlayerChromeSettingsState>((s
     showOpenPanelCloseButton: getStoredBoolean('show_open_panel_close_button', true),
     showPlayerVolumeSlider: getStoredBoolean('show_player_volume_slider', false),
     volumeButtonLayout: readStoredVolumeButtonLayout(),
+    playerBottomBarGlass: getStoredBoolean(PLAYER_BOTTOM_BAR_GLASS_STORAGE_KEY, false),
     setTransparentPlayerBackgroundFromSystem: (enabled) => {
         setStoredBoolean('transparent_player_background', enabled);
         set({ transparentPlayerBackground: enabled });
@@ -259,6 +264,10 @@ export const usePlayerChromeSettingsStore = create<PlayerChromeSettingsState>((s
         }
         set({ volumeButtonLayout: layout });
     },
+    handleTogglePlayerBottomBarGlass: (enable) => {
+        setStoredBoolean(PLAYER_BOTTOM_BAR_GLASS_STORAGE_KEY, enable);
+        set({ playerBottomBarGlass: enable });
+    },
 }));
 
 /**
@@ -283,6 +292,7 @@ export const selectPlayerChromeSettingsSnapshot = (state: PlayerChromeSettingsSt
     showOpenPanelCloseButton: state.showOpenPanelCloseButton,
     showPlayerVolumeSlider: state.showPlayerVolumeSlider,
     volumeButtonLayout: state.volumeButtonLayout,
+    playerBottomBarGlass: state.playerBottomBarGlass,
     handleToggleHidePlayerProgressBar: state.handleToggleHidePlayerProgressBar,
     handleSetPlayerBottomBarOffset: state.handleSetPlayerBottomBarOffset,
     handleSetPlayerControlSlot: state.handleSetPlayerControlSlot,
@@ -300,5 +310,6 @@ export const selectPlayerChromeSettingsSnapshot = (state: PlayerChromeSettingsSt
     handleToggleOpenPanelCloseButton: state.handleToggleOpenPanelCloseButton,
     handleTogglePlayerVolumeSlider: state.handleTogglePlayerVolumeSlider,
     handleSetVolumeButtonLayout: state.handleSetVolumeButtonLayout,
+    handleTogglePlayerBottomBarGlass: state.handleTogglePlayerBottomBarGlass,
     handleWallpaperTransparentRefused: state.handleWallpaperTransparentRefused,
 });

@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next';
 import type { Theme } from '../../../types';
 import { useTransitionBorderCue } from './now-playing-toast/useTransitionBorderCue';
 import { usePlayerBottomBarBottomPx } from '../../../hooks/usePlayerBottomBarBottomPx';
+import { usePlayerChromeSettingsStore } from '../../../stores/usePlayerChromeSettingsStore';
+import { PLAYER_BAR_GLASS_STYLE } from '../../../utils/playerBarGlass';
 
 // src/components/app/overlays/NowPlayingToast.tsx
 // 播放器与 Lattice 左下角的 now playing 卡片（playing-toast 样式：圆角 2xl、44px 封面、底部滑入）。
@@ -82,6 +84,8 @@ const NowPlayingToast: React.FC<NowPlayingToastProps> = ({
     // 而全屏圆环已经让位了。
     const bottomBarBottomPx = usePlayerBottomBarBottomPx();
     const transitionCue = useTransitionBorderCue();
+    // 与底部控制台同族：玻璃开关打开时，卡片换用同一套 Mineradio 玻璃配方（更通透 + 内发光描边）。
+    const bottomBarGlassEnabled = usePlayerChromeSettingsStore(state => state.playerBottomBarGlass);
 
     // 可见性状态机：never 不渲染；always 常驻；auto 换歌重新计时。
     // isNextUp（预览下一首）挂起计时，翻回 false 后（即使 trackKey 没变）重新计时。
@@ -184,10 +188,21 @@ const NowPlayingToast: React.FC<NowPlayingToastProps> = ({
                         whileTap={onActivate ? { opacity: 0.85 } : undefined}
                         transition={{ duration: 0.35, ease: 'easeOut' }}
                         className={`relative flex min-w-[240px] items-center gap-3 overflow-hidden rounded-2xl border p-2 pr-4 text-left backdrop-blur-xl shadow-lg transition-colors ${
-                            isDaylight ? 'border-black/10 bg-white/35 text-zinc-900' : 'border-white/10 bg-black/35 text-white'
+                            bottomBarGlassEnabled
+                                ? (isDaylight
+                                    ? 'border-white/25 bg-white/40 text-zinc-900'
+                                    : 'border-white/10 bg-black/10 text-white')
+                                : (isDaylight
+                                    ? 'border-black/10 bg-white/35 text-zinc-900'
+                                    : 'border-white/10 bg-black/35 text-white')
                         } ${onActivate
-                            ? `pointer-events-auto cursor-pointer ${isDaylight ? 'hover:bg-white/55' : 'hover:bg-black/55'}`
+                            ? `pointer-events-auto cursor-pointer ${
+                                bottomBarGlassEnabled
+                                    ? (isDaylight ? 'hover:bg-white/55' : 'hover:bg-black/25')
+                                    : (isDaylight ? 'hover:bg-white/55' : 'hover:bg-black/55')
+                              }`
                             : ''}`}
+                        style={bottomBarGlassEnabled ? PLAYER_BAR_GLASS_STYLE : undefined}
                     >
                         {/* 顶部光线（进场的横向扫光）。混音期间收掉：描边现在正压在卡片边框上，
                             再叠一条亮线就是同一条边上两层东西，读起来是好几层边框套在一起。 */}

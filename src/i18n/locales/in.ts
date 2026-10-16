@@ -1959,6 +1959,8 @@ export default {
     "playerVolumeButtonLayoutDesc": "Pilih posisi tombol volume di bilah bawah: sebaris dengan bilah kemajuan, atau di slot pojok kanan atas kapsul yang diperluas.",
     "playerVolumeButtonLayoutRow": "Di samping bilah kemajuan",
     "playerVolumeButtonLayoutCorner": "Pojok kanan atas",
+    "playerBottomBarGlass": "Efek kaca bilah bawah",
+    "playerBottomBarGlassDesc": "Latar belakang tembus pandang yang lebih jernih dengan buram, saturasi warna, dan pencerahan, serta tepian cahaya putih di bagian dalam.",
     "factoryReset": "Setel ulang pabrik",
     "factoryResetDesc": "Atur ulang semua pengaturan dan cache (termasuk data pustaka lokal) tetapi pertahankan akun yang sudah masuk, lalu muat ulang aplikasi. Tindakan ini tidak dapat dibatalkan.",
     "factoryResetConfirm": "Setel ulang sekarang",

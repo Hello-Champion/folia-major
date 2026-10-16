@@ -42,6 +42,8 @@ const PlayerBottomBarSection: React.FC<PlayerBottomBarSectionProps> = ({
         handleTogglePlayerVolumeSlider,
         volumeButtonLayout,
         handleSetVolumeButtonLayout,
+        playerBottomBarGlass,
+        handleTogglePlayerBottomBarGlass,
     } = usePlayerChromeSettingsStore(useShallow(state => ({
         playerBottomBarOffset: state.playerBottomBarOffset,
         playerControlSlotPrimary: state.playerControlSlotPrimary,
@@ -53,6 +55,8 @@ const PlayerBottomBarSection: React.FC<PlayerBottomBarSectionProps> = ({
         handleTogglePlayerVolumeSlider: state.handleTogglePlayerVolumeSlider,
         volumeButtonLayout: state.volumeButtonLayout,
         handleSetVolumeButtonLayout: state.handleSetVolumeButtonLayout,
+        playerBottomBarGlass: state.playerBottomBarGlass,
+        handleTogglePlayerBottomBarGlass: state.handleTogglePlayerBottomBarGlass,
     })));
     const currentSong = usePlaybackStore(state => state.currentSong);
     const requestPositioning = usePlayerBottomBarLayoutStore(state => state.requestPositioning);
@@ -168,6 +172,29 @@ const PlayerBottomBarSection: React.FC<PlayerBottomBarSectionProps> = ({
                 <div className="flex flex-wrap gap-3">
                     {renderSlotPicker('primary', playerControlSlotPrimary, t('options.playerControlSlotPrimary'))}
                     {renderSlotPicker('secondary', playerControlSlotSecondary, t('options.playerControlSlotSecondary'))}
+                </div>
+            </div>
+
+            <div className={`p-4 rounded-xl border space-y-3 ${settingsCardClass}`}>
+                <div className="flex items-center justify-between gap-4">
+                    <div className="space-y-1">
+                        <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                            {t('options.playerBottomBarGlass')}
+                        </div>
+                        <div className="text-xs opacity-50 max-w-[420px]" style={{ color: 'var(--text-secondary)' }}>
+                            {t('options.playerBottomBarGlassDesc')}
+                        </div>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => handleTogglePlayerBottomBarGlass(!playerBottomBarGlass)}
+                        aria-pressed={playerBottomBarGlass}
+                        aria-label={t('options.playerBottomBarGlass')}
+                        className={`w-12 h-6 rounded-full p-1 transition-colors shrink-0 ${!playerBottomBarGlass ? toggleOffBackgroundClass : ''}`}
+                        style={{ backgroundColor: playerBottomBarGlass ? theme?.secondaryColor || 'rgba(114, 119, 134, 1)' : undefined }}
+                    >
+                        <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${playerBottomBarGlass ? 'translate-x-6' : 'translate-x-0'}`} />
+                    </button>
                 </div>
             </div>
 

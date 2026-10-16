@@ -1967,6 +1967,8 @@ export default {
     "playerVolumeButtonLayoutDesc": "Choose where the volume button sits on the bottom bar: on the same row as the progress bar, or in the top-right slot of the expanded capsule.",
     "playerVolumeButtonLayoutRow": "Next to progress bar",
     "playerVolumeButtonLayoutCorner": "Top-right corner",
+    "playerBottomBarGlass": "Glass bottom bar",
+    "playerBottomBarGlassDesc": "A more translucent frosted look with blur, color saturation and a brightness lift, plus a white inner glow rim.",
     "factoryReset": "Factory reset",
     "factoryResetDesc": "Reset all settings and caches (including local library data) but keep your logged-in accounts, then reload the app. This cannot be undone.",
     "factoryResetConfirm": "Reset everything",

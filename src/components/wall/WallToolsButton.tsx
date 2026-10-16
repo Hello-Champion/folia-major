@@ -3,6 +3,7 @@ import { AnimatePresence, motion, useIsPresent, useTransform, type MotionStyle }
 import { CircleHelp, Command, Layers3, Settings2, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useLatticeSettingsStore } from '../../stores/useLatticeSettingsStore';
+import { usePlayerChromeSettingsStore } from '../../stores/usePlayerChromeSettingsStore';
 import { openCommandPalette } from '../../stores/useAppViewStore';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { usePlayerBottomBarBottomPx } from '../../hooks/usePlayerBottomBarBottomPx';
@@ -84,6 +85,8 @@ export function WallToolsSurface({ idPrefix, label, isDaylight, locate, destinat
         setShowHelp(false);
     }
     const rootRef = useRef<HTMLDivElement>(null);
+    // 玻璃开关：打开时面板、队列浮岛与触发按钮都换用 Mineradio 风格玻璃（has-glass 类驱动 CSS）。
+    const bottomBarGlassEnabled = usePlayerChromeSettingsStore(state => state.playerBottomBarGlass);
     const lightsOn = useLatticeSettingsStore(state => state.latticeLightsOn);
     const handleToggleLatticeLights = useLatticeSettingsStore(state => state.handleToggleLatticeLights);
     const tintEnabled = useLatticeSettingsStore(state => state.latticePosterTintEnabled);
@@ -157,7 +160,7 @@ export function WallToolsSurface({ idPrefix, label, isDaylight, locate, destinat
         <motion.div
             ref={rootRef}
             style={{ bottom: bottomPx, '--wall-tools-bottom': bottomVar } as unknown as MotionStyle}
-            className={`lattice-tools group ${isDaylight ? 'is-daylight' : ''}`}
+            className={`lattice-tools group ${isDaylight ? 'is-daylight' : ''} ${bottomBarGlassEnabled ? 'has-glass' : ''}`}
         >
             {/* 面板与队列浮岛叠在按钮上方的一列里（column-reverse：面板在下、浮岛在上）：定位在 stack 上，面板自己不再 absolute。 */}
             <div className={showQueueIsland ? 'lattice-tools-stack has-queue-island' : 'lattice-tools-stack'}>
@@ -242,6 +245,7 @@ export function WallToolsSurface({ idPrefix, label, isDaylight, locate, destinat
                 isDaylight={isDaylight}
                 accentColor="var(--text-accent)"
                 accentForeground="var(--text-on-accent, #ffffff)"
+                glass={bottomBarGlassEnabled}
             />
         </motion.div>
     );

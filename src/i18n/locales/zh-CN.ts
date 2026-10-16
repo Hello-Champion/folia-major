@@ -1966,6 +1966,8 @@ export default {
     "playerVolumeButtonLayoutDesc": "选择音量按钮在底部控制条上的位置：与播放进度条同一排，或位于展开态右上角槽位。",
     "playerVolumeButtonLayoutRow": "进度条旁",
     "playerVolumeButtonLayoutCorner": "右上角",
+    "playerBottomBarGlass": "底部控制条玻璃效果",
+    "playerBottomBarGlassDesc": "更通透的半透明背景，带磨砂模糊、色彩饱和与增亮，以及白色内发光描边。",
     "factoryReset": "恢复出厂设置",
     "factoryResetDesc": "重置所有设置与缓存（含本地库数据），保留各平台登录状态，并重新加载应用。此操作不可撤销。",
     "factoryResetConfirm": "确认并重置",

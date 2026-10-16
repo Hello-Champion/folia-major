@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import type { LucideIcon } from 'lucide-react';
+import { PLAYER_BAR_GLASS_STYLE } from '../../utils/playerBarGlass';
 
 // src/components/shared/SlideActionButton.tsx
 // The player-style round action button with a second action on a leftward slide: tap the button for
@@ -29,6 +30,8 @@ export interface SlideActionButtonProps {
     /** 拖满时按钮变成强调色底，上面图标的颜色（缺省白色；强调色可能本身就很浅，例如墙面工具按钮读 --text-on-accent）。 */
     accentForeground?: string;
     disabled?: boolean;
+    /** 玻璃开关开启时（墙面工具按钮）：按钮换用更通透的底色与内发光描边。 */
+    glass?: boolean;
 }
 
 export const SlideActionButton: React.FC<SlideActionButtonProps> = ({
@@ -42,6 +45,7 @@ export const SlideActionButton: React.FC<SlideActionButtonProps> = ({
     accentColor,
     accentForeground = '#ffffff',
     disabled = false,
+    glass = false,
 }) => {
     const [showGuideLine, setShowGuideLine] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
@@ -211,8 +215,8 @@ export const SlideActionButton: React.FC<SlideActionButtonProps> = ({
                     }
                     onActivate();
                 }}
-                style={{ touchAction: 'none' }}
-                className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg backdrop-blur-md transform border-none absolute right-0 top-0 z-10 disabled:opacity-40 disabled:cursor-default ${isDaylight ? 'bg-white/70 text-zinc-900' : 'bg-black/40 text-white'}`}
+                style={{ touchAction: 'none', ...(glass ? PLAYER_BAR_GLASS_STYLE : undefined) }}
+                className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg backdrop-blur-md transform border-none absolute right-0 top-0 z-10 disabled:opacity-40 disabled:cursor-default ${isDaylight ? (glass ? 'bg-white/40 text-zinc-900' : 'bg-white/70 text-zinc-900') : (glass ? 'bg-black/10 text-white' : 'bg-black/40 text-white')}`}
                 title={title}
                 aria-label={title}
             >
