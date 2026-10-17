@@ -15,7 +15,8 @@ export type PlayerControlSlotActionId =
     | 'queue'
     | 'song-wall'
     | 'sleep-timer'
-    | 'hidden';
+    | 'hidden'
+    | 'locate';
 
 export const PLAYER_CONTROL_SLOT_ACTION_IDS: readonly PlayerControlSlotActionId[] = [
     'loop',
@@ -29,6 +30,7 @@ export const PLAYER_CONTROL_SLOT_ACTION_IDS: readonly PlayerControlSlotActionId[
     'song-wall',
     'sleep-timer',
     'hidden',
+    'locate',
 ];
 
 /** 默认保持改动前的样子：循环模式 + 歌词时间轴。 */

@@ -1,7 +1,8 @@
-import { ChartBar, EyeOff, Heart, ListMusic, PanelsTopLeft, Repeat, Repeat1, RepeatOff, Shuffle, SkipBack, SkipForward, Timer, Volume2 } from 'lucide-react';
+import { ChartBar, Crosshair, EyeOff, Heart, ListMusic, PanelsTopLeft, Repeat, Repeat1, RepeatOff, Shuffle, SkipBack, SkipForward, Timer, Volume2 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { PlayerControlSlotActionId } from '../../types/playerControlSlots';
 import { noteLoopButtonPress } from '../../services/ponder/loopShuffleHint';
+import { loopModeIcon, loopModeLabelName } from '../shared/loopModeDisplay';
 
 // src/components/floating-player/playerControlSlotActions.ts
 // 进度条胶囊右侧两个可自定义槽位的动作清单。
@@ -65,21 +66,8 @@ export const PLAYER_CONTROL_SLOT_OPTIONS: readonly { id: PlayerControlSlotAction
     { id: 'queue', icon: ListMusic, labelKey: 'options.playerControlSlotAction_queue' },
     { id: 'song-wall', icon: PanelsTopLeft, labelKey: 'options.playerControlSlotAction_songWall' },
     { id: 'sleep-timer', icon: Timer, labelKey: 'options.playerControlSlotAction_sleepTimer' },
+    { id: 'locate', icon: Crosshair, labelKey: 'options.playerControlSlotAction_locate' },
 ];
-
-/** 循环按钮的图标反映当前模式，是这批动作里唯一的三态图标。 */
-const resolveLoopIcon = (loopMode: PlayerControlSlotContext['loopMode']): LucideIcon => {
-    if (loopMode === 'off') return RepeatOff;
-    if (loopMode === 'one') return Repeat1;
-    return Repeat;
-};
-
-/** 循环按钮的提示文本反映当前模式。 */
-const resolveLoopLabelKey = (loopMode: PlayerControlSlotContext['loopMode']): string => {
-    if (loopMode === 'off') return 'player.loopOff';
-    if (loopMode === 'one') return 'player.loopOne';
-    return 'player.loopAll';
-};
 
 /**
  * 把一个槽位 id 和当前播放上下文解析成可直接渲染的按钮描述。
@@ -92,7 +80,8 @@ export const resolvePlayerControlSlot = (
     switch (id) {
         case 'loop':
             return {
-                icon: resolveLoopIcon(context.loopMode),
+                // 循环按钮的图标和提示文本反映当前模式，是这批动作里唯一的三态图标。
+                icon: loopModeIcon(context.loopMode),
                 filled: false,
                 active: context.loopMode !== 'off',
                 disabled: false,
@@ -101,7 +90,7 @@ export const resolvePlayerControlSlot = (
                     context.onToggleLoop();
                     noteLoopButtonPress();
                 },
-                labelKey: resolveLoopLabelKey(context.loopMode),
+                labelKey: `player.${loopModeLabelName(context.loopMode)}`,
             };
         case 'prev':
             return {
@@ -186,6 +175,15 @@ export const resolvePlayerControlSlot = (
                 disabled: true,
                 onActivate: () => {},
                 labelKey: 'options.playerControlSlotAction_hidden',
+            };
+        case 'locate':
+            return {
+                icon: Crosshair,
+                filled: false,
+                active: false,
+                disabled: !context.canInvokeCommandById('locate-playing-song'),
+                onActivate: () => context.invokeCommandById('locate-playing-song'),
+                labelKey: 'options.playerControlSlotAction_locate',
             };
         case 'lyrics-timeline':
         default:
