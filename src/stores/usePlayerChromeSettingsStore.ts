@@ -32,6 +32,8 @@ const GLOBAL_GLASS_OPACITY_STORAGE_KEY = 'global_glass_opacity';
 const GLOBAL_GLASS_BRIGHTNESS_STORAGE_KEY = 'global_glass_brightness';
 const GLOBAL_GLASS_SATURATE_STORAGE_KEY = 'global_glass_saturate';
 const GLOBAL_GLASS_GLOW_STORAGE_KEY = 'global_glass_glow';
+/** 开屏动画开关：启动时是否显示 index.html 内联的 Folia 标题与波形遮罩。 */
+const SHOW_SPLASH_ANIMATION_STORAGE_KEY = 'show_splash_animation';
 
 /** 玻璃参数默认值：与 playerBarGlass.ts 里复刻 Mineradio 的原始配方一致。 */
 export const DEFAULT_GLASS_BLUR_PX = 12;
@@ -166,6 +168,8 @@ export type PlayerChromeSettingsState = {
     globalGlassSaturate: number;
     /** 全局玻璃：白色内发光描边强度。 */
     globalGlassGlow: number;
+    /** 开屏动画：启动时是否显示 Folia 标题与波形遮罩。默认开启。 */
+    showSplashAnimation: boolean;
     setTransparentPlayerBackgroundFromSystem: (enabled: boolean) => void;
     handleTogglePlayerPageNativeBlur: (enable: boolean) => void;
     handleToggleHidePlayerProgressBar: (enable: boolean) => void;
@@ -191,6 +195,7 @@ export type PlayerChromeSettingsState = {
     handleSetPlayerBottomBarGlassSaturate: (saturate: number) => void;
     handleSetPlayerBottomBarGlassGlow: (glow: number) => void;
     handleToggleGlobalGlass: (enable: boolean) => void;
+    handleToggleShowSplashAnimation: (enable: boolean) => void;
     handleSetGlobalGlassBlur: (blurPx: number) => void;
     handleSetGlobalGlassOpacity: (opacityPercent: number) => void;
     handleSetGlobalGlassBrightness: (brightness: number) => void;
@@ -240,6 +245,7 @@ export const usePlayerChromeSettingsStore = create<PlayerChromeSettingsState>((s
     globalGlassBrightness: readStoredNumber(GLOBAL_GLASS_BRIGHTNESS_STORAGE_KEY, DEFAULT_GLASS_BRIGHTNESS, GLASS_BRIGHTNESS_MIN, GLASS_BRIGHTNESS_MAX),
     globalGlassSaturate: readStoredNumber(GLOBAL_GLASS_SATURATE_STORAGE_KEY, DEFAULT_GLASS_SATURATE, GLASS_SATURATE_MIN, GLASS_SATURATE_MAX),
     globalGlassGlow: readStoredNumber(GLOBAL_GLASS_GLOW_STORAGE_KEY, DEFAULT_GLASS_GLOW, GLASS_GLOW_MIN, GLASS_GLOW_MAX),
+    showSplashAnimation: getStoredBoolean(SHOW_SPLASH_ANIMATION_STORAGE_KEY, true),
     setTransparentPlayerBackgroundFromSystem: (enabled) => {
         setStoredBoolean('transparent_player_background', enabled);
         set({ transparentPlayerBackground: enabled });
@@ -404,6 +410,14 @@ export const usePlayerChromeSettingsStore = create<PlayerChromeSettingsState>((s
         setStoredBoolean(GLOBAL_GLASS_ENABLED_STORAGE_KEY, enable);
         set({ globalGlassEnabled: enable });
     },
+    handleToggleShowSplashAnimation: (enable) => {
+        setStoredBoolean(SHOW_SPLASH_ANIMATION_STORAGE_KEY, enable);
+        set({ showSplashAnimation: enable });
+        setStatusMessage({
+            type: 'info',
+            text: i18n.t('notifications.' + (enable ? 'splashAnimationOn' : 'splashAnimationOff')),
+        });
+    },
     handleSetGlobalGlassBlur: (blurPx) => {
         const next = Math.min(GLASS_BLUR_MAX_PX, Math.max(GLASS_BLUR_MIN_PX, blurPx));
         writeStoredNumber(GLOBAL_GLASS_BLUR_STORAGE_KEY, next);
@@ -493,6 +507,7 @@ export const selectPlayerChromeSettingsSnapshot = (state: PlayerChromeSettingsSt
     globalGlassBrightness: state.globalGlassBrightness,
     globalGlassSaturate: state.globalGlassSaturate,
     globalGlassGlow: state.globalGlassGlow,
+    showSplashAnimation: state.showSplashAnimation,
     handleToggleHidePlayerProgressBar: state.handleToggleHidePlayerProgressBar,
     handleSetPlayerBottomBarOffset: state.handleSetPlayerBottomBarOffset,
     handleSetPlayerControlSlot: state.handleSetPlayerControlSlot,
@@ -517,6 +532,7 @@ export const selectPlayerChromeSettingsSnapshot = (state: PlayerChromeSettingsSt
     handleSetPlayerBottomBarGlassSaturate: state.handleSetPlayerBottomBarGlassSaturate,
     handleSetPlayerBottomBarGlassGlow: state.handleSetPlayerBottomBarGlassGlow,
     handleToggleGlobalGlass: state.handleToggleGlobalGlass,
+    handleToggleShowSplashAnimation: state.handleToggleShowSplashAnimation,
     handleSetGlobalGlassBlur: state.handleSetGlobalGlassBlur,
     handleSetGlobalGlassOpacity: state.handleSetGlobalGlassOpacity,
     handleSetGlobalGlassBrightness: state.handleSetGlobalGlassBrightness,

@@ -29,6 +29,7 @@ const O = {
     autoPlay: option(LAUNCH, 'autoPlayOnLaunch', 'options.autoPlayOnLaunch'),
     openPlayer: option(LAUNCH, 'openPlayerOnLaunch', 'options.openPlayerOnLaunch', { electronOnly: true }),
     titlebarButtons: option(LAUNCH, 'alwaysShowMainWindowTitlebar', 'options.alwaysShowMainWindowTitlebar'),
+    splashAnimation: option(LAUNCH, 'showSplashAnimation', 'options.showSplashAnimation'),
     updateCheck: option(UPDATE, 'enableUpdateCheck', 'options.enableUpdateCheck'),
     autoUpdate: option(UPDATE, 'enableAutoUpdate', 'options.enableAutoUpdate'),
     updateChannel: option(UPDATE, 'updateChannel', 'options.updateChannel'),
@@ -51,6 +52,8 @@ const GeneralPage: React.FC = () => {
     const setAutoPlay = useAudioSettingsStore(state => state.handleToggleAutoPlayOnLaunch);
     const titlebarButtons = usePlayerChromeSettingsStore(state => state.alwaysShowMainWindowTitlebar);
     const setTitlebarButtons = usePlayerChromeSettingsStore(state => state.handleToggleAlwaysShowMainWindowTitlebar);
+    const splashAnimation = usePlayerChromeSettingsStore(state => state.showSplashAnimation);
+    const setSplashAnimation = usePlayerChromeSettingsStore(state => state.handleToggleShowSplashAnimation);
     const ponder = usePonderStore(useShallow(selectPonderSettingsSnapshot));
 
     const resolvedLanguage = i18n.resolvedLanguage;
@@ -100,6 +103,9 @@ const GeneralPage: React.FC = () => {
                 )}
                 <Row option={O.titlebarButtons} hint={t('options.alwaysShowMainWindowTitlebarDesc')}>
                     <Toggle checked={titlebarButtons} onChange={setTitlebarButtons} />
+                </Row>
+                <Row option={O.splashAnimation} hint={t('options.showSplashAnimationDesc')}>
+                    <Toggle checked={splashAnimation} onChange={setSplashAnimation} />
                 </Row>
             </Group>
 

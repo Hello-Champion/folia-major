@@ -6,9 +6,14 @@ const SPLASH_ELEMENT_ID = 'app-splash';
 const FADE_OUT_MS = 320;
 
 // 淡出并移除首屏加载遮罩；遮罩不存在（OBS 源已提前移除、或已经调用过）时是空操作。
-export const hideAppSplash = (): void => {
+// immediate 为 true 时不做淡出动画直接摘掉（设置里关掉开屏动画时用）。
+export const hideAppSplash = (immediate = false): void => {
     const splash = document.getElementById(SPLASH_ELEMENT_ID);
     if (!splash) {
+        return;
+    }
+    if (immediate) {
+        splash.remove();
         return;
     }
     splash.classList.add('is-hiding');
