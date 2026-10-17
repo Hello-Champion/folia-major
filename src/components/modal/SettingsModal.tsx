@@ -1180,6 +1180,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                     ...settingsTokens(isDaylight, theme),
                     ...kitMotionTokens(reducedKitMotion),
                     ...(globalGlassStyle ?? {}),
+                    // 左侧分类栏默认有不透明的 --st-side 底色，会盖住根的玻璃背景：
+                    // 玻璃开启时让它透明，露出同一层磨砂玻璃。
+                    ...(globalGlassStyle ? ({ '--st-side': 'transparent' } as React.CSSProperties) : {}),
                 }}
                 onClick={(event) => event.stopPropagation()}
             >
