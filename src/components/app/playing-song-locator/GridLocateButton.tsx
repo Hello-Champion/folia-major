@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Crosshair } from 'lucide-react';
 
 // src/components/app/playing-song-locator/GridLocateButton.tsx
@@ -22,7 +22,6 @@ interface GridLocateButtonProps {
 }
 
 export const GridLocateButton: React.FC<GridLocateButtonProps> = ({ isDaylight, accentColor, isHere, isSeeking, title, onLocate }) => {
-    const [presses, setPresses] = useState(0);
     return (
         <button
             type="button"
@@ -31,17 +30,11 @@ export const GridLocateButton: React.FC<GridLocateButtonProps> = ({ isDaylight, 
             aria-busy={isSeeking}
             title={title}
             aria-label={title}
-            onClick={() => {
-                setPresses(count => count + 1);
-                onLocate();
-            }}
+            onClick={onLocate}
             // It moves with the action button below it: half out of the way on a narrow window, whole on a wide one.
-            className={`relative mr-1 flex h-10 w-10 translate-x-1/2 items-center justify-center rounded-full opacity-60 shadow-lg backdrop-blur-md transition-all duration-300 active:scale-90 group-hover:translate-x-0 group-hover:opacity-100 md:translate-x-0 md:opacity-100 md:hover:scale-105 ${isDaylight ? 'bg-white/70 text-zinc-900' : 'bg-black/40 text-white'}`}
+            className={`relative mr-1 flex h-10 w-10 translate-x-1/2 cursor-pointer items-center justify-center rounded-[12px] opacity-60 shadow-lg backdrop-blur-md transition-all duration-300 active:scale-90 group-hover:translate-x-0 group-hover:opacity-100 md:translate-x-0 md:opacity-100 ${isDaylight ? 'bg-white/70 text-zinc-900' : 'bg-black/40 text-white'}`}
         >
-            {isSeeking
-                ? <span className="locate-seeking pointer-events-none absolute inset-0 rounded-full border" style={{ borderColor: accentColor }} />
-                : presses > 0 && <span key={`ring-${presses}`} className="locate-ring pointer-events-none absolute inset-0 rounded-full border" style={{ borderColor: accentColor }} />}
-            <Crosshair key={presses} size={18} className={presses > 0 ? 'locate-mark' : undefined} style={{ color: isHere ? accentColor : undefined }} />
+            <Crosshair size={18} />
         </button>
     );
 };

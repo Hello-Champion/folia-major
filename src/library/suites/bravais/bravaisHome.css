@@ -304,11 +304,58 @@
 }
 
 .bravais-seam-home.is-compact .bravais-seam-tools { grid-template-columns: 36px; gap: 6px; }
-.bravais-seam-tools .bravais-seam-icon { width: 40px; height: 40px; border-radius: 12px; }
+.bravais-seam-tools .bravais-seam-icon { width: 40px; height: 40px; border-radius: 12px; position: relative; }
 .bravais-seam-tools .bravais-seam-icon svg { width: 18px; height: 18px; }
 .bravais-seam-home.is-compact .bravais-seam-tools .bravais-seam-icon { width: 36px; height: 36px; }
 .bravais-seam-tools .bravais-seam-icon:disabled { opacity: 0.3; cursor: default; }
 .bravais-seam-tools .bravais-seam-icon.is-pressed { color: var(--text-accent, currentColor); background: color-mix(in srgb, currentColor 16%, transparent); }
+
+/* 玻璃开关下，缝里按钮的悬浮框（.bravais-seam-icon / 页签）也换玻璃配方：半透明底色 + 磨砂 + 白色内发光描边，
+   与面板、菜单同一族。 */
+.has-glass .bravais-seam-icon:hover,
+.has-glass .bravais-seam-level:hover,
+.has-glass .bravais-seam-tabs button:hover:not(:disabled) {
+    border-color: transparent;
+    background: rgb(0 0 0 / var(--glass-alpha, 10%));
+    backdrop-filter: var(--glass-backdrop, blur(12px) saturate(1.8) brightness(1.16));
+    box-shadow: inset 0 0 2px 1px rgb(255 255 255 / var(--glass-glow, 0.16)), inset 0 0 10px 4px rgb(255 255 255 / calc(var(--glass-glow, 0.16) * 0.94));
+}
+
+.bravais-root.is-daylight .has-glass .bravais-seam-icon:hover,
+.bravais-root.is-daylight .has-glass .bravais-seam-level:hover,
+.bravais-root.is-daylight .has-glass .bravais-seam-tabs button:hover:not(:disabled) {
+    background: rgb(255 255 255 / var(--glass-alpha, 40%));
+    box-shadow: inset 0 0 2px 1px rgb(255 255 255 / var(--glass-glow, 0.16)), inset 0 0 10px 4px rgb(255 255 255 / calc(var(--glass-glow, 0.16) * 0.94));
+}
+
+/* 工具格的悬浮小提示：鼠标在按钮上停一下出现（替代原生 title 的实心框），玻璃配方 + 柔和投影；
+   pointer-events 关掉，鼠标移到提示上不触发按钮的 mouseleave。 */
+.bravais-seam-tip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    z-index: 20;
+    transform: translateX(-50%);
+    padding: 5px 9px;
+    border-radius: 8px;
+    color: var(--text-primary, #f7f4ee);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.4;
+    white-space: nowrap;
+    pointer-events: none;
+    background: rgb(0 0 0 / var(--glass-alpha, 10%));
+    backdrop-filter: var(--glass-backdrop, blur(12px) saturate(1.8) brightness(1.16));
+    box-shadow: inset 0 0 2px 1px rgb(255 255 255 / var(--glass-glow, 0.16)), inset 0 0 10px 4px rgb(255 255 255 / calc(var(--glass-glow, 0.16) * 0.94)),
+        0 8px 24px rgb(0 0 0 / 24%);
+}
+
+.bravais-root.is-daylight .bravais-seam-tip {
+    color: var(--text-primary, #26262b);
+    background: rgb(255 255 255 / var(--glass-alpha, 40%));
+    box-shadow: inset 0 0 2px 1px rgb(255 255 255 / var(--glass-glow, 0.16)), inset 0 0 10px 4px rgb(255 255 255 / calc(var(--glass-glow, 0.16) * 0.94)),
+        0 8px 24px rgb(17 17 26 / 12%);
+}
 /* fb11：舞台开着时舞台入口单独占最上面一整行（宽同两格，图标 + 短名）；书脊上一列，它是最上面的一个图标。 */
 .bravais-seam-tools .bravais-seam-icon.is-wide {
     display: inline-flex;
@@ -443,16 +490,6 @@
 }
 
 .bravais-search-form input::-webkit-search-cancel-button { display: none; }
-
-/* 玻璃开关（.has-glass，底部控制台同款 Mineradio 配方）：搜索面板换更通透的底 + 磨砂模糊 + 白色内发光描边。
-   底色 alpha 与 backdrop-filter 由全局玻璃调节区经 CSS 变量注入（--glass-alpha / --glass-backdrop）。 */
-.bravais-seam-search.has-glass {
-    background: rgb(12 12 15 / var(--glass-alpha, 48%));
-    backdrop-filter: var(--glass-backdrop, blur(12px) saturate(1.8) brightness(1.16));
-    box-shadow: inset 0 0 2px 1px rgb(255 255 255 / var(--glass-glow, 0.16)), inset 0 0 10px 4px rgb(255 255 255 / calc(var(--glass-glow, 0.16) * 0.94)),
-        0 4px 16px rgb(17 17 26 / 5%), 0 8px 24px rgb(17 17 26 / 5%), 0 16px 56px rgb(17 17 26 / 5%),
-        inset 0 4px 16px rgb(17 17 26 / 5%), inset 0 8px 24px rgb(17 17 26 / 5%), inset 0 16px 56px rgb(17 17 26 / 5%);
-}
 
 /* ---------- 目录树面板 ---------- */
 

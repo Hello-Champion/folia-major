@@ -44,7 +44,8 @@ export default function LatticeFocusButton({ isDaylight, tiles, onGoHome }: { is
             isDaylight={isDaylight}
             destination={destination}
             entries={[]}
-            above={playingSongKey !== null ? (
+            // 定位按钮常驻面板（WallToolsButton 渲染在面板顶部）：有正在播放的歌才亮起，没歌时置灰不响应。
+            above={(
                 <GridLocateButton
                     isDaylight={isDaylight}
                     accentColor="var(--text-accent)"
@@ -53,7 +54,7 @@ export default function LatticeFocusButton({ isDaylight, tiles, onGoHome }: { is
                     title={t('playlist.locatePlaying')}
                     onLocate={locatePlayingSongOnWall}
                 />
-            ) : undefined}
+            )}
             help={(
                 <>
                     <li>

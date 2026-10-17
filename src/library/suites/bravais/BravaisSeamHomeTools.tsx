@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, type KeyboardEvent } from 'react';
+import React, { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
     Disc3,
@@ -17,6 +17,7 @@ import { BRAVAIS_SPECIAL_ICONS } from './bravaisSpecialIcons';
 import { closeBravaisHomePopover, setBravaisHomeOpenRequest, setBravaisHomePopover, useBravaisHomeUiStore } from './bravaisHomeUiStore';
 import { useBravaisReducedTransitions } from './bravaisMotion';
 import { bravaisPopMotion } from './bravaisSeamMotion';
+import { usePlayerChromeSettingsStore } from '../../../stores/usePlayerChromeSettingsStore';
 
 // src/library/suites/bravais/BravaisSeamHomeTools.tsx
 // 首页窄缝底部的工具格。
@@ -87,6 +88,21 @@ const BravaisSeamHomeTools: React.FC<{
     const hasMenu = jumps.length > 0 || page.length > 0 || local.length > 0 || app.length > 0;
     const open = menuOpen && hasMenu && !compact;
     const pop = bravaisPopMotion('above', useBravaisReducedTransitions());
+    // 全局玻璃：首页工具格的「⋯」菜单与按钮悬浮提示走玻璃配方（与搜索面板、聚焦卡菜单同族）。
+    const globalGlassEnabled = usePlayerChromeSettingsStore(state => state.globalGlassEnabled);
+
+    // 悬浮提示：鼠标在按钮上停一下才显示玻璃小提示（替代原生 title 的实心框）。
+    const [tip, setTip] = useState<string | null>(null);
+    const tipTimerRef = useRef<number | undefined>(undefined);
+    const showTip = (label: string) => {
+        window.clearTimeout(tipTimerRef.current);
+        tipTimerRef.current = window.setTimeout(() => setTip(label), 350);
+    };
+    const hideTip = () => {
+        window.clearTimeout(tipTimerRef.current);
+        setTip(null);
+    };
+    useEffect(() => () => window.clearTimeout(tipTimerRef.current), []);
 
     // 书脊上点了「⋯」：缝展开成窄缝后在这里把菜单打开。
     useEffect(() => {
@@ -153,7 +169,7 @@ const BravaisSeamHomeTools: React.FC<{
         <div ref={dockRef} className="bravais-seam-dock" onKeyDown={onKeyDown}>
             <AnimatePresence>
                 {open && (
-                    <motion.div key="menu" className="bravais-seam-menu is-home" role="menu" aria-label={home.menuLabel} data-bravais-seam-menu {...pop}>
+                    <motion.div key="menu" className={`bravais-seam-menu is-home${globalGlassEnabled ? ' has-glass' : ''}`} role="menu" aria-label={home.menuLabel} data-bravais-seam-menu {...pop}>
                         {jumps.map(shortcut => {
                             const Icon = BRAVAIS_SPECIAL_ICONS[shortcut.special];
                             return (
@@ -192,21 +208,30 @@ const BravaisSeamHomeTools: React.FC<{
                             data-bravais-badge={tool.badge ? 'true' : undefined}
                             aria-label={label}
                             aria-pressed={tool.pressed}
-                            title={label}
                             disabled={tool.disabled}
                             onClick={tool.run}
+                            onMouseEnter={() => showTip(label)}
+                            onMouseLeave={hideTip}
+                            onFocus={(event) => { if (event.target.matches(':focus-visible')) showTip(label); }}
+                            onBlur={hideTip}
                         >
                             <Icon aria-hidden className={tool.busy ? 'animate-spin' : undefined} />
                             {wide && !compact && tool.shortLabel && <span className="is-label" aria-hidden>{tool.shortLabel}</span>}
                             {tool.badge && compact && <span className="is-badge" aria-hidden />}
+                            {tip === label && <span className="bravais-seam-tip" role="tooltip">{label}</span>}
                         </button>
                     );
                 })}
                 {hasMenu && (
                     <button ref={moreRef} type="button" className={`bravais-seam-icon${open ? ' is-pressed' : ''}`} data-bravais-seam-action="more"
-                        aria-haspopup="menu" aria-expanded={open} aria-label={home.menuLabel} title={home.menuLabel}
-                        onClick={onMore}>
+                        aria-haspopup="menu" aria-expanded={open} aria-label={home.menuLabel}
+                        onClick={onMore}
+                        onMouseEnter={() => showTip(home.menuLabel)}
+                        onMouseLeave={hideTip}
+                        onFocus={(event) => { if (event.target.matches(':focus-visible')) showTip(home.menuLabel); }}
+                        onBlur={hideTip}>
                         <MoreHorizontal aria-hidden />
+                        {tip === home.menuLabel && <span className="bravais-seam-tip" role="tooltip">{home.menuLabel}</span>}
                     </button>
                 )}
             </div>

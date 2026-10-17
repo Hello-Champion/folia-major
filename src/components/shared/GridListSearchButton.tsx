@@ -4,7 +4,9 @@ import { Command, List, Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { openCommandFilter, openCommandPalette } from '../../stores/useAppViewStore';
 import { useInteractionSettingsStore } from '../../stores/useInteractionSettingsStore';
+import { usePlayerChromeSettingsStore } from '../../stores/usePlayerChromeSettingsStore';
 import { usePlayerBottomBarBottomPx } from '../../hooks/usePlayerBottomBarBottomPx';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { SlideActionButton } from './SlideActionButton';
 
 // Player-style grid action button: click for the list, or slide left to reveal search.
@@ -36,7 +38,11 @@ export const GridListSearchButton: React.FC<GridListSearchButtonProps> = ({
     const { t } = useTranslation();
     const slideTarget = useInteractionSettingsStore(state => state.gridActionButtonSlideTarget);
     const opensPalette = slideTarget === 'command-palette';
-    const bottomBarBottomPx = usePlayerBottomBarBottomPx();
+    // 与墙面工具按钮同一套底距（宽屏 24 / 窄屏 16），首页与播放页的右下角按钮位置一致。
+    const isWideLayout = useMediaQuery('(min-width: 640px)');
+    const bottomBarBottomPx = usePlayerBottomBarBottomPx(isWideLayout ? 24 : 16);
+    // 全局玻璃：网格 / 集合页的右下角按钮也跟全局（与墙面、播放页一致）。
+    const globalGlassEnabled = usePlayerChromeSettingsStore(state => state.globalGlassEnabled);
     // 所在的网格层已经在退场时才挂上（打开集合后马上关掉，曲目在退场开始之后才到）就不渲染：
     // 父层退场中途才挂上的带 exit 的 motion 元素，framer 会把它登记为「退场未完成」却不再给它播退场，
     // 宿主的 AnimatePresence 于是等不到完成，透明的整屏网格层卸不掉、挡住首页。挂上时在场的照常随父层淡出；
@@ -48,13 +54,12 @@ export const GridListSearchButton: React.FC<GridListSearchButtonProps> = ({
 
     return (
         <motion.div
-            initial={{ opacity: 0, x: 20, y: 12, scale: 0.92 }}
-            animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
+            // 去掉进入视图时的滑入/缩放出现动画（退出保留淡出）。
             exit={{ opacity: 0, x: 20, y: 12, scale: 0.92 }}
             transition={{ duration: 0.24, ease: 'easeOut' }}
             data-testid="grid-list-search-button"
             style={{ bottom: bottomBarBottomPx }}
-            className="pointer-events-auto fixed right-0 z-[60] pr-4 md:pr-8 group w-20 flex flex-col items-end gap-3"
+            className="pointer-events-auto fixed right-0 z-[60] pr-6 group w-20 flex flex-col items-end gap-3"
         >
             {above}
             <SlideActionButton
@@ -66,6 +71,7 @@ export const GridListSearchButton: React.FC<GridListSearchButtonProps> = ({
                 onSlide={opensPalette ? openCommandPalette : openCommandFilter}
                 isDaylight={isDaylight}
                 accentColor={accentColor}
+                glass={globalGlassEnabled}
             />
         </motion.div>
     );

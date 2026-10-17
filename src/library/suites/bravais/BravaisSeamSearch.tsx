@@ -2,7 +2,6 @@ import React, { useEffect, useRef, type FormEvent, type KeyboardEvent } from 're
 import { Search, X } from 'lucide-react';
 import type { BravaisLayer } from './bravaisLayer';
 import { setBravaisSearchOpen } from './bravaisHomeUiStore';
-import { usePlayerChromeSettingsStore } from '../../../stores/usePlayerChromeSettingsStore';
 import BravaisSeamCrumbs from './BravaisSeamCrumbs';
 
 // src/library/suites/bravais/BravaisSeamSearch.tsx
@@ -15,8 +14,6 @@ import BravaisSeamCrumbs from './BravaisSeamCrumbs';
 const BravaisSeamSearch: React.FC<{ layer: BravaisLayer }> = ({ layer }) => {
     const inputRef = useRef<HTMLInputElement>(null);
     const search = layer.seam.home?.search;
-    // 全局搜索框与底部控制台同族：全局玻璃开关打开时挂 has-glass，CSS 换 Mineradio 配方。
-    const globalGlassEnabled = usePlayerChromeSettingsStore(state => state.globalGlassEnabled);
     useEffect(() => {
         inputRef.current?.focus({ preventScroll: true });
     }, []);
@@ -36,7 +33,7 @@ const BravaisSeamSearch: React.FC<{ layer: BravaisLayer }> = ({ layer }) => {
         close();
     };
     return (
-        <div className={`bravais-seam-search${globalGlassEnabled ? ' has-glass' : ''}`} data-bravais-search data-bravais-input-kind="search">
+        <div className="bravais-seam-search" data-bravais-search data-bravais-input-kind="search">
             <div className="bravais-seam-crumbs">
                 <BravaisSeamCrumbs layer={layer} panelLabel={search.title} onClosePanel={close} />
                 <button type="button" className="bravais-seam-level" data-bravais-seam-action="close-search" onClick={close}>

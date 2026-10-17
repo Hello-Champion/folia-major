@@ -188,6 +188,22 @@
     box-shadow: 0 0 0 1px color-mix(in srgb, currentColor 14%, transparent), 0 12px 32px rgb(0 0 0 / 34%);
 }
 
+/* 玻璃开关（.has-glass，底部控制台同款 Mineradio 配方）：缝里的「⋯」菜单（首页工具格 / 集合层）换更通透的底 +
+   磨砂模糊 + 白色内发光描边（与聚焦卡菜单、搜索面板同一族）。底色 alpha 与 backdrop-filter 由全局玻璃调节区
+   经 CSS 变量注入（--glass-alpha / --glass-backdrop）。 */
+.bravais-seam-menu.has-glass {
+    background: rgb(0 0 0 / var(--glass-alpha, 10%));
+    backdrop-filter: var(--glass-backdrop, blur(12px) saturate(1.8) brightness(1.16));
+    box-shadow: inset 0 0 2px 1px rgb(255 255 255 / var(--glass-glow, 0.16)), inset 0 0 10px 4px rgb(255 255 255 / calc(var(--glass-glow, 0.16) * 0.94)),
+        0 4px 16px rgb(17 17 26 / 5%), 0 8px 24px rgb(17 17 26 / 5%), 0 16px 56px rgb(17 17 26 / 5%);
+}
+
+.bravais-root.is-daylight .bravais-seam-menu.has-glass {
+    background: rgb(255 255 255 / var(--glass-alpha, 40%));
+    box-shadow: inset 0 0 2px 1px rgb(255 255 255 / var(--glass-glow, 0.16)), inset 0 0 10px 4px rgb(255 255 255 / calc(var(--glass-glow, 0.16) * 0.94)),
+        0 4px 16px rgb(17 17 26 / 5%), 0 8px 24px rgb(17 17 26 / 5%), 0 16px 56px rgb(17 17 26 / 5%);
+}
+
 /* 集合层「⋯ 更多」悬浮在按钮行上方，不占缝里的排版（打开时不推挤描述与按钮）。 */
 .bravais-seam-more-anchor { position: relative; }
 .bravais-seam-more-anchor > .bravais-seam-menu {

@@ -1,4 +1,4 @@
-import { useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent } from 'react';
+import { useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
 
 // src/components/wall/WallToolsRows.tsx
@@ -160,10 +160,15 @@ function WallToolsSliderRow({ entry }: { entry: Extract<WallToolsEntry, { kind: 
     );
 }
 
-/** 顶部一排纯图标快捷格（menu 里的一个 group，按钮仍是 menuitem）。 */
-export function WallToolsQuickRow({ actions, onDone }: { actions: readonly WallToolsQuickAction[]; onDone: () => void }) {
+/** 顶部一排纯图标快捷格（menu 里的一个 group，按钮仍是 menuitem）。lead：排在快捷格前面的东西（墙的定位按钮）。 */
+export function WallToolsQuickRow({ actions, onDone, lead }: {
+    actions: readonly WallToolsQuickAction[];
+    onDone: () => void;
+    lead?: ReactNode;
+}) {
     return (
         <div role="group" className="lattice-tools-quick">
+            {lead}
             {actions.map(action => {
                 const Icon = action.icon;
                 const tooltip = [action.label, action.status, action.kbd].filter(Boolean).join(' · ');

@@ -1,10 +1,12 @@
 import React from 'react';
 import { PANEL_SLIDE_CLAMP_PX, PANEL_SLIDE_TRACK_BASE_PX, PANEL_SLIDE_TRACK_FULL_PX, PANEL_SLIDE_TRIGGER_PX } from '../../../utils/panelSlideGesture';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings2, X, Command } from 'lucide-react';
+import { Settings2, Command } from 'lucide-react';
 import type { Theme } from '../../../types';
 import { usePlayerBottomBarBottomPx } from '../../../hooks/usePlayerBottomBarBottomPx';
+import { useMediaQuery } from '../../../hooks/useMediaQuery';
 import { usePlayerOverlayObstacle } from '../../../hooks/usePlayerOverlayLayout';
+import { useGlobalGlassStyle } from '../../../utils/playerBarGlass';
 
 // src/components/panelTab/shell/PanelHandle.tsx
 // The round button at the bottom right of the playing page that opens the panel and, white, closes
@@ -40,7 +42,11 @@ const PanelHandle: React.FC<PanelHandleProps> = ({
     const [showGuideLine, setShowGuideLine] = React.useState(false);
     const [isDragging, setIsDragging] = React.useState(false);
     const guideHideTimeoutRef = React.useRef<number | null>(null);
-    const bottomBarBottomPx = usePlayerBottomBarBottomPx();
+    // 与墙面工具按钮同一套底距（宽屏 24 / 窄屏 16），首页与播放页的右下角按钮位置一致。
+    const isWideLayout = useMediaQuery('(min-width: 640px)');
+    const bottomBarBottomPx = usePlayerBottomBarBottomPx(isWideLayout ? 24 : 16);
+    // 全局玻璃：开关打开时，关闭（×）状态下的按钮换用同一套可调玻璃配方，去掉纯白底。
+    const globalGlassStyle = useGlobalGlassStyle(isDaylight);
     // The button is in the way of a mod's player layout, as the open panel above it is.
     const { ref: layoutRef, invalidate: invalidateLayout } = usePlayerOverlayObstacle('panel-toggle', 'panel');
     const supportsHover = typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
@@ -50,11 +56,15 @@ const PanelHandle: React.FC<PanelHandleProps> = ({
     const trackEndIconRef = React.useRef<HTMLDivElement | null>(null);
     const trackFillRef = React.useRef<HTMLDivElement | null>(null);
     const canSlideOpenCommandPalette = !isOpen && Boolean(onOpenCommandPalette);
-    const isGuideLineVisible = canSlideOpenCommandPalette && (showGuideLine || isPanelGuideHotspotActive);
+    // 导轨 hover 即显示、不随面板开合消失（与首页墙面按钮的 SlideActionButton 一致）：
+    // 面板打开瞬间不再因为 canSlideOpenCommandPalette 变 false 而收起。
+    const isGuideLineVisible = showGuideLine || isPanelGuideHotspotActive;
+    // 玻璃开启时去掉 hover 放大（md:hover:scale-105）：放大会让磨砂区域跟着缩放，
+    // 悬浮与不悬浮的玻璃观感不一致；非玻璃按钮保留放大反馈。
     const toggleButtonMotionClass = (isOpen || isGuideLineVisible || isDragging)
         ? 'translate-x-0 opacity-100'
         : supportsHover
-            ? 'translate-x-1/2 opacity-60 group-hover:translate-x-0 group-hover:opacity-100 md:translate-x-0 md:opacity-100 md:hover:scale-105'
+            ? `translate-x-1/2 opacity-60 group-hover:translate-x-0 group-hover:opacity-100 md:translate-x-0 md:opacity-100${globalGlassStyle ? '' : ' md:hover:scale-105'}`
             : 'translate-x-1/2 opacity-60';
     const setCommandDestinationFeedback = (progress: number) => {
         const iconContainer = trackEndIconRef.current;
@@ -237,7 +247,7 @@ const PanelHandle: React.FC<PanelHandleProps> = ({
             triggered: false,
         };
         suppressToggleClickRef.current = false;
-        setShowGuideLine(false);
+        // 导轨（框）不随按下消失：鼠标移出按钮（handleToggleButtonMouseLeave）时才收起。
         setIsDragging(true);
 
         setToggleButtonDragFeedback(0);
@@ -261,7 +271,9 @@ const PanelHandle: React.FC<PanelHandleProps> = ({
         }
     };
     const handleToggleButtonMouseEnter = () => {
-        if (supportsHover && canSlideOpenCommandPalette) {
+        // 悬浮打开由 PanelShell 容器统一处理（覆盖按钮 + 面板整体）；这里只负责滑动导轨提示：
+        // hover 即显示（与首页一致），不随面板开合消失。
+        if (supportsHover) {
             setShowGuideLine(true);
         }
     };
@@ -301,6 +313,12 @@ const PanelHandle: React.FC<PanelHandleProps> = ({
             return;
         }
 
+        // 悬浮打开模式下点击只负责打开：鼠标移出按钮与面板整体 / 点外部 / Esc 才收起，
+        // 避免面板已经打开后点一下按钮就消失。
+        if (supportsHover && isOpen) {
+            return;
+        }
+
         onToggle();
     };
 
@@ -314,8 +332,7 @@ const PanelHandle: React.FC<PanelHandleProps> = ({
         <AnimatePresence>
             {!hideToggleButton && (!isOpen || showOpenPanelCloseButton) && !isCommandPaletteOpen && (
                 <motion.div
-                    initial={{ opacity: 0, x: 20, y: 12, scale: 0.92 }}
-                    animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
+                    // 去掉进入播放页时的滑入/缩放出现动画（退出保留淡出，隐藏按钮/命令面板时仍播）。
                     exit={isCommandPaletteOpen
                         ? { opacity: 0, x: 0, y: 0, scale: 1 }
                         : { opacity: 0, x: 20, y: 12, scale: 0.92 }
@@ -325,7 +342,7 @@ const PanelHandle: React.FC<PanelHandleProps> = ({
                     ref={layoutRef}
                     onUpdate={invalidateLayout}
                     style={{ bottom: bottomBarBottomPx }}
-                    className="pointer-events-auto fixed right-0 z-[60] pr-4 md:pr-8 group w-20 flex justify-end"
+                    className="pointer-events-auto fixed right-0 z-[160] pr-6 group w-20 flex justify-end"
                     onMouseEnter={handleToggleButtonMouseEnter}
                     onMouseLeave={handleToggleButtonMouseLeave}
                     onPointerDown={handleToggleHotspotPointerDown}
@@ -395,11 +412,14 @@ const PanelHandle: React.FC<PanelHandleProps> = ({
                             onPointerUp={clearToggleButtonGesture}
                             onPointerCancel={clearToggleButtonGesture}
                             onClick={handleToggleButtonClick}
-                            style={{ touchAction: canSlideOpenCommandPalette ? 'none' : undefined }}
-                            className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg backdrop-blur-md transform
-                                border-none absolute right-0 top-0 z-10 ${isOpen ? 'bg-white text-black' : (isDaylight ? 'bg-white/70 text-zinc-900' : 'bg-black/40 text-white')}`}
+                            style={{ touchAction: canSlideOpenCommandPalette ? 'none' : undefined, ...(globalGlassStyle ? globalGlassStyle : undefined) }}
+                            className={`group/act w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg backdrop-blur-md transform
+                                border-none absolute right-0 top-0 z-10 ${globalGlassStyle ? (isDaylight ? 'text-zinc-900' : 'text-white') : (isDaylight ? 'bg-white/70 text-zinc-900' : 'bg-black/40 text-white')}`}
                         >
-                            {isOpen ? <X size={20} /> : <Settings2 size={20} />}
+                            {/* 固定用 Settings2（面板开合不再切换 X 图标）；hover 时图标旋转 90°（Mineradio fx-fab 同款）。 */}
+                            <span className="block transition-transform duration-[380ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover/act:rotate-90">
+                                <Settings2 size={20} />
+                            </span>
                         </button>
                     </div>
                 </motion.div>

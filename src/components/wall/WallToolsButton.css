@@ -95,6 +95,22 @@
         inset 0 4px 16px rgb(17 17 26 / 5%), inset 0 8px 24px rgb(17 17 26 / 5%), inset 0 16px 56px rgb(17 17 26 / 5%);
 }
 
+/* 玻璃开关下，面板里的快捷格与定位按钮（GridLocateButton）也从实心底换成同款玻璃：
+   更透的底 + 白色内发光描边 + 磨砂，与面板本身的玻璃配方一致。 */
+.lattice-tools.has-glass .lattice-tools-quick-action,
+.lattice-tools.has-glass .lattice-tools-panel [data-grid-locate] {
+    background: rgb(0 0 0 / var(--glass-alpha, 10%));
+    box-shadow: inset 0 0 2px 1px rgb(255 255 255 / var(--glass-glow, 0.16)), inset 0 0 10px 4px rgb(255 255 255 / calc(var(--glass-glow, 0.16) * 0.94));
+    backdrop-filter: var(--glass-backdrop, blur(12px) saturate(1.8) brightness(1.16));
+}
+/* 玻璃开启时悬浮不换底色：让快捷格与定位按钮悬浮/不悬浮的磨砂观感保持一致。 */
+
+.lattice-tools.has-glass.is-daylight .lattice-tools-quick-action,
+.lattice-tools.has-glass.is-daylight .lattice-tools-panel [data-grid-locate] {
+    background: rgb(255 255 255 / var(--glass-alpha, 40%));
+    box-shadow: inset 0 0 2px 1px rgb(255 255 255 / var(--glass-glow, 0.16)), inset 0 0 10px 4px rgb(255 255 255 / calc(var(--glass-glow, 0.16) * 0.94));
+}
+
 .lattice-tools-action {
     display: flex;
     width: 100%;

@@ -2,9 +2,11 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useTransform, type MotionStyle } from 'framer-motion';
 import type { Theme } from '../../../types';
 import { usePlayerBottomBarBottomPx } from '../../../hooks/usePlayerBottomBarBottomPx';
+import { useMediaQuery } from '../../../hooks/useMediaQuery';
 import { usePlayerOverlayObstacle } from '../../../hooks/usePlayerOverlayLayout';
 import { kitTransition, useKitReducedMotion } from '../../modal/settings/kit/motion';
 import { panelTokens } from './panelTheme';
+import { useGlobalGlassStyle } from '../../../utils/playerBarGlass';
 import { FOLDED_PX } from './SongHeader';
 import { useMeasuredSize } from './useMeasuredSize';
 
@@ -44,11 +46,13 @@ type PanelShellProps = {
     dock: React.ReactNode;
     /** The round button that opens and closes the panel. */
     handle: React.ReactNode;
+    /** 悬浮进入打开 / 离开关闭面板（鼠标设备）：由容器按 isOpen 判断调用 onToggle。 */
+    onTogglePanel: () => void;
     /** The open tab's body. It may use --pn-tab-room, the height it can take before it scrolls here. */
     children: React.ReactNode;
 };
 
-type PanelSurfaceProps = Omit<PanelShellProps, 'isOpen' | 'handle'> & {
+type PanelSurfaceProps = Omit<PanelShellProps, 'isOpen' | 'handle' | 'onTogglePanel'> & {
     /** Registers the surface as an obstacle of the player layout. */
     layoutRef: (element: HTMLElement | null) => void;
     /** Tells the player layout that the surface moved. */
@@ -58,6 +62,9 @@ type PanelSurfaceProps = Omit<PanelShellProps, 'isOpen' | 'handle'> & {
 const PanelSurface: React.FC<PanelSurfaceProps> = ({ hasHandle, isCover, tabKey, theme, isDaylight, header, dock, children, layoutRef, onLayoutUpdate }) => {
     const reduced = useKitReducedMotion();
     const bottomBarBottomPx = usePlayerBottomBarBottomPx();
+    // 全局玻璃：开关打开时，面板换用同一套可调玻璃配方（磨砂/透明度/高亮/描边），
+    // 内联 backdropFilter/backgroundColor/boxShadow 覆盖下方 className 的 --pn-glass 与固定 blur。
+    const globalGlassStyle = useGlobalGlassStyle(isDaylight);
     // What is under the surface: the handle, or a small gap. A variable, so the two heights below follow it at once.
     const underPx = hasHandle ? HANDLE_ROOM_PX : BARE_GAP_PX;
     // Never taller than the window allows, wherever the bottom bar's baseline has been lifted to.
@@ -100,6 +107,7 @@ const PanelSurface: React.FC<PanelSurfaceProps> = ({ hasHandle, isCover, tabKey,
             className="st-window pointer-events-auto @container hide-scrollbar flex w-[360px] max-w-[calc(100vw-2rem)] flex-col overflow-y-auto overflow-x-hidden rounded-[20px] bg-[var(--pn-glass)] text-[color:var(--st-t1)] shadow-[var(--pn-shadow)] backdrop-blur-[40px] backdrop-saturate-[1.3] [&[data-still]_*]:transition-none"
             style={{
                 ...panelTokens(isDaylight, theme, reduced),
+                ...(globalGlassStyle ?? {}),
                 '--pn-under': `${underPx}px`,
                 '--pn-room': headerRoom,
                 // What is left of that room under the song's one line and the hairline: a tab with a
@@ -144,15 +152,28 @@ const PanelSurface: React.FC<PanelSurfaceProps> = ({ hasHandle, isCover, tabKey,
     );
 };
 
-const PanelShell: React.FC<PanelShellProps> = ({ isOpen, handle, ...surface }) => {
-    const bottomBarBottomPx = usePlayerBottomBarBottomPx();
+const PanelShell: React.FC<PanelShellProps> = ({ isOpen, handle, onTogglePanel, ...surface }) => {
+    // 与墙面工具按钮同一套底距（宽屏 24 / 窄屏 16），让首页与播放页的右下角按钮位置一致。
+    const isWideLayout = useMediaQuery('(min-width: 640px)');
+    const bottomBarBottomPx = usePlayerBottomBarBottomPx(isWideLayout ? 24 : 16);
     const { ref: layoutRef, invalidate: invalidateLayout } = usePlayerOverlayObstacle('player-panel', 'panel');
 
     return (
         <motion.div
             style={{ bottom: bottomBarBottomPx }}
             onUpdate={invalidateLayout}
-            className="absolute right-0 z-[60] flex flex-col items-end pointer-events-none"
+            // 悬浮打开 / 离开关闭：鼠标设备上，悬停按钮或面板打开，移出按钮与面板整体收起（同墙面工具按钮）。
+            onMouseEnter={() => {
+                if (typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches && !isOpen) {
+                    onTogglePanel();
+                }
+            }}
+            onMouseLeave={() => {
+                if (isOpen) {
+                    onTogglePanel();
+                }
+            }}
+            className="absolute right-0 z-[160] flex flex-col items-end pointer-events-none"
             onClick={(e) => e.stopPropagation()}
         >
             <div className="pr-4 md:pr-8">

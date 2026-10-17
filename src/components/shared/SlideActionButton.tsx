@@ -63,7 +63,9 @@ export const SlideActionButton: React.FC<SlideActionButtonProps> = ({
     const motionClass = showGuideLine || isDragging
         ? 'translate-x-0 opacity-100'
         : supportsHover
-            ? 'translate-x-1/2 opacity-60 group-hover:translate-x-0 group-hover:opacity-100 md:translate-x-0 md:opacity-100 md:hover:scale-105'
+            // 玻璃开启时去掉 hover 放大（md:hover:scale-105）：放大会让磨砂区域跟着缩放，
+            // 悬浮与不悬浮的玻璃观感不一致；非玻璃按钮保留放大反馈。
+            ? `translate-x-1/2 opacity-60 group-hover:translate-x-0 group-hover:opacity-100 md:translate-x-0 md:opacity-100${glass ? '' : ' md:hover:scale-105'}`
             : 'translate-x-1/2 opacity-60';
 
     const setDestinationFeedback = (progress: number) => {
@@ -188,7 +190,7 @@ export const SlideActionButton: React.FC<SlideActionButtonProps> = ({
                     if (disabled) return;
                     gestureRef.current = { startX: event.clientX, startY: event.clientY, triggered: false };
                     suppressClickRef.current = false;
-                    setShowGuideLine(false);
+                    // 导轨（框）不随按下消失：鼠标移出按钮（onMouseLeave）时才收起。
                     setIsDragging(true);
                     setDragFeedback(0);
                     event.currentTarget.setPointerCapture?.(event.pointerId);

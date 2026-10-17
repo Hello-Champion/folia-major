@@ -368,6 +368,7 @@ const UnifiedPanel: React.FC<UnifiedPanelProps> = ({
                     isCommandPaletteOpen={isCommandPaletteOpen}
                 />
             )}
+            onTogglePanel={onToggle}
         >
             {currentTab === 'controls' && (
                 <ControlsTab

@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { AnimatePresence, motion, useIsPresent, useTransform, type MotionStyle } from 'framer-motion';
-import { CircleHelp, Command, Layers3, Settings2, X } from 'lucide-react';
+import { CircleHelp, Command, Layers3, Settings2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useLatticeSettingsStore } from '../../stores/useLatticeSettingsStore';
 import { usePlayerChromeSettingsStore } from '../../stores/usePlayerChromeSettingsStore';
@@ -162,8 +162,21 @@ export function WallToolsSurface({ idPrefix, label, isDaylight, destination, ent
     return (
         <motion.div
             ref={rootRef}
+            // 悬浮即打开：鼠标设备上，悬停按钮区域直接打开面板（关闭仍走点外部 / Esc / 点 ×）。
+            onMouseEnter={() => {
+                if (typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches && !isOpen) {
+                    setIsOpen(true);
+                }
+            }}
+            // 鼠标离开按钮与面板（含浮岛）整个区域时收起面板。
+            onMouseLeave={() => {
+                if (isOpen) {
+                    setIsOpen(false);
+                    setShowHelp(false);
+                }
+            }}
             style={{ bottom: bottomPx, '--wall-tools-bottom': bottomVar } as unknown as MotionStyle}
-            className={`lattice-tools group ${above ? 'has-above' : ''} ${isDaylight ? 'is-daylight' : ''} ${globalGlassEnabled ? 'has-glass' : ''}`}
+            className={`lattice-tools group ${isDaylight ? 'is-daylight' : ''} ${globalGlassEnabled ? 'has-glass' : ''}`}
         >
             {/* 面板与队列浮岛叠在按钮上方的一列里（column-reverse：面板在下、浮岛在上）：定位在 stack 上，面板自己不再 absolute。 */}
             <div className={showQueueIsland ? 'lattice-tools-stack has-queue-island' : 'lattice-tools-stack'}>
@@ -180,7 +193,12 @@ export function WallToolsSurface({ idPrefix, label, isDaylight, destination, ent
                             onAnimationComplete={() => setIslandTrailsPanel(false)}
                             className={quick.length > 0 ? 'lattice-tools-panel has-quick-actions' : 'lattice-tools-panel'}
                         >
-                            {quick.length > 0 && <WallToolsQuickRow actions={quick} onDone={close} />}
+                            {/* 定位按钮（above，Lattice / bravais / 集合页的 GridLocateButton）移进面板：与快捷排并排（同一行第一格）。 */}
+                            {quick.length > 0 ? (
+                                <WallToolsQuickRow actions={quick} onDone={close} lead={above} />
+                            ) : above ? (
+                                <div className="flex items-center justify-center pb-1">{above}</div>
+                            ) : null}
                             <WallToolsRow entry={common.volume} onDone={close} />
                             {rows.map(entry => <WallToolsRow key={entry.id} entry={entry} onDone={close} />)}
                             <WallToolsRow entry={tintRow} onDone={close} />
@@ -232,16 +250,16 @@ export function WallToolsSurface({ idPrefix, label, isDaylight, destination, ent
                 </AnimatePresence>
             </div>
 
-            {above}
             <SlideActionButton
-                icon={isOpen ? X : Settings2}
+                icon={Settings2}
                 title={label}
                 onActivate={() => {
-                    setIslandTrailsPanel(!isOpen);
-                    setIsOpen(open => {
-                        if (open) setShowHelp(false);
-                        return !open;
-                    });
+                    // 悬浮打开模式下点击只负责打开：鼠标移出按钮与面板整体 / 点外部 / Esc 才收起，
+                    // 避免面板已经打开后点一下按钮就消失。
+                    if (!isOpen) {
+                        setIslandTrailsPanel(true);
+                        setIsOpen(true);
+                    }
                 }}
                 slideIcon={Command}
                 slideTitle={t('options.gridSlideTargetCommandPalette')}

@@ -105,16 +105,17 @@ const BravaisStageChrome: React.FC<BravaisStageChromeProps> = ({
                 label={t('libraryBravais.tools')}
                 claimed={toolsClaimed}
                 isDaylight={isDaylight}
-                above={locatePlaying ? (
+                // 定位按钮常驻面板（WallToolsButton 渲染在面板顶部）：有正在播放的歌才亮起，没歌时置灰不响应。
+                above={(
                     <GridLocateButton
                         isDaylight={isDaylight}
                         accentColor="var(--text-accent)"
-                        isHere={locatePlaying.isHere}
+                        isHere={locatePlaying?.isHere ?? false}
                         isSeeking={isLocateAsked}
                         title={t('playlist.locatePlaying')}
-                        onLocate={locatePlaying.run}
+                        onLocate={locatePlaying?.run ?? (() => {})}
                     />
-                ) : undefined}
+                )}
                 destination={destination}
                 entries={entries}
                 help={BRAVAIS_HELP_ROWS.map(row => (

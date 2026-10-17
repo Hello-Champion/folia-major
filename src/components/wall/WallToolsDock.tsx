@@ -59,8 +59,7 @@ const WallToolsDock = memo(function WallToolsDock({ claims }: { claims: DockClai
                     <motion.div
                         key="wall-tools"
                         className="absolute inset-0"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
+                        // 挂载即显示，不做淡入（进入墙面视图时按钮直接出现）；没人认领时仍淡出。
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.25, ease: 'easeInOut' }}
                     >
