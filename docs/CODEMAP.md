@@ -63,6 +63,7 @@
 | 32+ | `src/stores/useAppViewStore.ts` |
 | 32+ | `src/stores/useAudioSettingsStore.ts` |
 | 32+ | `src/stores/useOnlineProviderAccountStore.ts` |
+| 32+ | `src/stores/usePlayerChromeSettingsStore.ts` |
 | 32+ | `src/stores/useThemeSettingsStore.ts` |
 | 32+ | `src/stores/useVisualizerSettingsStore.ts` |
 | 32+ | `src/types/localLibrary.ts` |
@@ -129,12 +130,14 @@
 - `dev/probes/ponderHint.probe.tsx`
 - `dev/probes/ponderPageSurfaces.probe.tsx`
 - `dev/probes/remoteActions.probe.tsx`
+- `dev/probes/searchWorkspaceAutoSearch.probe.tsx`
 - `dev/probes/settingsHelpActions.probe.tsx`
 - `dev/probes/settingsNavigation.probe.tsx`
 - `dev/probes/subtitleDualRow.probe.tsx`
 - `dev/probes/themePark.probe.tsx`
 - `dev/probes/trackTitleNavigator.probe.tsx`
 - `dev/probes/visualizerMemory.probe.tsx`
+- `dev/probes/volumeDragNavigation.probe.tsx`
 - `dev/probes/wallToolsIsland.probe.tsx`
 - `dev/probes/wallpaperDisplayRow.probe.tsx`
 - `dev/probes/wallpaperEntryConfirm.probe.tsx`
@@ -307,6 +310,7 @@
 
 - `src/stores/useVisualizerSettingsStore.ts` → `src/components/visualizer/registry.tsx`  —— store 不应依赖组件
 - `src/utils/lyrics/lyricMatchSources.ts` → `src/stores/useOnlineProviderAccountStore.ts`  —— 纯变换不应依赖 UI 或状态
+- `src/utils/playerBarGlass.ts` → `src/stores/usePlayerChromeSettingsStore.ts`  —— 纯变换不应依赖 UI 或状态
 
 ### 目录归属存疑
 
