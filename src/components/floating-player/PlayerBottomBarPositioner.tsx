@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { Check, RotateCcw, X } from 'lucide-react';
 import { usePlayerChromeSettingsStore } from '../../stores/usePlayerChromeSettingsStore';
-import { PLAYER_BAR_GLASS_STYLE } from '../../utils/playerBarGlass';
+import { useBottomBarGlassStyle } from '../../utils/playerBarGlass';
 import { PLAYER_BOTTOM_BAR_BASE_OFFSET_PX } from '../../utils/playerBottomBarLayout';
 
 // src/components/floating-player/PlayerBottomBarPositioner.tsx
@@ -29,12 +29,12 @@ const PlayerBottomBarPositioner: React.FC<PlayerBottomBarPositionerProps> = ({
     onCancel,
 }) => {
     const { t } = useTranslation();
-    // 与底部控制台同族：玻璃开关打开时，定位提示胶囊换用同一套玻璃配方。
-    const bottomBarGlassEnabled = usePlayerChromeSettingsStore(state => state.playerBottomBarGlass);
-    const chipClass = bottomBarGlassEnabled
+    // 与底部控制台同族：玻璃开关打开时，定位提示胶囊换用同一套玻璃配方（底色由内联样式提供）。
+    const bottomBarGlassStyle = useBottomBarGlassStyle(isDaylight);
+    const chipClass = bottomBarGlassStyle
         ? (isDaylight
-            ? 'bg-white/40 border-white/25 text-black'
-            : 'bg-black/10 border-white/10 text-white')
+            ? 'border-white/25 text-black'
+            : 'border-white/10 text-white')
         : (isDaylight
             ? 'bg-white/80 border-black/10 text-black'
             : 'bg-black/60 border-white/15 text-white');
@@ -68,7 +68,7 @@ const PlayerBottomBarPositioner: React.FC<PlayerBottomBarPositionerProps> = ({
             >
                 <div
                     className={`flex items-center gap-3 rounded-full border px-4 py-2 text-sm shadow-xl backdrop-blur-xl ${chipClass}`}
-                    style={bottomBarGlassEnabled ? PLAYER_BAR_GLASS_STYLE : undefined}
+                    style={bottomBarGlassStyle}
                 >
                     <span className="select-none">{t('options.playerBottomBarPositioningHint')}</span>
                     <span className="h-4 w-px opacity-20" style={{ backgroundColor: 'currentColor' }} />

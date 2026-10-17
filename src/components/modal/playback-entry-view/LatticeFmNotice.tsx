@@ -5,8 +5,7 @@ import { Radio, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { usePlaybackEntryViewStore } from '../../../stores/usePlaybackEntryViewStore';
 import { useThemeSettingsStore } from '../../../stores/useThemeSettingsStore';
-import { usePlayerChromeSettingsStore } from '../../../stores/usePlayerChromeSettingsStore';
-import { PLAYER_BAR_GLASS_STYLE } from '../../../utils/playerBarGlass';
+import { useGlobalGlassStyle } from '../../../utils/playerBarGlass';
 
 // src/components/modal/playback-entry-view/LatticeFmNotice.tsx
 // Explains why Personal FM opened the standard player instead of Lattice.
@@ -23,8 +22,8 @@ export const LatticeFmNotice: React.FC = () => {
     const token = usePlaybackEntryViewStore(state => state.latticeFmNoticeToken);
     const dismiss = usePlaybackEntryViewStore(state => state.dismissLatticeFmNotice);
     const isDaylight = useThemeSettingsStore(state => state.isDaylight);
-    // 与底部控制台同族：玻璃开关打开时提示卡换用同一套 Mineradio 配方。
-    const bottomBarGlassEnabled = usePlayerChromeSettingsStore(state => state.playerBottomBarGlass);
+    // 全局玻璃：开关打开时提示卡换用同一套 Mineradio 配方（底色由内联样式提供）。
+    const globalGlassStyle = useGlobalGlassStyle(isDaylight);
 
     // Keyed on the token rather than on a boolean, so raising the notice again while it is still
     // on screen restarts the countdown instead of inheriting the tail of the previous one.
@@ -44,15 +43,15 @@ export const LatticeFmNotice: React.FC = () => {
                     exit={{ opacity: 0, y: 60, x: '-50%' }}
                     transition={{ type: 'spring', bounce: 0, duration: 0.45 }}
                     className={`fixed top-0 left-1/2 z-[205] flex max-w-[min(92vw,26rem)] items-start gap-3 rounded-2xl px-5 py-3.5 shadow-xl backdrop-blur-md ${
-                        bottomBarGlassEnabled
+                        globalGlassStyle
                             ? (isDaylight
-                                ? 'border border-white/25 bg-white/40 text-zinc-800'
-                                : 'border border-white/10 bg-black/10 text-white')
+                                ? 'border border-white/25 text-zinc-800'
+                                : 'border border-white/10 text-white')
                             : (isDaylight
                                 ? 'border border-black/5 bg-white/80 text-zinc-800'
                                 : 'border border-white/10 bg-white/10 text-white')
                     }`}
-                    style={bottomBarGlassEnabled ? PLAYER_BAR_GLASS_STYLE : undefined}
+                    style={globalGlassStyle}
                 >
                     <Radio size={18} className={`mt-0.5 shrink-0 ${isDaylight ? 'text-amber-600' : 'text-amber-300'}`} />
                     <span className="text-sm leading-relaxed">{t('status.latticeFmOpenedInPlayer')}</span>

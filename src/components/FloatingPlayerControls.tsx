@@ -14,7 +14,7 @@ import { usePlayerBottomBarBottomPx } from '../hooks/usePlayerBottomBarBottomPx'
 import { playerBottomBarLiveOffset } from '../stores/motionSignals';
 import { usePlayerBottomBarLayoutStore } from '../stores/usePlayerBottomBarLayoutStore';
 import { usePlayerChromeSettingsStore } from '../stores/usePlayerChromeSettingsStore';
-import { PLAYER_BAR_GLASS_STYLE } from '../utils/playerBarGlass';
+import { buildGlassStyle } from '../utils/playerBarGlass';
 import { PLAYER_BOTTOM_BAR_BASE_OFFSET_PX, clampPlayerBottomBarOffset, resolvePlayerBottomBarMaxOffset } from '../utils/playerBottomBarLayout';
 import type { PlayerControlSlotActionId, PlayerControlSlotContext } from './floating-player/playerControlSlotActions';
 
@@ -133,15 +133,22 @@ const FloatingPlayerControls: React.FC<FloatingPlayerControlsProps> = ({
     const glassBgCollapsed = isDaylight ? 'bg-white/40 border border-white/20 shadow-lg hover:bg-white/50' : 'bg-black/20 border border-white/5 hover:bg-black/30';
     // 玻璃开关（设置「底部控制条玻璃效果」）：开启后换用更通透的底色，backdrop-filter 与
     // box-shadow 由下方内联样式覆盖 Tailwind 的 backdrop-blur-xl / shadow-2xl，复刻 Mineradio
-    // 的 blur(12px) saturate(1.8) brightness(1.16) + 白色内发光描边。
+    // 的 blur(12px) saturate(1.8) brightness(1.16) + 白色内发光描边；磨砂/透明度/高亮可在设置里调。
     const bottomBarGlassEnabled = usePlayerChromeSettingsStore(state => state.playerBottomBarGlass);
+    const playerBottomBarGlassBlur = usePlayerChromeSettingsStore(state => state.playerBottomBarGlassBlur);
+    const playerBottomBarGlassOpacity = usePlayerChromeSettingsStore(state => state.playerBottomBarGlassOpacity);
+    const playerBottomBarGlassBrightness = usePlayerChromeSettingsStore(state => state.playerBottomBarGlassBrightness);
+    const playerBottomBarGlassSaturate = usePlayerChromeSettingsStore(state => state.playerBottomBarGlassSaturate);
+    const playerBottomBarGlassGlow = usePlayerChromeSettingsStore(state => state.playerBottomBarGlassGlow);
     const bottomBarBgExpanded = bottomBarGlassEnabled
-        ? (isDaylight ? 'bg-white/40 border border-white/25' : 'bg-black/10 border border-white/10')
+        ? (isDaylight ? 'border border-white/25' : 'border border-white/10')
         : glassBgExpanded;
     const bottomBarBgCollapsed = bottomBarGlassEnabled
-        ? (isDaylight ? 'bg-white/30 border border-white/20 hover:bg-white/45' : 'bg-black/10 border border-white/10 hover:bg-black/20')
+        ? (isDaylight ? 'border border-white/20' : 'border border-white/10')
         : glassBgCollapsed;
-    const bottomBarGlassStyle = bottomBarGlassEnabled ? PLAYER_BAR_GLASS_STYLE : undefined;
+    const bottomBarGlassStyle = bottomBarGlassEnabled
+        ? buildGlassStyle({ blurPx: playerBottomBarGlassBlur, opacityPercent: playerBottomBarGlassOpacity, brightness: playerBottomBarGlassBrightness, saturate: playerBottomBarGlassSaturate, glow: playerBottomBarGlassGlow }, isDaylight)
+        : undefined;
     const trackColor = isDaylight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.1)';
     // Button bg logic
     const buttonBg = isDaylight ? { backgroundColor: primaryColor, color: 'var(--bg-color)' } : { backgroundColor: primaryColor, color: 'var(--bg-color)' }; // Keep primary for play button, looks good

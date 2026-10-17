@@ -318,7 +318,7 @@ const RemoteControlApp: React.FC = () => {
     const exportState = snapshot.exportState ?? idleVideoExportState();
     const isDaylight = Boolean(snapshot.isDaylight);
 
-    const baseColor = isDaylight ? 'rgba(0, 0, 0, 0.35)' : 'rgba(255, 255, 255, 0.35)';
+    const baseColor = isDaylight ? 'rgba(0, 0, 0, 0.35)' : 'rgba(255, 255, 255, 0.16)';
     const activeColor = isDaylight ? '#1c1917' : '#ffffff';
 
     // Ghost icon buttons: no resting chip, background only on hover. The filled

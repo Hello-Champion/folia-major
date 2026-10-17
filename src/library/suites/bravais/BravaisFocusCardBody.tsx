@@ -68,8 +68,8 @@ const BravaisFocusCardBody: React.FC<BravaisFocusCardBodyProps> = ({ slotKey, it
         ? t(isPlaying ? 'libraryBravais.pausePlayback' : 'libraryBravais.resumePlayback')
         : t('libraryBravais.playNow');
     const enterLabel = t(entersLattice ? 'libraryBravais.enterLattice' : 'libraryBravais.enterPlayer');
-    // 聚焦卡的「⋯ 更多」菜单与底部控制台同族：玻璃开关打开时挂 has-glass 换 Mineradio 配方。
-    const bottomBarGlassEnabled = usePlayerChromeSettingsStore(state => state.playerBottomBarGlass);
+    // 聚焦卡的「⋯ 更多」菜单与底部控制台同族：全局玻璃开关打开时挂 has-glass 换 Mineradio 配方。
+    const globalGlassEnabled = usePlayerChromeSettingsStore(state => state.globalGlassEnabled);
     return (
         <>
         {menu.length > 0 && (
@@ -86,7 +86,7 @@ const BravaisFocusCardBody: React.FC<BravaisFocusCardBodyProps> = ({ slotKey, it
                     <MoreHorizontal aria-hidden />
                 </button>
                 {isMenuOpen && (
-                    <span className={`bravais-focus-menu${bottomBarGlassEnabled ? ' has-glass' : ''}`} role="menu" data-bravais-focus-menu={item.key}>
+                    <span className={`bravais-focus-menu${globalGlassEnabled ? ' has-glass' : ''}`} role="menu" data-bravais-focus-menu={item.key}>
                         {menu.map(entry => (
                             <button
                                 key={entry.id}

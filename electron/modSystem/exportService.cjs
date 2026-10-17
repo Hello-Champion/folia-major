@@ -145,7 +145,7 @@ const createExportService = ({ app, BrowserWindow, resolveFfmpeg, getModClients 
 
     const getModExportPageUrl = () => {
         if (isElectronDevRuntime()) {
-            return new URL('http://localhost:3000/mod-export.html').toString();
+            return new URL('http://localhost:5173/mod-export.html').toString();
         }
         return path.join(__dirname, '../../dist/mod-export.html');
     };

@@ -15,8 +15,8 @@ import BravaisSeamCrumbs from './BravaisSeamCrumbs';
 const BravaisSeamSearch: React.FC<{ layer: BravaisLayer }> = ({ layer }) => {
     const inputRef = useRef<HTMLInputElement>(null);
     const search = layer.seam.home?.search;
-    // 全局搜索框与底部控制台同族：玻璃开关打开时挂 has-glass，CSS 换 Mineradio 配方。
-    const bottomBarGlassEnabled = usePlayerChromeSettingsStore(state => state.playerBottomBarGlass);
+    // 全局搜索框与底部控制台同族：全局玻璃开关打开时挂 has-glass，CSS 换 Mineradio 配方。
+    const globalGlassEnabled = usePlayerChromeSettingsStore(state => state.globalGlassEnabled);
     useEffect(() => {
         inputRef.current?.focus({ preventScroll: true });
     }, []);
@@ -36,7 +36,7 @@ const BravaisSeamSearch: React.FC<{ layer: BravaisLayer }> = ({ layer }) => {
         close();
     };
     return (
-        <div className={`bravais-seam-search${bottomBarGlassEnabled ? ' has-glass' : ''}`} data-bravais-search data-bravais-input-kind="search">
+        <div className={`bravais-seam-search${globalGlassEnabled ? ' has-glass' : ''}`} data-bravais-search data-bravais-input-kind="search">
             <div className="bravais-seam-crumbs">
                 <BravaisSeamCrumbs layer={layer} panelLabel={search.title} onClosePanel={close} />
                 <button type="button" className="bravais-seam-level" data-bravais-seam-action="close-search" onClick={close}>

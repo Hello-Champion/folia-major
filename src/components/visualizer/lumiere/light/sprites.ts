@@ -77,7 +77,7 @@ const drawBokeh = (size: number) => {
     const { canvas, context } = canvasOf(size, size);
     const r = size / 2;
     const gradient = context.createRadialGradient(r, r, 0, r, r, r * 0.96);
-    gradient.addColorStop(0, 'rgba(255,255,255,0.35)');
+    gradient.addColorStop(0, 'rgba(255,255,255,0.16)');
     gradient.addColorStop(0.78, 'rgba(255,255,255,0.42)');
     gradient.addColorStop(0.9, 'rgba(255,255,255,0.75)');
     gradient.addColorStop(1, 'rgba(255,255,255,0)');

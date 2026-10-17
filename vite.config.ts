@@ -251,7 +251,9 @@ export default async function viteConfig(_config: ConfigEnv): Promise<UserConfig
       },
     },
     server: {
-      port: 3000,
+      // 5173（Vite 默认）而非 3000：Mineradio 桌面版会占 3000 端口，Windows 下 localhost 优先命中它，
+      // 导致 Electron dev 窗口加载到 Mineradio 页面（开屏卡住的根因之一）。
+      port: 5173,
       host: '0.0.0.0',
       watch: {
         // Build output and model weights are not sources, and watching them breaks packaging: the
@@ -271,7 +273,10 @@ export default async function viteConfig(_config: ConfigEnv): Promise<UserConfig
         registerType: 'autoUpdate',
         includeAssets: ['icon.svg'],
         devOptions: {
-          enabled: true
+          // Electron dev 加载 localhost 页面时会注册 dev SW：SW 把 index.html 打进 precache 并拦截 `/`
+          // 导航（缓存命中不回源），dev server 重启或尚未 ready 的间隙会用旧缓存兜底，模块请求全部 404，
+          // 页面就永远卡在首屏开屏。SW 是 Web/PWA 部署的能力，桌面 Electron 用不到，只在纯浏览器 dev 下保留。
+          enabled: process.env.ELECTRON_DEV !== 'true' && process.env.ELECTRON !== 'true',
         },
         workbox: {
           maximumFileSizeToCacheInBytes: 5000000,

@@ -4129,7 +4129,7 @@ function isElectronDevRuntime() {
 
 function loadAppEntry(win, query = {}) {
   if (isElectronDevRuntime()) {
-    const url = new URL('http://localhost:3000');
+    const url = new URL('http://localhost:5173');
     Object.entries(query).forEach(([key, value]) => {
       url.searchParams.set(key, String(value));
     });
@@ -4285,7 +4285,7 @@ async function handleObsBrowserSourceHttpRequest(req, res) {
     }
 
     if (isElectronDevRuntime()) {
-      const devUrl = new URL('http://localhost:3000');
+      const devUrl = new URL('http://localhost:5173');
       devUrl.searchParams.set('obs', '1');
       devUrl.searchParams.set('token', requestUrl.searchParams.get('token') || '');
       devUrl.searchParams.set('obsPort', String(getConfiguredObsBrowserSourcePort()));

@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import type { LucideIcon } from 'lucide-react';
-import { PLAYER_BAR_GLASS_STYLE } from '../../utils/playerBarGlass';
+import { useGlobalGlassStyle } from '../../utils/playerBarGlass';
 
 // src/components/shared/SlideActionButton.tsx
 // The player-style round action button with a second action on a leftward slide: tap the button for
@@ -32,6 +32,8 @@ export interface SlideActionButtonProps {
     disabled?: boolean;
     /** 玻璃开关开启时（墙面工具按钮）：按钮换用更通透的底色与内发光描边。 */
     glass?: boolean;
+    /** 悬浮旋转动画（Mineradio fx-fab 同款）：hover 时图标旋转 45°，0.38s 弹性曲线。 */
+    spinOnHover?: boolean;
 }
 
 export const SlideActionButton: React.FC<SlideActionButtonProps> = ({
@@ -46,9 +48,12 @@ export const SlideActionButton: React.FC<SlideActionButtonProps> = ({
     accentForeground = '#ffffff',
     disabled = false,
     glass = false,
+    spinOnHover = false,
 }) => {
     const [showGuideLine, setShowGuideLine] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
+    // 玻璃开关开启时（墙面工具按钮）：按钮换用全局玻璃配方（磨砂/透明度/高亮在设置里调）。
+    const globalGlassStyle = useGlobalGlassStyle(isDaylight);
     const gestureRef = useRef<{ startX: number; startY: number; triggered: boolean } | null>(null);
     const suppressClickRef = useRef(false);
     const buttonRef = useRef<HTMLButtonElement>(null);
@@ -215,12 +220,21 @@ export const SlideActionButton: React.FC<SlideActionButtonProps> = ({
                     }
                     onActivate();
                 }}
-                style={{ touchAction: 'none', ...(glass ? PLAYER_BAR_GLASS_STYLE : undefined) }}
-                className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg backdrop-blur-md transform border-none absolute right-0 top-0 z-10 disabled:opacity-40 disabled:cursor-default ${isDaylight ? (glass ? 'bg-white/40 text-zinc-900' : 'bg-white/70 text-zinc-900') : (glass ? 'bg-black/10 text-white' : 'bg-black/40 text-white')}`}
+                style={{ touchAction: 'none', ...(glass ? globalGlassStyle : undefined) }}
+                className={`group/act w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg backdrop-blur-md transform border-none absolute right-0 top-0 z-10 disabled:opacity-40 disabled:cursor-default ${isDaylight ? (glass ? 'text-zinc-900' : 'bg-white/70 text-zinc-900') : (glass ? 'text-white' : 'bg-black/40 text-white')}`}
                 title={title}
                 aria-label={title}
             >
-                <Icon size={20} />
+                {/* spinOnHover：悬浮时图标旋转 90°（Mineradio 右下角 fx-fab 的 hover 动画，弹性曲线同款）。 */}
+                <span
+                    className={`block ${
+                        spinOnHover
+                            ? 'transition-transform duration-[380ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover/act:rotate-90'
+                            : ''
+                    }`}
+                >
+                    <Icon size={20} />
+                </span>
             </button>
         </div>
     );

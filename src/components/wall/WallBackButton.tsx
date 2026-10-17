@@ -50,9 +50,9 @@ type WallBackButtonProps = {
 
 export default function WallBackButton({ label, onBack, concealed = false }: WallBackButtonProps) {
     const revealed = useCornerReveal(concealed);
-    // 与播放页返回按钮同族：玻璃开关打开时挂 has-glass，CSS 换 Mineradio 配方。
-    const bottomBarGlassEnabled = usePlayerChromeSettingsStore(state => state.playerBottomBarGlass);
-    const className = `${concealed ? `lattice-back is-concealed${revealed ? ' is-revealed' : ''}` : 'lattice-back'}${bottomBarGlassEnabled ? ' has-glass' : ''}`;
+    // 与播放页返回按钮同族：全局玻璃开关打开时挂 has-glass，CSS 换 Mineradio 配方。
+    const globalGlassEnabled = usePlayerChromeSettingsStore(state => state.globalGlassEnabled);
+    const className = `${concealed ? `lattice-back is-concealed${revealed ? ' is-revealed' : ''}` : 'lattice-back'}${globalGlassEnabled ? ' has-glass' : ''}`;
     return (
         <button type="button" className={className} onClick={onBack} aria-label={label} title={label}>
             <ChevronLeft size={20} />

@@ -101,7 +101,7 @@
         height: 100%;
         transform: scaleY(var(--floor, 0.18));
         background-color: rgba(255, 255, 255, var(--alpha, 0.85));
-        box-shadow: 0 0 var(--glow, 14px) rgba(255, 255, 255, 0.35);
+        box-shadow: 0 0 var(--glow, 14px) rgba(255, 255, 255, 0.16);
         animation: app-splash-wave 1100ms ease-in-out infinite;
       }
 
@@ -248,11 +248,11 @@
           var randomGlow = function () {
             var roll = Math.random();
             if (roll < 0.3) {
-              return '0 0 ' + (2 + Math.random() * 4).toFixed(1) + 'px rgba(255,255,255,0.35)';
+              return '0 0 ' + (2 + Math.random() * 4).toFixed(1) + 'px rgba(255,255,255,0.16)';
             }
             if (roll < 0.75) {
               return '0 0 ' + (6 + Math.random() * 8).toFixed(1) + 'px rgba(255,255,255,0.7), 0 0 ' +
-                (20 + Math.random() * 16).toFixed(1) + 'px rgba(255,255,255,0.35)';
+                (20 + Math.random() * 16).toFixed(1) + 'px rgba(255,255,255,0.16)';
             }
             return '0 0 ' + (10 + Math.random() * 8).toFixed(1) + 'px rgba(255,255,255,0.95), 0 0 ' +
               (34 + Math.random() * 20).toFixed(1) + 'px rgba(255,255,255,0.7), 0 0 ' +

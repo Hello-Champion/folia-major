@@ -98,7 +98,7 @@ const QuickEffectPicker = <Value extends string>({
                             className="visualizer-overlay-scrollbar max-h-[11.25rem] overflow-y-auto px-1.5 py-1.5 pr-1.5"
                             style={{
                                 ['--scrollbar-thumb-color' as string]: isDaylight ? 'rgba(0, 0, 0, 0.16)' : 'rgba(255, 255, 255, 0.22)',
-                                ['--scrollbar-thumb-hover-color' as string]: isDaylight ? 'rgba(0, 0, 0, 0.28)' : 'rgba(255, 255, 255, 0.35)',
+                                ['--scrollbar-thumb-hover-color' as string]: isDaylight ? 'rgba(0, 0, 0, 0.28)' : 'rgba(255, 255, 255, 0.16)',
                             }}
                             role="listbox"
                             aria-label={ariaLabel}

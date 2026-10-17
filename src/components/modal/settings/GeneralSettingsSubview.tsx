@@ -11,6 +11,7 @@ import PlaybackEntryViewSection from './PlaybackEntryViewSection';
 import LibrarySuiteSection from './LibrarySuiteSection';
 import BravaisSettingsSection from './BravaisSettingsSection';
 import PlayerBottomBarSection from './PlayerBottomBarSection';
+import GlobalGlassSettingsSection from './GlobalGlassSettingsSection';
 import HomeCardPositionSection from './HomeCardPositionSection';
 import { SettingsAnchor } from './navigation/SettingsAnchorContext';
 import SettingsSectionHeading from './navigation/SettingsSectionHeading';
@@ -119,6 +120,17 @@ const GeneralSettingsSubview: React.FC<GeneralSettingsSubviewProps> = ({
                         </div>
                     )}
                 </div>
+            </SettingsAnchor>
+
+            {/* 全局玻璃：独立于底部控制条的玻璃开关与磨砂/透明度/高亮/饱和滑杆，放在语言设置下面。 */}
+            <SettingsAnchor anchorId="globalGlassSettings" label={t('options.globalGlass')}>
+                <SettingsSectionHeading icon={Move} label={t('options.globalGlass')} />
+                <GlobalGlassSettingsSection
+                    settingsCardClass={settingsCardClass}
+                    rangeInputClass={rangeInputClass}
+                    isDaylight={isDaylight}
+                    theme={theme}
+                />
             </SettingsAnchor>
 
             <SettingsAnchor anchorId="homeTabsVisibility" label={t('options.homeTabsVisibility')}>

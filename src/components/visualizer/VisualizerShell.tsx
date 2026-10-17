@@ -10,8 +10,7 @@ import { getSizedCoverUrl } from '../../utils/coverUrl';
 import { FoliumStageLayerSlot } from '../../mods/folium/registries/stageLayers';
 import VideoLayer from './videoLayer/VideoLayer';
 import { isMainAppSurface } from '../../utils/appSurface';
-import { usePlayerChromeSettingsStore } from '../../stores/usePlayerChromeSettingsStore';
-import { PLAYER_BAR_GLASS_STYLE } from '../../utils/playerBarGlass';
+import { useGlobalGlassStyle } from '../../utils/playerBarGlass';
 
 // Shared outer shell for all visualizers.
 // This is where we keep background layering, font injection, and the hover-only back button
@@ -65,12 +64,12 @@ const VisualizerShell = forwardRef<HTMLDivElement, VisualizerShellProps>(({
 }, ref) => {
     const { t } = useTranslation();
     const [showBackButton, setShowBackButton] = useState(false);
-    // 左上角返回按钮与底部控制台同族：玻璃开关打开时换用同一套 Mineradio 玻璃配方。
-    const bottomBarGlassEnabled = usePlayerChromeSettingsStore(state => state.playerBottomBarGlass);
+    // 左上角返回按钮与底部控制台同族：全局玻璃开关打开时换用同一套 Mineradio 玻璃配方。
+    const resolvedIsDaylight = sharedProps?.isDaylight ?? false;
+    const globalGlassStyle = useGlobalGlassStyle(resolvedIsDaylight);
     const playerPanelGuideHotspotRef = useRef(false);
     const touchGuideHideTimeoutRef = useRef<number | null>(null);
     const resolvedCoverUrl = getSizedCoverUrl(sharedProps?.coverUrl, 1024) || undefined;
-    const resolvedIsDaylight = sharedProps?.isDaylight ?? false;
     const resolvedVisualizerOpacity = sharedProps?.visualizerOpacity ?? visualizerOpacity;
     const resolvedStaticMode = sharedProps?.staticMode ?? false;
     const resolvedBackgroundStaticMode = sharedProps?.backgroundStaticMode ?? false;
@@ -180,11 +179,11 @@ const VisualizerShell = forwardRef<HTMLDivElement, VisualizerShellProps>(({
                         resolvedOnBack();
                     }}
                     className={`absolute top-[42px] left-6 z-30 h-10 w-10 rounded-full flex items-center justify-center transition-colors backdrop-blur-md text-white/60 pointer-events-auto ${
-                        bottomBarGlassEnabled ? 'bg-black/10 hover:bg-black/25' : 'bg-black/20 hover:bg-white/10'
+                        globalGlassStyle ? '' : 'bg-black/20 hover:bg-white/10'
                     }`}
                     style={{
                         pointerEvents: isBackButtonVisible ? 'auto' : 'none',
-                        ...(bottomBarGlassEnabled ? PLAYER_BAR_GLASS_STYLE : undefined),
+                        ...globalGlassStyle,
                     }}
                 >
                     <ChevronLeft size={20} />

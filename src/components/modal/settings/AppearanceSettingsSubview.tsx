@@ -136,6 +136,11 @@ const AppearanceSettingsSubview: React.FC<AppearanceSettingsSubviewProps> = ({
     customTheme,
 }) => {
     const { t } = useTranslation();
+    // 玻璃调节滑块用与通用设置一致的 range 类。
+    const rangeInputClass = [
+        'w-full accent-current',
+        isDaylight ? 'text-zinc-900' : 'text-white',
+    ].join(' ');
     // OBS static URL points to this web deploy, so the copy button is web-only (no shareable URL under Electron).
     // The link follows the selected web stage source (Now Playing / PlayerCap); disabled when none is on.
     const isElectron = typeof window !== 'undefined' && Boolean((window as { electron?: unknown }).electron);

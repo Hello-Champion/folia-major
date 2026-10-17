@@ -86,7 +86,7 @@ export function WallToolsSurface({ idPrefix, label, isDaylight, locate, destinat
     }
     const rootRef = useRef<HTMLDivElement>(null);
     // 玻璃开关：打开时面板、队列浮岛与触发按钮都换用 Mineradio 风格玻璃（has-glass 类驱动 CSS）。
-    const bottomBarGlassEnabled = usePlayerChromeSettingsStore(state => state.playerBottomBarGlass);
+    const globalGlassEnabled = usePlayerChromeSettingsStore(state => state.globalGlassEnabled);
     const lightsOn = useLatticeSettingsStore(state => state.latticeLightsOn);
     const handleToggleLatticeLights = useLatticeSettingsStore(state => state.handleToggleLatticeLights);
     const tintEnabled = useLatticeSettingsStore(state => state.latticePosterTintEnabled);
@@ -160,7 +160,7 @@ export function WallToolsSurface({ idPrefix, label, isDaylight, locate, destinat
         <motion.div
             ref={rootRef}
             style={{ bottom: bottomPx, '--wall-tools-bottom': bottomVar } as unknown as MotionStyle}
-            className={`lattice-tools group ${isDaylight ? 'is-daylight' : ''} ${bottomBarGlassEnabled ? 'has-glass' : ''}`}
+            className={`lattice-tools group ${isDaylight ? 'is-daylight' : ''} ${globalGlassEnabled ? 'has-glass' : ''}`}
         >
             {/* 面板与队列浮岛叠在按钮上方的一列里（column-reverse：面板在下、浮岛在上）：定位在 stack 上，面板自己不再 absolute。 */}
             <div className={showQueueIsland ? 'lattice-tools-stack has-queue-island' : 'lattice-tools-stack'}>
@@ -245,7 +245,8 @@ export function WallToolsSurface({ idPrefix, label, isDaylight, locate, destinat
                 isDaylight={isDaylight}
                 accentColor="var(--text-accent)"
                 accentForeground="var(--text-on-accent, #ffffff)"
-                glass={bottomBarGlassEnabled}
+                glass={globalGlassEnabled}
+                spinOnHover
             />
         </motion.div>
     );

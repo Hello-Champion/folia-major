@@ -10,6 +10,7 @@ import { usePlayerChromeSettingsStore } from '../../../stores/usePlayerChromeSet
 import { usePlayerBottomBarLayoutStore } from '../../../stores/usePlayerBottomBarLayoutStore';
 import { PLAYER_BOTTOM_BAR_BASE_OFFSET_PX, resolvePlayerBottomBarMaxOffset } from '../../../utils/playerBottomBarLayout';
 import { PLAYER_CONTROL_SLOT_OPTIONS, type PlayerControlSlotActionId } from '../../floating-player/playerControlSlotActions';
+import GlassAdjustSection from './GlassAdjustSection';
 
 // src/components/modal/settings/PlayerBottomBarSection.tsx
 // 播放页底部基线的高度，以及进度条右侧两个按钮槽位。挂在「界面设置」的底部界面分区里。
@@ -44,6 +45,17 @@ const PlayerBottomBarSection: React.FC<PlayerBottomBarSectionProps> = ({
         handleSetVolumeButtonLayout,
         playerBottomBarGlass,
         handleTogglePlayerBottomBarGlass,
+        playerBottomBarGlassBlur,
+        playerBottomBarGlassOpacity,
+        playerBottomBarGlassBrightness,
+        playerBottomBarGlassSaturate,
+        playerBottomBarGlassGlow,
+        handleSetPlayerBottomBarGlassBlur,
+        handleSetPlayerBottomBarGlassOpacity,
+        handleSetPlayerBottomBarGlassBrightness,
+        handleSetPlayerBottomBarGlassSaturate,
+        handleSetPlayerBottomBarGlassGlow,
+        handleResetPlayerBottomBarGlass,
     } = usePlayerChromeSettingsStore(useShallow(state => ({
         playerBottomBarOffset: state.playerBottomBarOffset,
         playerControlSlotPrimary: state.playerControlSlotPrimary,
@@ -57,6 +69,17 @@ const PlayerBottomBarSection: React.FC<PlayerBottomBarSectionProps> = ({
         handleSetVolumeButtonLayout: state.handleSetVolumeButtonLayout,
         playerBottomBarGlass: state.playerBottomBarGlass,
         handleTogglePlayerBottomBarGlass: state.handleTogglePlayerBottomBarGlass,
+        playerBottomBarGlassBlur: state.playerBottomBarGlassBlur,
+        playerBottomBarGlassOpacity: state.playerBottomBarGlassOpacity,
+        playerBottomBarGlassBrightness: state.playerBottomBarGlassBrightness,
+        playerBottomBarGlassSaturate: state.playerBottomBarGlassSaturate,
+        playerBottomBarGlassGlow: state.playerBottomBarGlassGlow,
+        handleSetPlayerBottomBarGlassBlur: state.handleSetPlayerBottomBarGlassBlur,
+        handleSetPlayerBottomBarGlassOpacity: state.handleSetPlayerBottomBarGlassOpacity,
+        handleSetPlayerBottomBarGlassBrightness: state.handleSetPlayerBottomBarGlassBrightness,
+        handleSetPlayerBottomBarGlassSaturate: state.handleSetPlayerBottomBarGlassSaturate,
+        handleSetPlayerBottomBarGlassGlow: state.handleSetPlayerBottomBarGlassGlow,
+        handleResetPlayerBottomBarGlass: state.handleResetPlayerBottomBarGlass,
     })));
     const currentSong = usePlaybackStore(state => state.currentSong);
     const requestPositioning = usePlayerBottomBarLayoutStore(state => state.requestPositioning);
@@ -196,6 +219,24 @@ const PlayerBottomBarSection: React.FC<PlayerBottomBarSectionProps> = ({
                         <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${playerBottomBarGlass ? 'translate-x-6' : 'translate-x-0'}`} />
                     </button>
                 </div>
+
+                {playerBottomBarGlass && (
+                    <GlassAdjustSection
+                        blur={playerBottomBarGlassBlur}
+                        opacity={playerBottomBarGlassOpacity}
+                        brightness={playerBottomBarGlassBrightness}
+                        saturate={playerBottomBarGlassSaturate}
+                        glow={playerBottomBarGlassGlow}
+                        onBlurChange={handleSetPlayerBottomBarGlassBlur}
+                        onOpacityChange={handleSetPlayerBottomBarGlassOpacity}
+                        onBrightnessChange={handleSetPlayerBottomBarGlassBrightness}
+                        onSaturateChange={handleSetPlayerBottomBarGlassSaturate}
+                        onGlowChange={handleSetPlayerBottomBarGlassGlow}
+                        onReset={handleResetPlayerBottomBarGlass}
+                        rangeInputClass={rangeInputClass}
+                        isDaylight={isDaylight}
+                    />
+                )}
             </div>
 
             <div className={`p-4 rounded-xl border space-y-3 ${settingsCardClass}`}>

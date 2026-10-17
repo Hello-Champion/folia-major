@@ -5,7 +5,7 @@ import { Volume1, Volume2, VolumeX } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAudioSettingsStore } from '../../stores/useAudioSettingsStore';
 import { usePlayerChromeSettingsStore, type PlayerVolumeButtonLayout } from '../../stores/usePlayerChromeSettingsStore';
-import { PLAYER_BAR_GLASS_STYLE } from '../../utils/playerBarGlass';
+import { useBottomBarGlassStyle } from '../../utils/playerBarGlass';
 import PlayerBarVolumeSlider from './PlayerBarVolumeSlider';
 
 // src/components/floating-player/PlayerBarVolumeControl.tsx
@@ -51,7 +51,7 @@ const PlayerBarVolumeControl: React.FC<PlayerBarVolumeControlProps> = ({
     const volume = useAudioSettingsStore(state => state.volume);
     const isMuted = useAudioSettingsStore(state => state.isMuted);
     // 与底部控制台同族：玻璃开关打开时，竖向音量弹层换用同一套 Mineradio 玻璃配方。
-    const bottomBarGlassEnabled = usePlayerChromeSettingsStore(state => state.playerBottomBarGlass);
+    const bottomBarGlassStyle = useBottomBarGlassStyle(isDaylight);
     const [open, setOpen] = useState(false);
     const buttonRef = useRef<HTMLButtonElement>(null);
     const popoverRef = useRef<HTMLDivElement>(null);
@@ -170,9 +170,8 @@ const PlayerBarVolumeControl: React.FC<PlayerBarVolumeControlProps> = ({
                     style={{
                         transform: 'translateX(-50%)',
                         // 背景颜色/透明度对齐底部控制台展开态（bg-black/40 / bg-white/60），别太黑。
-                        ...(bottomBarGlassEnabled ? {
-                            ...PLAYER_BAR_GLASS_STYLE,
-                            backgroundColor: isDaylight ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.1)',
+                        ...(bottomBarGlassStyle ? {
+                            ...bottomBarGlassStyle,
                             borderColor: isDaylight ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.1)',
                         } : {
                             backgroundColor: isDaylight ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.4)',
