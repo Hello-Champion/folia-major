@@ -32,8 +32,13 @@ export interface SlideActionButtonProps {
     disabled?: boolean;
     /** 玻璃开关开启时（墙面工具按钮）：按钮换用更通透的底色与内发光描边。 */
     glass?: boolean;
-    /** 悬浮旋转动画（Mineradio fx-fab 同款）：hover 时图标旋转 45°，0.38s 弹性曲线。 */
+    /** 悬浮旋转动画（Mineradio fx-fab 同款）：hover 时图标旋转 90°，0.38s 弹性曲线。 */
     spinOnHover?: boolean;
+    /**
+     * spinOnHover 开着时，为 true 让图标保持旋转位（不随 hover 离开转回去）：墙面工具按钮在面板打开时用——
+     * 鼠标从按钮移进面板，图标停在旋转位；面板收起才转回。
+     */
+    spinPersist?: boolean;
 }
 
 export const SlideActionButton: React.FC<SlideActionButtonProps> = ({
@@ -49,6 +54,7 @@ export const SlideActionButton: React.FC<SlideActionButtonProps> = ({
     disabled = false,
     glass = false,
     spinOnHover = false,
+    spinPersist = false,
 }) => {
     const [showGuideLine, setShowGuideLine] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
@@ -227,11 +233,12 @@ export const SlideActionButton: React.FC<SlideActionButtonProps> = ({
                 title={title}
                 aria-label={title}
             >
-                {/* spinOnHover：悬浮时图标旋转 90°（Mineradio 右下角 fx-fab 的 hover 动画，弹性曲线同款）。 */}
+                {/* spinOnHover：悬浮时图标旋转 90°（Mineradio 右下角 fx-fab 的 hover 动画，弹性曲线同款）；
+                    spinPersist：开着时图标停在旋转位，不随 hover 离开转回（面板打开期间保持）。 */}
                 <span
                     className={`block ${
                         spinOnHover
-                            ? 'transition-transform duration-[380ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover/act:rotate-90'
+                            ? `transition-transform duration-[380ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover/act:rotate-90${spinPersist ? ' rotate-90' : ''}`
                             : ''
                     }`}
                 >

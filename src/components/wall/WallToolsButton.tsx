@@ -269,6 +269,8 @@ export function WallToolsSurface({ idPrefix, label, isDaylight, destination, ent
                 accentForeground="var(--text-on-accent, #ffffff)"
                 glass={globalGlassEnabled}
                 spinOnHover
+                // 面板打开（进入面板）期间图标停在旋转位，不随鼠标离开按钮转回；面板收起才转回。
+                spinPersist={isOpen}
             />
         </motion.div>
     );

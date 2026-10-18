@@ -157,6 +157,9 @@ const PanelShell: React.FC<PanelShellProps> = ({ isOpen, handle, onTogglePanel, 
     const isWideLayout = useMediaQuery('(min-width: 640px)');
     const bottomBarBottomPx = usePlayerBottomBarBottomPx(isWideLayout ? 24 : 16);
     const { ref: layoutRef, invalidate: invalidateLayout } = usePlayerOverlayObstacle('player-panel', 'panel');
+    // 面板底边到容器底（按钮处）的空隙：面板打开时这带也是命中区（见下方 bridge），鼠标从按钮移进面板
+    // ——含关闭按钮常驻与按钮淡出两种配置——不会在空隙里触发容器 mouseleave 提前收起；面板关着时 bridge 不渲染。
+    const underPx = surface.hasHandle ? HANDLE_ROOM_PX : BARE_GAP_PX;
 
     return (
         <motion.div
@@ -180,6 +183,15 @@ const PanelShell: React.FC<PanelShellProps> = ({ isOpen, handle, onTogglePanel, 
                 <AnimatePresence>
                     {isOpen && <PanelSurface {...surface} layoutRef={layoutRef} onLayoutUpdate={invalidateLayout} />}
                 </AnimatePresence>
+                {/* 桥：紧随面板之后（面板的 margin-bottom 让出的空隙），负 margin 拉回按钮上方，把这带归进
+                    面板子树命中区。只与面板同开同关；面板开着时按钮移到面板、或按钮淡出时鼠标仍停原处，都不误收起。 */}
+                {isOpen && (
+                    <div
+                        aria-hidden="true"
+                        className="pointer-events-auto"
+                        style={{ height: underPx, marginTop: -underPx }}
+                    />
+                )}
             </div>
 
             {handle}

@@ -24,22 +24,26 @@
 
 /* 按钮上方的一列：面板与队列浮岛在里面，从下往上排（column-reverse：DOM 里面板在前、浮岛在后，Tab 顺序是
    面板 → 浮岛 → 按钮，视觉上浮岛在面板上方）；定位在这一层，面板自己不 absolute。
+   bottom: 48px + padding-bottom: 16px：面板底边仍停在按钮上 16px（视觉不变），但 stack 的命中区延伸到按钮顶，
+   鼠标从按钮移向面板时不会在间隙里触发根节点的 mouseleave（面板收起、按钮转回）——只有真正离开整块区域才收起。
+   间隙命中区只在面板打开（stack 有内容、有宽度）时存在；面板关着时 stack 没有宽度，悬停间隙不会误开面板。
    max-height 是按钮上方到窗口顶的距离，顶上让出 --wall-tools-top-reserve（标题栏 + 间距）：窗口矮时只压缩浮岛
    （它 flex-shrink、最小 112px），面板不缩；浮岛压到最小还放不下时由帮助列表让（见文件末尾的预算）。
    --wall-tools-bottom 是按钮此刻的底距（WallToolsSurface 随底栏抬升量写到根节点上）。 */
 .lattice-tools-stack {
     position: absolute;
     right: 0;
-    bottom: 64px;
+    bottom: 48px;
+    padding-bottom: 16px;
     display: flex;
-    max-height: calc(100vh - var(--wall-tools-bottom, 24px) - 64px - var(--wall-tools-top-reserve));
+    max-height: calc(100vh - var(--wall-tools-bottom, 24px) - 48px - var(--wall-tools-top-reserve));
     flex-direction: column-reverse;
     align-items: flex-end;
     gap: 8px;
 }
 
 /* 按钮上方还有一样东西（`above`，Lattice 的定位按钮：40px 高）时，二者排成一列，与集合页的右下角一样；
-   面板与浮岛整体上移它的高度和 12px 间距。 */
+   面板与浮岛整体上移它的高度和 12px 间距（stack 的底与 padding 同上：底边对齐按钮顶，16px 间隙归进命中区）。 */
 .lattice-tools.has-above {
     display: flex;
     flex-direction: column;
@@ -48,8 +52,9 @@
 }
 
 .lattice-tools.has-above .lattice-tools-stack {
-    bottom: 116px;
-    max-height: calc(100vh - var(--wall-tools-bottom, 24px) - 116px - var(--wall-tools-top-reserve));
+    bottom: 100px;
+    padding-bottom: 16px;
+    max-height: calc(100vh - var(--wall-tools-bottom, 24px) - 100px - var(--wall-tools-top-reserve));
 }
 
 .lattice-tools-panel {

@@ -416,8 +416,9 @@ const PanelHandle: React.FC<PanelHandleProps> = ({
                             className={`group/act w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg backdrop-blur-md transform
                                 border-none absolute right-0 top-0 z-10 ${globalGlassStyle ? (isDaylight ? 'text-zinc-900' : 'text-white') : (isDaylight ? 'bg-white/70 text-zinc-900' : 'bg-black/40 text-white')}`}
                         >
-                            {/* 固定用 Settings2（面板开合不再切换 X 图标）；hover 时图标旋转 90°（Mineradio fx-fab 同款）。 */}
-                            <span className="block transition-transform duration-[380ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover/act:rotate-90">
+                            {/* 固定用 Settings2（面板开合不再切换 X 图标）；hover 时图标旋转 90°（Mineradio fx-fab 同款）。
+                                面板打开时保持旋转位（与首页墙面按钮一致）：鼠标移进面板不随 hover 离开转回，面板收起才转回。 */}
+                            <span className={`block transition-transform duration-[380ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover/act:rotate-90${isOpen ? ' rotate-90' : ''}`}>
                                 <Settings2 size={20} />
                             </span>
                         </button>
