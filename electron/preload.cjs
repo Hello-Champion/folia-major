@@ -6,15 +6,27 @@ contextBridge.exposeInMainWorld('electron', {
       // resolve the OS path of a dropped file from the renderer.
       getPathForFile: (file) => webUtils.getPathForFile(file),
     },
-    // Beat This! inference. Returns null whenever the weights or the runtime are not there,
-    // which is the browser build's permanent answer and any desktop install missing the model.
+    // Beat This! on the CPU, automix's fallback when the renderer's GPU path cannot run. Returns null
+    // whenever the weights are not there, which is the browser build's permanent answer.
     runBeatThis: (chunks) => ipcRenderer.invoke('automix-beat-this', chunks),
+    // The same model's WebGPU export ({ weights, manifest }) for the renderer's own GPU runtime, or null.
+    getBeatThisGpuWeights: (model) => ipcRenderer.invoke('automix-beat-this-gpu-weights', model),
+    getHtdemucsGpuWeights: () => ipcRenderer.invoke('automix-beat-this-gpu-weights', 'htdemucs'),
     separateStems: (request) => ipcRenderer.invoke('automix-htdemucs', request),
+    // Whether automix is switched on. While it is, the analysis worker keeps htdemucs loaded; switching
+    // it off releases it. See electron/analysis/host.cjs.
+    // (From the PR #750 re-review, 2026-10-19: not kept while it is on any more - the worker releases
+    // htdemucs a minute after each run - and switching it off still releases it at once.)
+    setAutomixEnabled: (enabled) => ipcRenderer.send('automix-enabled', enabled === true),
     // Which weights exist, answered without loading them. See the handler for why the settings page
     // is not allowed to infer this from "am I running in Electron".
     getAutomixModelsPresent: () => ipcRenderer.invoke('automix-models-present'),
     // One-way stage marks from the automix session into the runtime log. See services/automix/diag.ts.
     diagMark: (text) => ipcRenderer.send('automix-diag', text),
+    // Old automix models left in the folder an earlier version let the listener choose. See main.cjs.
+    checkLegacyModels: () => ipcRenderer.invoke('legacy-models-check'),
+    resolveLegacyModels: (action) => ipcRenderer.invoke('legacy-models-resolve', action),
+    openLegacyModelsFolder: () => ipcRenderer.invoke('legacy-models-open'),
     // Developer debug module: the runtime log and the memory monitor. See electron/debug/debugHost.cjs.
     debugGetState: () => ipcRenderer.invoke('debug-get-state'),
     debugSetState: (patch) => ipcRenderer.invoke('debug-set-state', patch),
@@ -63,23 +75,6 @@ contextBridge.exposeInMainWorld('electron', {
         const listener = (_event, sample) => callback(sample);
         ipcRenderer.on('debug-memory-sample', listener);
         return () => ipcRenderer.removeListener('debug-memory-sample', listener);
-    },
-    // Where the weights are kept. The settings page reads the live location off the model status;
-    // these two only change it.
-    chooseModelsDirectory: () => ipcRenderer.invoke('choose-models-directory'),
-    resetModelsDirectory: () => ipcRenderer.invoke('reset-models-directory'),
-    // Getting the weights onto this machine: over the network, off a file already here, or by
-    // pointing at one. All three end at the same verified file - see analysis/modelStore.cjs.
-    getAutomixModelStatus: () => ipcRenderer.invoke('automix-model-status'),
-    downloadAutomixModel: (name) => ipcRenderer.invoke('automix-model-download', name),
-    cancelAutomixModelDownload: (name) => ipcRenderer.invoke('automix-model-cancel', name),
-    scanForAutomixModels: () => ipcRenderer.invoke('automix-model-scan'),
-    installAutomixModel: (name, source) => ipcRenderer.invoke('automix-model-install', name, source),
-    removeAllAutomixModels: () => ipcRenderer.invoke('automix-model-remove-all'),
-    onAutomixModelProgress: (callback) => {
-        const listener = (_event, progress) => callback(progress);
-        ipcRenderer.on('automix-model-progress', listener);
-        return () => ipcRenderer.removeListener('automix-model-progress', listener);
     },
     platform: process.platform,
     isLinuxX11: process.platform === 'linux' && !process.env.WAYLAND_DISPLAY,
@@ -244,6 +239,13 @@ contextBridge.exposeInMainWorld('electron', {
         ipcRenderer.on('obs-browser-source-status-changed', listener);
         return () => ipcRenderer.removeListener('obs-browser-source-status-changed', listener);
     },
+    getGlobalShortcutBackend: () => ipcRenderer.invoke('global-shortcuts-backend'),
+    setGlobalShortcuts: (accelerators) => ipcRenderer.invoke('global-shortcuts-set', accelerators),
+    onGlobalShortcut: (callback) => {
+        const listener = (_event, accelerator) => callback(accelerator);
+        ipcRenderer.on('global-shortcut-triggered', listener);
+        return () => ipcRenderer.removeListener('global-shortcut-triggered', listener);
+    },
     updateTaskbarControls: (state) => ipcRenderer.invoke('thumbar-update-buttons', state),
     onTaskbarControl: (callback) => {
         const listener = (_event, action) => callback(action);
@@ -328,6 +330,7 @@ contextBridge.exposeInMainWorld('electron', {
         reloadMods: () => ipcRenderer.invoke('folia-mods:reload'),
         invokeModRpc: (modId, name, args) => ipcRenderer.invoke('folia-mods:rpc', modId, name, args),
         invokeModStorage: (modId, operation, key, value) => ipcRenderer.invoke('folia-mods:storage', modId, operation, key, value),
+        invokeModSecrets: (modId, operation, key, value) => ipcRenderer.invoke('folia-mods:secrets', modId, operation, key, value),
         invokeModNetFetch: (modId, url, init) => ipcRenderer.invoke('folia-mods:net-fetch', modId, url, init),
         invokeModPickFile: (modId, accept, persist) => ipcRenderer.invoke('folia-mods:pick-file', modId, accept, persist),
         invokeModRestoreFile: (modId, grantId) => ipcRenderer.invoke('folia-mods:restore-file', modId, grantId),
@@ -357,6 +360,16 @@ contextBridge.exposeInMainWorld('electron', {
             const listener = (_event, entry) => callback(entry);
             ipcRenderer.on('folia-mods:log', listener);
             return () => ipcRenderer.removeListener('folia-mods:log', listener);
+        },
+        onModRpcMessage: (callback) => {
+            const listener = (_event, message) => callback(message);
+            ipcRenderer.on('folia-mods:rpc-message', listener);
+            return () => ipcRenderer.removeListener('folia-mods:rpc-message', listener);
+        },
+        onModSecretChanged: (callback) => {
+            const listener = (_event, change) => callback(change);
+            ipcRenderer.on('folia-mods:secret-changed', listener);
+            return () => ipcRenderer.removeListener('folia-mods:secret-changed', listener);
         },
     },
 });

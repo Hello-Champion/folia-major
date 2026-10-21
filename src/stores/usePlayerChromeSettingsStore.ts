@@ -139,6 +139,7 @@ export type PlayerChromeSettingsState = {
     enablePlayerPageNativeBlur: boolean;
     autoHidePlayerChrome: boolean;
     autoHideCursorWithPlayerChrome: boolean;
+    hideCursorWhenIdle: boolean;
     showOpenPanelCloseButton: boolean;
     /** 底部胶囊展开态右侧是否显示常驻的竖向音量滑块。默认关闭，和槽位里的音量按钮并存。 */
     showPlayerVolumeSlider: boolean;
@@ -185,6 +186,7 @@ export type PlayerChromeSettingsState = {
     handleWallpaperTransparentRefused: () => void;
     handleToggleAutoHidePlayerChrome: (enable: boolean) => void;
     handleToggleAutoHideCursorWithPlayerChrome: (enable: boolean) => void;
+    handleToggleHideCursorWhenIdle: (enable: boolean) => void;
     handleToggleOpenPanelCloseButton: (enable: boolean) => void;
     handleTogglePlayerVolumeSlider: (enable: boolean) => void;
     handleSetVolumeButtonLayout: (layout: PlayerVolumeButtonLayout) => void;
@@ -230,6 +232,7 @@ export const usePlayerChromeSettingsStore = create<PlayerChromeSettingsState>((s
     // Rides the chrome auto-hide clock rather than owning one: the cursor goes away with the
     // controls it would have clicked. Opt-out, so auto-hide can keep the pointer if wanted.
     autoHideCursorWithPlayerChrome: getStoredBoolean('auto_hide_cursor_with_player_chrome', true),
+    hideCursorWhenIdle: getStoredBoolean('hide_cursor_when_idle', false),
     showOpenPanelCloseButton: getStoredBoolean('show_open_panel_close_button', true),
     showPlayerVolumeSlider: getStoredBoolean('show_player_volume_slider', false),
     volumeButtonLayout: readStoredVolumeButtonLayout(),
@@ -267,6 +270,14 @@ export const usePlayerChromeSettingsStore = create<PlayerChromeSettingsState>((s
         setStatusMessage({
             type: 'info',
             text: i18n.t('notifications.' + (enable ? 'cursorAutoHideOn' : 'cursorAutoHideOff')),
+        });
+    },
+    handleToggleHideCursorWhenIdle: (enable) => {
+        setStoredBoolean('hide_cursor_when_idle', enable);
+        set({ hideCursorWhenIdle: enable });
+        setStatusMessage({
+            type: 'info',
+            text: i18n.t('notifications.' + (enable ? 'cursorIdleHideOn' : 'cursorIdleHideOff')),
         });
     },
     handleToggleHidePlayerProgressBar: (enable) => {
@@ -492,6 +503,7 @@ export const selectPlayerChromeSettingsSnapshot = (state: PlayerChromeSettingsSt
     enablePlayerPageNativeBlur: state.enablePlayerPageNativeBlur,
     autoHidePlayerChrome: state.autoHidePlayerChrome,
     autoHideCursorWithPlayerChrome: state.autoHideCursorWithPlayerChrome,
+    hideCursorWhenIdle: state.hideCursorWhenIdle,
     showOpenPanelCloseButton: state.showOpenPanelCloseButton,
     showPlayerVolumeSlider: state.showPlayerVolumeSlider,
     volumeButtonLayout: state.volumeButtonLayout,
@@ -522,6 +534,7 @@ export const selectPlayerChromeSettingsSnapshot = (state: PlayerChromeSettingsSt
     handleTogglePlayerPageNativeBlur: state.handleTogglePlayerPageNativeBlur,
     handleToggleAutoHidePlayerChrome: state.handleToggleAutoHidePlayerChrome,
     handleToggleAutoHideCursorWithPlayerChrome: state.handleToggleAutoHideCursorWithPlayerChrome,
+    handleToggleHideCursorWhenIdle: state.handleToggleHideCursorWhenIdle,
     handleToggleOpenPanelCloseButton: state.handleToggleOpenPanelCloseButton,
     handleTogglePlayerVolumeSlider: state.handleTogglePlayerVolumeSlider,
     handleSetVolumeButtonLayout: state.handleSetVolumeButtonLayout,

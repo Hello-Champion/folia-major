@@ -124,7 +124,10 @@ export const applyImportedConfig = (config: any, keys: string[], theme: ConfigTh
 
     // 2. Restore Visualizer Setup
     if (has('visualizerMode') && config.visualizerMode) {
-        storeVisualizer.handleSetVisualizerMode(config.visualizerMode);
+        storeVisualizer.handleSetVisualizerMode(config.visualizerMode, { preserveRandom: true });
+    }
+    if (has('randomVisualizerModes')) {
+        storeVisualizer.handleSetRandomVisualizerModes(config.randomVisualizerModes);
     }
     if (has('randomVisualizerModePerSong')) {
         storeVisualizer.handleToggleRandomVisualizerModePerSong(Boolean(config.randomVisualizerModePerSong));
@@ -222,6 +225,10 @@ export const applyImportedConfig = (config: any, keys: string[], theme: ConfigTh
 
     // Tunings. The bundle wins over the individual ones, which is why the plan never offers
     // both -- picking the bundle is picking every renderer at once.
+    // Outside the visualizerTunings bundle: it belongs to no one mode.
+    if (has('smartBeat') && config.smartBeat) {
+        storeVisualizer.handleSetSmartBeat(config.smartBeat);
+    }
     if (has('visualizerTunings') && config.visualizerTunings) {
         applyVisualizerTuningsToSettings(useVisualizerSettingsStore.getState() as unknown as Record<string, unknown>, config.visualizerTunings);
     }

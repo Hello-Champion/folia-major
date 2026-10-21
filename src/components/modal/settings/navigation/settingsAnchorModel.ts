@@ -31,9 +31,6 @@ export const SETTINGS_ANCHOR_DEFINITIONS = {
     rememberHomeCardPosition: { section: 'home' },
     gridViewCardSettings: { section: 'home' },
 
-    // pages/PlaybackPage
-    automixModels: { section: 'playback' },
-
     // pages/LyricsPage
     localLyricFormatOrder: { section: 'lyrics' },
 
@@ -57,6 +54,7 @@ export const SETTINGS_ANCHOR_DEFINITIONS = {
     gridActionButton: { section: 'interaction' },
     gridPaletteHotkey: { section: 'interaction' },
     customShortcut: { section: 'interaction' },
+    globalShortcuts: { section: 'interaction' },
 
     // pages/ModsPage
     modSystem: { section: 'mods' },

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, session, screen, dialog, shell, nativeImage, webContents: electronWebContents, Menu, Tray, nativeTheme, powerSaveBlocker, safeStorage, protocol, crashReporter, net: electronNet } = require('electron');
+const { app, BrowserWindow, globalShortcut, ipcMain, session, screen, dialog, shell, nativeImage, webContents: electronWebContents, Menu, Tray, nativeTheme, powerSaveBlocker, safeStorage, protocol, crashReporter, net: electronNet } = require('electron');
 // 必须先于其它模块加载：TEMP / TMP 里没展开的 %USERPROFILE% 会让 os.tmpdir() 变成相对路径（#690）。
 for (const repair of require('./tempDirEnvironment.cjs').repairTempDirEnvironment()) {
   console.warn(`[TempDir] expanded ${repair.key}: ${repair.from} -> ${repair.to}`);
@@ -13,9 +13,11 @@ const { createStageApi } = require('./stageApi.cjs');
 const { createModSystem } = require('./modSystem/modSystem.cjs');
 const { MOD_PROTOCOL_PRIVILEGED_SCHEME } = require('./modSystem/modProtocol.cjs');
 const { createWindowPlaybackHandoffStore } = require('./windowPlaybackHandoff.cjs');
+const { applyTileMemoryBudget } = require('./tileMemoryBudget.cjs');
 const {
   REMOTE_CONTROL_HIDE_TITLEBAR_SETTING_KEY,
   REMOTE_CONTROL_CLICK_THROUGH_SETTING_KEY,
+  REMOTE_CONTROL_EXPAND_COVER_SETTING_KEY,
   readRemoteControlWindowSettings,
   shouldShowRemoteUnlockTrayItem,
   applyRemoteControlMouseIgnore,
@@ -72,8 +74,11 @@ const { removeAudioCacheFileOfSize } = require('./audioCacheRemove.cjs');
 const { createAnalysisHost } = require('./analysis/host.cjs');
 const { createDebugHost, runtimeLine } = require('./debug/debugHost.cjs');
 const { createCrashLog, installCrashHandlers } = require('./debug/crashLog.cjs');
-const { createModelStore } = require('./analysis/modelStore.cjs');
+const { measureLeftovers, removeDownloadedLeftovers } = require('./analysis/modelPaths.cjs');
 const { resolveLinuxPasswordStore } = require('./linuxPasswordStore.cjs');
+const { resolveLinuxVulkanChoice, logLinuxVulkanChoice } = require('./linuxVulkan.cjs');
+const { isWindowAlwaysOnTopSupported } = require('./windowAlwaysOnTopSupport.cjs');
+const { createGlobalShortcutController, usesGlobalShortcutsPortal } = require('./globalShortcuts.cjs');
 const { createTranscodeService } = require('./transcode/service.cjs');
 const { TRANSCODE_PROTOCOL_SCHEME } = require('./transcode/protocol.cjs');
 const { sanitizeDualTheme: sanitizeGeneratedDualTheme } = require('../shared/themeSanitizer.cjs');
@@ -155,6 +160,12 @@ app.on('certificate-error', (event, _webContents, requestUrl, error, _certificat
   callback(false);
 });
 
+// Logged once the debug host captures the console, so the decision also reaches the in-app log.
+const linuxVulkan = resolveLinuxVulkanChoice({
+  ozonePlatform: app.commandLine.getSwitchValue('ozone-platform'),
+  graphicsMode: linuxGraphicsMode,
+});
+
 // Fix for Arch Linux / Wayland & Vulkan compatibility issues
 if (process.platform === 'linux') {
   // Must run before the ready event: Chromium reads the password backend once while initialising
@@ -164,10 +175,20 @@ if (process.platform === 'linux') {
     app.commandLine.appendSwitch('password-store', linuxPasswordStore);
   }
 
-  app.commandLine.appendSwitch('disable-vulkan');
-  app.commandLine.appendSwitch('disable-features', 'Vulkan');
+  if (linuxVulkan.enabled) {
+    appendChromiumFeature('Vulkan');
+  } else {
+    app.commandLine.appendSwitch('disable-vulkan');
+    appendChromiumFeature('Vulkan', 'disable-features');
+  }
   app.commandLine.appendSwitch('ozone-platform-hint', 'auto');
   app.commandLine.appendSwitch('log-level', '3');
+
+  // Native Wayland cannot grab keys, so the global playback shortcuts go through the desktop's
+  // GlobalShortcuts portal; the listener binds them in their desktop's settings (globalShortcuts.cjs).
+  if (usesGlobalShortcutsPortal({ ozonePlatform: app.commandLine.getSwitchValue('ozone-platform') })) {
+    appendChromiumFeature('GlobalShortcutsPortal');
+  }
 
   if (linuxGraphicsMode === 'software') {
     // Hard fallback: safest, but usually slower.
@@ -180,7 +201,7 @@ if (process.platform === 'linux') {
     app.commandLine.appendSwitch('use-angle', 'swiftshader');
     app.commandLine.appendSwitch('enable-unsafe-swiftshader');
   } else {
-    app.commandLine.appendSwitch('enable-features', 'WaylandWindowDecorations');
+    appendChromiumFeature('WaylandWindowDecorations');
   }
 }
 
@@ -195,13 +216,14 @@ if (process.platform === 'linux') {
 // therefore subscribes to `devicechange` while the device picker is open and unsubscribes when it
 // closes, purely to trigger the timer -- see src/hooks/useAudioOutputDevices.ts. Removing that
 // subscription re-pins the capture service for the lifetime of the process.
-function appendChromiumFeature(featureName) {
+// Pass 'disable-features' as switchName to turn a feature off the same way.
+function appendChromiumFeature(featureName, switchName = 'enable-features') {
   // base::CommandLine keeps one value per switch, so a plain appendSwitch would drop features the
   // user passed on the command line, or any appended earlier here.
-  const enabledFeatures = app.commandLine.getSwitchValue('enable-features');
+  const listedFeatures = app.commandLine.getSwitchValue(switchName);
   app.commandLine.appendSwitch(
-    'enable-features',
-    enabledFeatures ? `${enabledFeatures},${featureName}` : featureName,
+    switchName,
+    listedFeatures ? `${listedFeatures},${featureName}` : featureName,
   );
 }
 
@@ -282,6 +304,9 @@ const aiCredentials = createAiCredentialStore({ store, safeStorage });
 // Settings keys follow the existing electron-store key/value chain; values are normalized here in
 // the main process so stale or dirty stored values never reach the windowtolayer CLI.
 const WALLPAPER_MODE_SETTING_KEY = 'wallpaper_mode';
+// Renderer-recorded: the one-time "entering wallpaper mode" warning has been accepted. The tray
+// reads it to skip asking the renderer for a confirmation dialog that would not be shown anyway.
+const WALLPAPER_ENTRY_CONFIRMED_SETTING_KEY = 'wallpaper_entry_confirmed';
 // Windows-only helper switches; both default to on (missing = enabled).
 const WALLPAPER_FORWARD_MOUSE_SETTING_KEY = 'wallpaper_forward_mouse';
 const WALLPAPER_ZGUARD_SETTING_KEY = 'wallpaper_zguard';
@@ -1824,6 +1849,14 @@ function sendMacWallpaperMouseEvent(event) {
 // windowtolayer; the wrapped child uses FOLIA_RELAUNCH to retry after the jumpboard exits.
 const wallpaperMode = isWallpaperModeEnabled();
 const onWayland = Boolean(process.env.WAYLAND_DISPLAY);
+// False on the native Wayland backend: setAlwaysOnTop there is silently ignored (issue #657), so every
+// always-on-top switch is greyed out instead of showing a state the compositor never received.
+const windowAlwaysOnTopSupported = isWindowAlwaysOnTopSupported({
+  ozonePlatform: app.commandLine.getSwitchValue('ozone-platform'),
+});
+if (!windowAlwaysOnTopSupported) {
+  console.info('[Window] always-on-top unavailable: running on the native Wayland backend');
+}
 
 // Serializes ownership, wrapper launch, and crash-loop accounting.
 async function prepareMainProcessStartup() {
@@ -1877,6 +1910,7 @@ const mainLocale = {
     trayTransparentBackground: '透明背景',
     trayToggleClickThrough: '点击穿透',
     trayAlwaysOnTop: '窗口置顶',
+    trayAlwaysOnTopUnavailable: '窗口置顶（Wayland 下不可用）',
     trayHideTaskbar: '隐藏任务栏图标',
     trayDesktopLyricMode: '桌面歌词',
     trayToggleWallpaperMode: '壁纸模式',
@@ -1902,6 +1936,7 @@ const mainLocale = {
     trayTransparentBackground: '透明背景',
     trayToggleClickThrough: '點選穿透',
     trayAlwaysOnTop: '視窗置頂',
+    trayAlwaysOnTopUnavailable: '視窗置頂（Wayland 下不可用）',
     trayHideTaskbar: '隱藏工作列圖示',
     trayDesktopLyricMode: '桌面歌詞',
     trayToggleWallpaperMode: '桌布模式',
@@ -1927,6 +1962,7 @@ const mainLocale = {
     trayTransparentBackground: 'Transparent Background',
     trayToggleClickThrough: 'Click-Through',
     trayAlwaysOnTop: 'Always on Top',
+    trayAlwaysOnTopUnavailable: 'Always on Top (unavailable on Wayland)',
     trayHideTaskbar: 'Hide Taskbar Icon',
     trayDesktopLyricMode: 'Desktop Lyrics',
     trayToggleWallpaperMode: 'Wallpaper Mode',
@@ -1952,6 +1988,7 @@ const mainLocale = {
     trayTransparentBackground: 'Latar Belakang Transparan',
     trayToggleClickThrough: 'Click-Through',
     trayAlwaysOnTop: 'Selalu di Atas',
+    trayAlwaysOnTopUnavailable: 'Selalu di Atas (tidak tersedia di Wayland)',
     trayHideTaskbar: 'Sembunyikan Ikon Taskbar',
     trayDesktopLyricMode: 'Lirik Desktop',
     trayToggleWallpaperMode: 'Mode Wallpaper',
@@ -2176,6 +2213,7 @@ let remoteControlAlwaysOnTop = false;
 let remoteControlSkipTaskbarEnabled = false;
 let remoteControlHideTitlebarEnabled = false;
 let remoteControlClickThroughEnabled = false;
+let remoteControlExpandCoverEnabled = true;
 let mainWindowAlwaysOnTop = false;
 let mainWindowClickThroughEnabled = false;
 let mainWindowClickThroughUnlockHover = false;
@@ -2213,7 +2251,9 @@ const DEFAULT_WINDOW_BOUNDS = {
 };
 const WINDOW_STATE_SAVE_DEBOUNCE_MS = 300;
 const CACHE_DIRECTORY_SETTING_KEY = 'CACHE_DIRECTORY';
-const MODELS_DIRECTORY_SETTING_KEY = 'MODELS_DIRECTORY';
+// The 模型目录 earlier versions (up to 0.7.20) let the listener choose for automix's downloads. Never
+// written now; read once to offer deleting what is left there, then cleared (legacy-models-*).
+const LEGACY_MODELS_DIRECTORY_SETTING_KEY = 'MODELS_DIRECTORY';
 const ENABLE_UPDATE_CHECK_SETTING_KEY = 'ENABLE_UPDATE_CHECK';
 const ENABLE_AUTO_UPDATE_SETTING_KEY = 'ENABLE_AUTO_UPDATE';
 const UPDATE_CHANNEL_SETTING_KEY = 'UPDATE_CHANNEL';
@@ -2355,6 +2395,7 @@ function getPublicSettings() {
     [REMOTE_CONTROL_SKIP_TASKBAR_SETTING_KEY]: readStoredBoolean(REMOTE_CONTROL_SKIP_TASKBAR_SETTING_KEY, false),
     [REMOTE_CONTROL_HIDE_TITLEBAR_SETTING_KEY]: readStoredBoolean(REMOTE_CONTROL_HIDE_TITLEBAR_SETTING_KEY, false),
     [REMOTE_CONTROL_CLICK_THROUGH_SETTING_KEY]: readStoredBoolean(REMOTE_CONTROL_CLICK_THROUGH_SETTING_KEY, false),
+    [REMOTE_CONTROL_EXPAND_COVER_SETTING_KEY]: readStoredBoolean(REMOTE_CONTROL_EXPAND_COVER_SETTING_KEY, true),
     [MAIN_WINDOW_ALWAYS_ON_TOP_SETTING_KEY]: readStoredBoolean(MAIN_WINDOW_ALWAYS_ON_TOP_SETTING_KEY, false),
     [TRANSPARENT_PLAYER_BACKGROUND_SETTING_KEY]: readStoredBoolean(TRANSPARENT_PLAYER_BACKGROUND_SETTING_KEY, false),
     [DISCORD_RICH_PRESENCE_ENABLED_SETTING_KEY]: readStoredBoolean(DISCORD_RICH_PRESENCE_ENABLED_SETTING_KEY, false),
@@ -2366,7 +2407,10 @@ function getPublicSettings() {
     'enable_player_page_native_blur': store.get('enable_player_page_native_blur') === true,
     'wallpaper_attach_mode': process.platform === 'win32' ? wallpaperWindowsAttachMode : null,
     [WALLPAPER_MODE_SETTING_KEY]: isWallpaperModeEnabled(),
+    [WALLPAPER_ENTRY_CONFIRMED_SETTING_KEY]: readStoredBoolean(WALLPAPER_ENTRY_CONFIRMED_SETTING_KEY, false),
     [WALLPAPER_MAC_AUTOHIDE_DOCK_SETTING_KEY]: readStoredBoolean(WALLPAPER_MAC_AUTOHIDE_DOCK_SETTING_KEY, true),
+    // Not a stored setting: whether always-on-top can take effect in this process at all.
+    'window_always_on_top_supported': windowAlwaysOnTopSupported,
   };
 }
 
@@ -2430,6 +2474,7 @@ remoteControlSkipTaskbarEnabled = readStoredBoolean(REMOTE_CONTROL_SKIP_TASKBAR_
   const remoteWindowSettings = readRemoteControlWindowSettings(readStoredBoolean);
   remoteControlHideTitlebarEnabled = remoteWindowSettings.hideTitlebar;
   remoteControlClickThroughEnabled = remoteWindowSettings.clickThrough;
+  remoteControlExpandCoverEnabled = remoteWindowSettings.expandCover;
 }
 mainWindowAlwaysOnTop = readStoredBoolean(MAIN_WINDOW_ALWAYS_ON_TOP_SETTING_KEY, false);
 
@@ -2473,8 +2518,11 @@ const displaySleepBlocker = createDisplaySleepBlocker(powerSaveBlocker);
 // The developer debug module: the runtime log and the memory monitor, both switched from
 // Settings > Developer. Created BEFORE the analysis host, which logs through it.
 createDebugHost({ app, ipcMain, store, BrowserWindow });
+logLinuxVulkanChoice(linuxVulkan, linuxGraphicsMode);
 
-const analysisHost = createAnalysisHost({ app, ipcMain, getModelsDirs: getModelsDirectories });
+const analysisHost = createAnalysisHost({
+  app, ipcMain, getModelsDir: getBundledModelsDirectory,
+});
 
 function buildPlaybackSyncBridgeStatus() {
   return {
@@ -2681,32 +2729,16 @@ function getConfiguredCacheDirectory() {
     : getDefaultCacheDirectory();
 }
 
-// The analysis model weights - 83MB and 166MB of ONNX - and the three places they are allowed to
-// live, best first.
-//
-// They used to be one place: `resources/models` inside the install directory, shipped in the
-// installer. That put 249MB into a 436MB download that most listeners never turn the feature on for,
-// and it put them somewhere an update or a reinstall overwrites - so "you do not have to download
-// the models again" was not true even though nothing about them had changed.
-//
-// Now: whatever directory the user pointed us at, then the app's own download directory under
-// userData (which no update touches), then the bundled copy - kept so a build that still ships them
-// works unchanged, and so `npm run models:fetch` keeps working in a dev checkout.
-function getDefaultModelsDirectory() {
+// The models ship inside the installer - Beat This! final0 and htdemucs, the WebGPU exports both
+// runtimes read (electron/analysis/modelPaths.cjs) - and are read from there alone. Earlier versions
+// downloaded them, or older forms of them, into userData/models; those copies are deleted once at
+// startup (removeDownloadedLeftovers), as nothing reads them any more.
+function getDownloadedModelsDirectory() {
   return path.join(app.getPath('userData'), 'models');
-}
-
-function getConfiguredModelsDirectory() {
-  const configured = store.get(MODELS_DIRECTORY_SETTING_KEY);
-  return typeof configured === 'string' && configured.trim().length > 0 ? configured.trim() : null;
 }
 
 function getBundledModelsDirectory() {
   return path.join(app.isPackaged ? process.resourcesPath : path.join(__dirname, '..'), 'models');
-}
-
-function getModelsDirectories() {
-  return [getConfiguredModelsDirectory(), getDefaultModelsDirectory(), getBundledModelsDirectory()];
 }
 
 function getAudioCacheDirectory() {
@@ -2845,10 +2877,12 @@ function buildRemoteControlWindowSettings() {
   return {
     hideTitlebar: remoteControlHideTitlebarEnabled,
     clickThrough: remoteControlClickThroughEnabled,
+    expandCover: remoteControlExpandCoverEnabled,
+    alwaysOnTopSupported: windowAlwaysOnTopSupported,
   };
 }
 
-// Applies click-through to the remote window and tells its renderer about both switches.
+// Applies click-through to the remote window and tells its renderer about its switches.
 function applyRemoteControlWindowPresentation(win) {
   if (!win || win.isDestroyed()) {
     return false;
@@ -3034,9 +3068,15 @@ function refreshTrayMenu() {
       checked: isWallpaperModeEnabled(),
       click: () => {
         const nextEnabled = !isWallpaperModeEnabled();
-        // Entering is a user-initiated switch, so the renderer asks for confirmation first and
-        // then enters through save-settings. Leaving never needs one.
-        if (nextEnabled && requestWallpaperEntryConfirmation({ mainWindow, focusMainWindow, isClickThroughActive: () => mainWindowClickThroughEnabled })) {
+        // Entering is a user-initiated switch, so the first entry asks for confirmation through the
+        // renderer and then enters through save-settings. Once the renderer has recorded that first
+        // entry, there is no dialog left to show: enter directly instead of bringing the window
+        // forward for nothing. Leaving never needs a confirmation.
+        if (
+          nextEnabled &&
+          !readStoredBoolean(WALLPAPER_ENTRY_CONFIRMED_SETTING_KEY, false) &&
+          requestWallpaperEntryConfirmation({ mainWindow, focusMainWindow, isClickThroughActive: () => mainWindowClickThroughEnabled })
+        ) {
           // The click already flipped the checkbox; nothing is entered until the user confirms.
           refreshTrayMenu();
           return;
@@ -3047,6 +3087,12 @@ function refreshTrayMenu() {
         // empty menu-bar strip above the wallpaper). The wallpaper entry asserts click-
         // through and the always-on-top state itself (state-only flip + level sink).
         store.set(WALLPAPER_MODE_SETTING_KEY, nextEnabled);
+        if (nextEnabled) {
+          // Either the renderer already accepted the warning, or it could not answer (destroyed,
+          // loading, crashed, click-through) and the click wins over the dialog. Entering counts
+          // as the first use either way, so the next tray click must not ask again.
+          store.set(WALLPAPER_ENTRY_CONFIRMED_SETTING_KEY, true);
+        }
         refreshTrayMenu();
         scheduleWallpaperModeRelaunch(nextEnabled);
       },
@@ -3076,10 +3122,11 @@ function refreshTrayMenu() {
       },
     },
     {
-      label: locale.trayAlwaysOnTop,
+      // Native Wayland ignores the request; the label says so, since a tray menu has no tooltip on Linux.
+      label: windowAlwaysOnTopSupported ? locale.trayAlwaysOnTop : locale.trayAlwaysOnTopUnavailable,
       type: 'checkbox',
-      checked: mainWindowAlwaysOnTop,
-      enabled: hasMainWindow && !wallpaperOn,
+      checked: windowAlwaysOnTopSupported && mainWindowAlwaysOnTop,
+      enabled: hasMainWindow && !wallpaperOn && windowAlwaysOnTopSupported,
       click: () => {
         setMainWindowAlwaysOnTop(!mainWindowAlwaysOnTop);
       },
@@ -4789,10 +4836,10 @@ function patchRemoteControlSnapshot(patch) {
     return;
   }
 
+  // updatedAt stays: it is when the main window read the playback time, and the time is not re-read here.
   latestRemoteControlSnapshot = {
     ...latestRemoteControlSnapshot,
     ...patch,
-    updatedAt: Date.now(),
   };
   sendRemoteControlSnapshot(latestRemoteControlSnapshot);
 }
@@ -4992,7 +5039,10 @@ function keepRemoteControlCoverOnScreen(win, event, newBounds) {
   if (x !== newBounds.x) {
     // Windows then keeps the window where this puts it, and the drag slides along the edge.
     event.preventDefault();
-    win.setPosition(x, newBounds.y);
+    // setBounds rather than setPosition: this window's size is fixed for good (resizable: false,
+    // min === max === REMOTE_CONTROL_WINDOW_WIDTH/HEIGHT). Stating it on every move keeps the
+    // window the size the page is laid out to, instead of leaving the platform to re-derive it.
+    win.setBounds({ x, y: newBounds.y, width: REMOTE_CONTROL_WINDOW_WIDTH, height: REMOTE_CONTROL_WINDOW_HEIGHT });
   }
 }
 
@@ -5535,6 +5585,7 @@ async function setMainWindowTransparentModeFromRemote(enabled) {
 }
 
 app.whenReady().then(async () => {
+  applyTileMemoryBudget(app, screen);
   const startupResult = await mainProcessStartupPromise;
   if (startupResult === 'duplicate') {
     app.quit();
@@ -5997,12 +6048,14 @@ ipcMain.handle('save-settings', (event, key, value) => {
     key === REMOTE_CONTROL_SKIP_TASKBAR_SETTING_KEY ||
     key === REMOTE_CONTROL_HIDE_TITLEBAR_SETTING_KEY ||
     key === REMOTE_CONTROL_CLICK_THROUGH_SETTING_KEY ||
+    key === REMOTE_CONTROL_EXPAND_COVER_SETTING_KEY ||
     key === TRANSPARENT_PLAYER_BACKGROUND_SETTING_KEY ||
     key === DISCORD_RICH_PRESENCE_ENABLED_SETTING_KEY ||
     key === VOICE_INPUT_PAUSE_ENABLED_SETTING_KEY ||
     key === PREVENT_DISPLAY_SLEEP_DURING_PLAYBACK_SETTING_KEY ||
     key === MOD_SYSTEM_ENABLED_SETTING_KEY ||
     key === WALLPAPER_MODE_SETTING_KEY ||
+    key === WALLPAPER_ENTRY_CONFIRMED_SETTING_KEY ||
     key === WALLPAPER_FORWARD_MOUSE_SETTING_KEY ||
     key === WALLPAPER_ZGUARD_SETTING_KEY ||
     key === WALLPAPER_MAC_AUTOHIDE_DOCK_SETTING_KEY
@@ -6177,6 +6230,11 @@ ipcMain.handle('save-settings', (event, key, value) => {
     refreshTrayMenu();
   }
 
+  if (key === REMOTE_CONTROL_EXPAND_COVER_SETTING_KEY) {
+    remoteControlExpandCoverEnabled = Boolean(nextValue);
+    applyRemoteControlWindowPresentation(remoteControlWindow);
+  }
+
   if (key === STAGE_MODE_SOURCE_SETTING_KEY) {
     void stageApi.syncStageModeState?.().catch((error) => {
       console.error('[Stage] Failed to sync Stage mode source setting', error);
@@ -6243,65 +6301,65 @@ ipcMain.handle('reset-cache-directory', () => {
   };
 });
 
-// Where a fetched model is written: the directory the user pointed us at, or the app's own under
-// userData. Never the bundled copy - that lives in the install folder and is not ours to write into.
-// The settings page reads the live location off `automix-model-status`, so these handlers only DO
-// the change and let the page re-read; their own return value is not consumed.
-const modelsDownloadDir = () => getConfiguredModelsDirectory() ?? getDefaultModelsDirectory();
+// What earlier versions downloaded, gone from this machine: up to 330MB nothing reads now. Once per
+// launch, off the startup path; a file that will not go (in use, read-only) is tried again next time.
+app.whenReady().then(() => setTimeout(() => {
+  removeDownloadedLeftovers(getDownloadedModelsDirectory())
+    .then(({ removed, bytes }) => {
+      if (removed.length) console.log(`[Models] removed ${removed.length} downloaded model files (${Math.round(bytes / 1048576)}MB) the app no longer reads`);
+    })
+    .catch((error) => console.warn('[Models] could not remove the old downloads', error?.message || error));
+}, 10_000));
 
-ipcMain.handle('choose-models-directory', async () => {
-  if (!mainWindow || mainWindow.isDestroyed()) return { canceled: true };
+// The same leftovers in the folder the listener chose for them (LEGACY_MODELS_DIRECTORY_SETTING_KEY)
+// are theirs, not the app's: deleted only when they say so, from the one-time prompt in the renderer
+// (components/modal/LegacyModelsPrompt.tsx). Only the old files go, never the folder or anything else
+// in it (removeDownloadedLeftovers). Answered or dismissed, the setting is cleared and never asked again.
+const getLegacyModelsDirectory = () => {
+  const configured = store.get(LEGACY_MODELS_DIRECTORY_SETTING_KEY);
+  if (typeof configured !== 'string' || !configured.trim()) return null;
+  const dir = path.resolve(configured.trim());
+  // userData/models is cleaned above without asking; the installer's own is never a leftover.
+  const ours = [getDownloadedModelsDirectory(), getBundledModelsDirectory()].map(own => path.resolve(own));
+  return ours.includes(dir) ? null : dir;
+};
 
-  const result = await dialog.showOpenDialog(mainWindow, {
-    title: 'Choose model directory',
-    properties: ['openDirectory', 'createDirectory'],
-    defaultPath: modelsDownloadDir(),
-  });
-  if (result.canceled || result.filePaths.length === 0) return { canceled: true };
-
-  store.set(MODELS_DIRECTORY_SETTING_KEY, result.filePaths[0]);
-  // The running worker took its directories as argv, so it has to be restarted to see the new one.
-  analysisHost.reload();
-  return { canceled: false };
+ipcMain.handle('legacy-models-check', async () => {
+  const dir = getLegacyModelsDirectory();
+  if (!dir) {
+    store.delete(LEGACY_MODELS_DIRECTORY_SETTING_KEY);
+    return null;
+  }
+  const { paths, bytes } = await measureLeftovers(dir);
+  if (!paths.length) {
+    // Moved, emptied by hand, or on a drive that is not connected: nothing to ask about. A drive that
+    // comes back later is not asked about either - the folder is the listener's to tidy from here.
+    store.delete(LEGACY_MODELS_DIRECTORY_SETTING_KEY);
+    return null;
+  }
+  return { dir, count: paths.length, bytes };
 });
 
-ipcMain.handle('reset-models-directory', () => {
-  store.delete(MODELS_DIRECTORY_SETTING_KEY);
-  analysisHost.reload();
-});
-
-// Getting the weights onto this machine. Everything about HOW is in analysis/modelStore.cjs; what
-// is here is the window it reports progress to and the file picker it cannot open for itself.
-const modelStore = createModelStore({
-  getModelsDirs: getModelsDirectories,
-  // Never the bundled directory: that one lives inside the install folder and is not ours to write
-  // into, and on a packaged app it may not even be writable.
-  getDownloadDir: modelsDownloadDir,
-  onProgress: (event) => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('automix-model-progress', event);
+ipcMain.handle('legacy-models-resolve', async (_event, action) => {
+  const dir = getLegacyModelsDirectory();
+  if (action === 'delete' && dir) {
+    try {
+      const { removed, bytes } = await removeDownloadedLeftovers(dir);
+      console.log(`[Models] removed ${removed.length} old model files (${Math.round(bytes / 1048576)}MB) from ${dir}, as asked`);
+    } catch (error) {
+      // Kept, so the prompt comes back next launch rather than leaving files it said it would delete.
+      console.warn('[Models] could not remove the old models in the chosen folder', error?.message || error);
+      return { ok: false };
     }
-  },
-  // A model appearing or moving has to reach the worker, which took its directories as argv when it
-  // was forked. Restarting is how; it is what the idle timer does anyway.
-  onChanged: () => { analysisHost.reload(); },
+  }
+  store.delete(LEGACY_MODELS_DIRECTORY_SETTING_KEY);
+  return { ok: true };
 });
 
-ipcMain.handle('automix-model-status', () => modelStore.status());
-ipcMain.handle('automix-model-download', (_event, name) => modelStore.download(name));
-ipcMain.handle('automix-model-cancel', (_event, name) => modelStore.cancel(name));
-ipcMain.handle('automix-model-scan', () => modelStore.scan(scanHintDirectories()));
-ipcMain.handle('automix-model-install', (_event, name, source) => modelStore.installLocal(name, source));
-
-ipcMain.handle('automix-model-remove-all', () => modelStore.removeAll());
-
-// Where a manually downloaded file is likely to be. Passed to the scan rather than baked into it,
-// because these come from Electron's own path lookups and modelStore is plain Node.
-function scanHintDirectories() {
-  return ['downloads', 'desktop', 'documents']
-    .map((key) => { try { return app.getPath(key); } catch { return null; } })
-    .filter(Boolean);
-}
+ipcMain.handle('legacy-models-open', async () => {
+  const dir = getLegacyModelsDirectory();
+  return dir ? (await shell.openPath(dir)) === '' : false;
+});
 
 ipcMain.handle('updates-get-status', () => {
   return getUpdateStatus();
@@ -6640,6 +6698,11 @@ ipcMain.handle('window-get-always-on-top', (event) => {
     return false;
   }
 
+  // On native Wayland isAlwaysOnTop() only echoes the last request, never the compositor's state.
+  if (!windowAlwaysOnTopSupported) {
+    return false;
+  }
+
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindowAlwaysOnTop = mainWindow.isAlwaysOnTop();
   }
@@ -6824,6 +6887,43 @@ ipcMain.handle('stage-complete-player-queue', (event, result) => {
   return stageApi.completeStagePlayerQueueRequest(result);
 });
 
+// Created on first use: globalShortcut only works once the app is ready, and the renderer asks
+// only after its window has loaded.
+let globalShortcutController = null;
+const getGlobalShortcutController = () => {
+  if (!globalShortcutController) {
+    globalShortcutController = createGlobalShortcutController({
+      globalShortcut,
+      backend: usesGlobalShortcutsPortal({ ozonePlatform: app.commandLine.getSwitchValue('ozone-platform') }) ? 'portal' : 'native',
+      // TODO: macOS keeps the app running after its window closes, so the keys stay held and a
+      // press with no window does nothing. Reopening the window, or letting the keys go on `closed`,
+      // is undecided until it can be tried on a Mac.
+      onTrigger: (accelerator) => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('global-shortcut-triggered', accelerator);
+        }
+      },
+    });
+  }
+  return globalShortcutController;
+};
+
+ipcMain.handle('global-shortcuts-backend', () => (
+  usesGlobalShortcutsPortal({ ozonePlatform: app.commandLine.getSwitchValue('ozone-platform') }) ? 'portal' : 'native'
+));
+
+ipcMain.handle('global-shortcuts-set', (event, accelerators) => {
+  if (!isTrustedMainWindowContents(event.sender)) {
+    throw new Error('Untrusted renderer attempted to set global shortcuts.');
+  }
+
+  return getGlobalShortcutController().apply(accelerators);
+});
+
+app.on('will-quit', () => {
+  globalShortcutController?.dispose();
+});
+
 ipcMain.handle('thumbar-update-buttons', (event, state) => {
   if (!isTrustedMainWindowContents(event.sender)) {
     throw new Error('Untrusted renderer attempted to update taskbar controls.');
@@ -6878,6 +6978,11 @@ ipcMain.handle('remote-control-get-always-on-top', (event) => {
     throw new Error('Untrusted renderer attempted to read remote control always-on-top state.');
   }
 
+  // On native Wayland isAlwaysOnTop() only echoes the last request, never the compositor's state.
+  if (!windowAlwaysOnTopSupported) {
+    return false;
+  }
+
   if (remoteControlWindow && !remoteControlWindow.isDestroyed()) {
     remoteControlAlwaysOnTop = remoteControlWindow.isAlwaysOnTop();
   }
@@ -6888,6 +6993,10 @@ ipcMain.handle('remote-control-get-always-on-top', (event) => {
 ipcMain.handle('remote-control-set-always-on-top', (event, nextAlwaysOnTop) => {
   if (!isTrustedRemoteControlContents(event.sender)) {
     throw new Error('Untrusted renderer attempted to update remote control always-on-top state.');
+  }
+
+  if (!windowAlwaysOnTopSupported) {
+    return false;
   }
 
   remoteControlAlwaysOnTop = Boolean(nextAlwaysOnTop);
