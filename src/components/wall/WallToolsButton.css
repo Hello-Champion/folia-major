@@ -116,6 +116,19 @@
     box-shadow: inset 0 0 2px 1px rgb(255 255 255 / var(--glass-glow, 0.16)), inset 0 0 10px 4px rgb(255 255 255 / calc(var(--glass-glow, 0.16) * 0.94));
 }
 
+/* 面板里的定位按钮（GridLocateButton）跟快捷格一样给悬停底色：它自己是实心底，
+   不补这条时只有透明度变化（opacity-60 → 100），看着像没反应。必须写在 has-glass 规则之后：
+   日光下两者权重相同，后写的这条才能盖过玻璃底色，与快捷格的悬浮表现一致。 */
+.lattice-tools-panel [data-grid-locate]:hover,
+.lattice-tools-panel [data-grid-locate]:focus-visible {
+    background: rgb(255 255 255 / 13%);
+}
+
+.lattice-tools.is-daylight .lattice-tools-panel [data-grid-locate]:hover,
+.lattice-tools.is-daylight .lattice-tools-panel [data-grid-locate]:focus-visible {
+    background: rgb(0 0 0 / 10%);
+}
+
 .lattice-tools-action {
     display: flex;
     width: 100%;

@@ -203,7 +203,8 @@
 .lattice-poster-shade {
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, rgb(var(--lattice-shade-rgb) / 5%) 34%, rgb(var(--lattice-shade-rgb) / 24%) 56%, rgb(var(--lattice-shade-rgb) / 92%) 100%);
+    /* 沿左上→右下对角线分野：左上/左侧一侧稍暗（45deg 的低值端），右下/右侧一侧透出去。 */
+    background: linear-gradient(45deg, rgb(var(--lattice-shade-rgb) / 42%) 0%, rgb(var(--lattice-shade-rgb) / 16%) 55%, rgb(var(--lattice-shade-rgb) / 0%) 100%);
 }
 
 /* Theme-derived colour quiets the background cards without muting the playing or selected one. */
@@ -246,8 +247,8 @@
 .lattice-poster.is-expanded .lattice-poster-shade {
     /* The bottom band is what keeps the background-less playback chrome readable. */
     background:
-        linear-gradient(0deg, rgb(var(--lattice-shade-rgb) / 86%) 0%, rgb(var(--lattice-shade-rgb) / 62%) 14%, rgb(var(--lattice-shade-rgb) / 26%) 30%, rgb(var(--lattice-shade-rgb) / 0%) 46%),
-        linear-gradient(90deg, rgb(var(--lattice-shade-rgb) / 88%), rgb(var(--lattice-shade-rgb) / 50%) 52%, rgb(var(--lattice-shade-rgb) / 8%));
+        linear-gradient(0deg, rgb(var(--lattice-shade-rgb) / 64%) 0%, rgb(var(--lattice-shade-rgb) / 46%) 14%, rgb(var(--lattice-shade-rgb) / 20%) 30%, rgb(var(--lattice-shade-rgb) / 0%) 46%),
+        linear-gradient(90deg, rgb(var(--lattice-shade-rgb) / 65%), rgb(var(--lattice-shade-rgb) / 37%) 52%, rgb(var(--lattice-shade-rgb) / 6%));
 }
 
 .lattice-poster.is-expanded .lattice-poster-copy strong {
