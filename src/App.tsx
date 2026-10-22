@@ -88,6 +88,8 @@ import { resolveActiveProviderSummary } from './library/core/account/accountRule
 import { useAppPreferences } from './hooks/useAppPreferences';
 import { useElectronPlaybackBridge } from './components/app/playback/bridges/useElectronPlaybackBridge';
 import { useElectronDisplaySleepBlocker } from './hooks/useElectronDisplaySleepBlocker';
+import { useBackgroundLyricHold } from './components/app/backgroundThrottling/useBackgroundLyricHold';
+import { readLiveLyricTime, useBackgroundLyricHoldStore } from './components/app/backgroundThrottling/backgroundLyricHoldStore';
 import { useSleepTimer } from './hooks/useSleepTimer';
 import { useProviderNotices } from './components/app/useProviderNotices';
 import { useLocalLibraryAutoScan } from './hooks/useLocalLibraryAutoScan';
@@ -95,6 +97,7 @@ import { useElectronVideoExportController } from './hooks/useElectronVideoExport
 import { useElectronWindowPlaybackHandoff } from './components/app/playback/restore/useElectronWindowPlaybackHandoff';
 import { useMediaSessionBridge } from './hooks/useMediaSessionBridge';
 import { usePlayerChromeAutoHide } from './hooks/usePlayerChromeAutoHide';
+import { useMacWallpaperHitRegions } from './hooks/useMacWallpaperHitRegions';
 import { useIdleCursorHide } from './hooks/useIdleCursorHide';
 import { usePlaybackAudioBridge } from './components/app/playback/bridges/usePlaybackAudioBridge';
 import { useTranscodeFallback } from './hooks/useTranscodeFallback';
@@ -172,6 +175,7 @@ import { usePlayerBottomBarPositioningEntry } from './hooks/usePlayerBottomBarPo
 import { PlayerBottomBarLayoutContext } from './components/floating-player/PlayerBottomBarLayoutContext';
 import { useFoliumHostBridge } from './mods/runtime/hostBridge';
 import { useFoliumHostActions } from './mods/runtime/hostActions';
+import { refreshPrefetchAfterQueueEdit } from './services/prefetchService';
 import { FoliumStageLayerSlot } from './mods/folium/registries/stageLayers';
 import { errorFields } from './utils/errorText';
 import { runsOnWindows } from './utils/platform';
@@ -421,6 +425,8 @@ export default function App() {
         preventDisplaySleepDuringPlayback,
         wallpaperMode,
     } = useDesktopSettingsStore(useShallow(selectDesktopSettingsSnapshot));
+    // macOS wallpaper mode: click catchers over the controls, so Stage Manager ignores those clicks.
+    useMacWallpaperHitRegions(wallpaperMode);
     const {
         stageTrackPillMode,
         stageTrackPillOnHome,
@@ -487,6 +493,9 @@ export default function App() {
         preventDisplaySleepDuringPlayback,
         playerState === PlayerState.PLAYING,
     );
+    useBackgroundLyricHold();
+    // The app.overlay mod layers read the same lyric clock and line the hold keeps still: paused with it.
+    const backgroundLyricHeld = useBackgroundLyricHoldStore(state => state.held);
 
     const visualizerTunings = useVisualizerTunings();
 
@@ -1321,6 +1330,7 @@ export default function App() {
         syncOutputGain,
         getTargetPlaybackVolume,
         getCoverUrl,
+        isTransitionAudible: automix.isTransitionAudible,
     });
 
     const handleTranscodeFallback = useTranscodeFallback({
@@ -1638,6 +1648,7 @@ export default function App() {
         isElectronWindow,
         lyrics,
         offset: effectiveLyricTimelineOffsetMs,
+        audioSrc,
     });
     const canGenerateAITheme = Boolean((lyrics?.lines.length ?? 0) > 0 || currentSong?.isPureMusic);
     const generateCurrentSongTheme = useCallback(() => {
@@ -2019,7 +2030,8 @@ export default function App() {
             return;
         }
 
-        const playbackTime = Math.max(0, lyricTimeSec + currentTime.get() - lyricCurrentTime.get());
+        // Not lyricCurrentTime itself: 后台节流 holds that still while the window is hidden and playback runs on.
+        const playbackTime = Math.max(0, lyricTimeSec + currentTime.get() - readLiveLyricTime());
         if (activePlaybackContext === 'stage' && stageActiveEntryKind === 'lyrics' && !audioSrc) {
             syncStageLyricsClock(playbackTime, duration, playerState, stageLyricsClockRef.current.startTimeSec);
             currentTime.set(playbackTime);
@@ -2065,6 +2077,8 @@ export default function App() {
         isLiked: commandPaletteContext.playback.isSongLiked,
         controlsDisabled: isNowPlayingControlDisabled,
         isLyricsLoading,
+        persistQueue: persistLastPlaybackCache,
+        refreshQueuePrefetch: (song, previous, next) => refreshPrefetchAfterQueueEdit(song, previous, next, audioQuality, user?.id),
     });
 
     const visualizerRendererModel = useVisualizerRendererModel({
@@ -2819,7 +2833,7 @@ export default function App() {
                 slot="app.overlay"
                 theme={theme}
                 isDaylight={isDaylight}
-                paused={displayPlayerState !== PlayerState.PLAYING}
+                paused={displayPlayerState !== PlayerState.PLAYING || backgroundLyricHeld}
                 className="fixed inset-0 pointer-events-none z-[1000]"
             />
 

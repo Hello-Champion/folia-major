@@ -82,9 +82,10 @@ export const SETTINGS_ANCHOR_DEFINITIONS = {
     wallpaperMode: { section: 'desktop' },
     updateCheck: { section: 'general' },
 
-    // pages/GraphicsPage
+    // pages/GraphicsPage; the render GPU row only in the Windows desktop app.
     graphicsPerformance: { section: 'graphics' },
     graphicsMotion: { section: 'graphics' },
+    gpuPreference: { section: 'graphics' },
 
     // 用户功能：底部控制条与全局玻璃的调节区。
     playerBottomBarGlass: { section: 'player' },

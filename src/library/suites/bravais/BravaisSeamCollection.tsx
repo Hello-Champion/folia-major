@@ -10,7 +10,7 @@ import type {
 } from './bravaisSeamModels';
 import { BravaisSeamFlipText } from './BravaisSeamFlip';
 import { useBravaisReducedTransitions } from './bravaisMotion';
-import { bravaisPopMotion, bravaisRevealMotion } from './bravaisSeamMotion';
+import { bravaisPopMotion, bravaisRevealMotion, seamPopAnchorFor } from './bravaisSeamMotion';
 import { usePlayerChromeSettingsStore } from '../../../stores/usePlayerChromeSettingsStore';
 import './bravaisCollection.css';
 
@@ -119,10 +119,11 @@ export const BravaisSeamCollectionMenu: React.FC<{
     const { t } = useTranslation();
     const [isOpen, setIsOpen] = useState(false);
     const reduced = useBravaisReducedTransitions();
-    const pop = bravaisPopMotion('above', reduced);
     // 全局玻璃：集合层的「⋯ 更多」菜单也换玻璃配方（与聚焦卡菜单、搜索面板同族）。
     const globalGlassEnabled = usePlayerChromeSettingsStore(state => state.globalGlassEnabled);
     const anchorRef = useRef<HTMLDivElement>(null);
+    // 横的信息条在视口上半时菜单往下弹（按钮行一直挂着，anchorRef 在打开菜单的那次渲染里已经有值）。
+    const pop = bravaisPopMotion(seamPopAnchorFor(anchorRef.current), reduced);
     const reveal = bravaisRevealMotion(reduced);
     const items = collection?.menu ?? [];
     const hasMenu = items.length > 0 || Boolean(fold);
