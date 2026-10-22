@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { RotateCcw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { LYRIC_EXPORT_COMMAND_ID } from '../../../command-palette/commands/lyricExportCommands';
 import ConfirmDialog from '../../../shared/ConfirmDialog';
@@ -10,7 +11,7 @@ import { Button, CopyValue, FoldedGroup, Group, Row, Select, Toggle, Value, useS
 import { useSettingsPage } from './settingsPageContext';
 import ConfigTransferRows from './storage/ConfigTransferRows';
 import FolderWatchGroup from './storage/FolderWatchGroup';
-import { BACKUP, CACHE_ROWS, CACHES, MEDIA, O } from './storage/options';
+import { BACKUP, CACHE_ROWS, CACHES, FACTORY, MEDIA, O } from './storage/options';
 
 // src/components/modal/settings/pages/StoragePage.tsx
 // The 存储与备份 page: what Folia keeps on disk and how to carry its look to another Folia. The
@@ -34,11 +35,39 @@ const StoragePage: React.FC = () => {
     const cacheLimitGb = useAudioSettingsStore(state => state.mediaCacheLimitGb);
     const setCacheLimitGb = useAudioSettingsStore(state => state.handleSetMediaCacheLimitGb);
     const [clearingAll, setClearingAll] = useState<'no' | 'asking' | 'running'>('no');
+    const [factoryResetAsking, setFactoryResetAsking] = useState(false);
 
     // Everything the app stored goes, so it starts again from an empty state.
     const clearEverything = async () => {
         setClearingAll('running');
         await clearAllData();
+        window.location.reload();
+    };
+
+    // 恢复出厂设置：清空 IndexedDB（缓存 / 本地库）与全部 localStorage 持久化设置后重载，
+    // 让所有 store 回到初始默认值；各平台登录会话（online_provider:* 与旧版 cookie 键）保留，
+    // 重置后无需重新登录。已在页面上的数据清不回去，所以先弹确认。
+    const factoryReset = async () => {
+        setFactoryResetAsking(false);
+        try {
+            await clearAllData();
+        } catch (error) {
+            console.error('[FactoryReset] Failed to clear database:', error);
+        }
+        try {
+            const keptKeys = new Set<string>(['active_online_provider_id', 'netease_cookie', 'netease_anonymous_cookie']);
+            const allKeys: string[] = [];
+            for (let i = 0; i < localStorage.length; i += 1) {
+                const key = localStorage.key(i);
+                if (key) allKeys.push(key);
+            }
+            for (const key of allKeys) {
+                if (keptKeys.has(key) || key.startsWith('online_provider:')) continue;
+                localStorage.removeItem(key);
+            }
+        } catch (error) {
+            console.error('[FactoryReset] Failed to clear localStorage:', error);
+        }
         window.location.reload();
     };
 
@@ -113,6 +142,19 @@ const StoragePage: React.FC = () => {
                 <ConfigTransferRows />
             </FoldedGroup>
 
+            <Group def={FACTORY}>
+                <Row option={O.factoryReset} hint={t('options.factoryResetDesc')}>
+                    <button
+                        type="button"
+                        onClick={() => setFactoryResetAsking(true)}
+                        className="st-t-fast inline-flex h-8 items-center gap-1.5 rounded-lg border border-[color:var(--st-err)]/25 bg-[var(--st-err)]/10 px-3 text-[13px] font-medium text-[color:var(--st-err)] transition-colors hover:bg-[var(--st-err)]/20"
+                    >
+                        <RotateCcw size={14} aria-hidden />
+                        {t('options.factoryReset')}
+                    </button>
+                </Row>
+            </Group>
+
             <ConfirmDialog
                 isOpen={clearingAll === 'asking'}
                 title={t('options.clearAll')}
@@ -121,6 +163,17 @@ const StoragePage: React.FC = () => {
                 isDaylight={isDaylight}
                 onConfirm={() => void clearEverything()}
                 onClose={() => setClearingAll('no')}
+            />
+
+            <ConfirmDialog
+                isOpen={factoryResetAsking}
+                title={t('options.factoryReset')}
+                description={t('options.factoryResetConfirmDesc')}
+                confirmText={t('options.factoryResetConfirm')}
+                confirmVariant="danger"
+                isDaylight={isDaylight}
+                onConfirm={() => void factoryReset()}
+                onClose={() => setFactoryResetAsking(false)}
             />
         </>
     );

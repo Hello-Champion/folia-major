@@ -55,7 +55,8 @@ export const Segmented = <T extends string>({ value, options, onChange, fill, di
                                 layoutDependency={value}
                                 transition={kitTransition('move', reduced)}
                                 className="absolute inset-0 bg-[var(--st-raise)]"
-                                style={{ borderRadius: 6, boxShadow: '0 1px 2px rgba(0, 0, 0, 0.2)' }}
+                                // --st-raise-shadow：玻璃开启时由设置窗口换成带高光与投影的玻璃配方。
+                                style={{ borderRadius: 6, boxShadow: 'var(--st-raise-shadow, 0 1px 2px rgba(0, 0, 0, 0.2))' }}
                             />
                         )}
                         {option.icon

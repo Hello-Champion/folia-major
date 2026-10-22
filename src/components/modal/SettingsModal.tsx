@@ -1188,9 +1188,16 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                     ...settingsTokens(isDaylight, theme),
                     ...kitMotionTokens(reducedKitMotion),
                     ...(globalGlassStyle ?? {}),
-                    // 左侧分类栏默认有不透明的 --st-side 底色，会盖住根的玻璃背景：
-                    // 玻璃开启时让它透明，露出同一层磨砂玻璃。
-                    ...(globalGlassStyle ? ({ '--st-side': 'transparent' } as React.CSSProperties) : {}),
+                    // 左侧分类栏与各页的卡片默认有不透明的 --st-side / --st-card 底色，会盖住根的玻璃背景：
+                    // 玻璃开启时两者都透明，让同一层磨砂透出来；关闭时沿用 settingsTokens 的白色 / 深色底。
+                    // --st-raise 是分段选择器（Segmented）选中项的白底：玻璃下换成半透明玻璃，
+                    // 顶部内高光 + 内发光 + 投影做出厚度（--st-raise-shadow，Segmented 里消费）。
+                    ...(globalGlassStyle ? ({
+                        '--st-side': 'transparent',
+                        '--st-card': 'transparent',
+                        '--st-raise': isDaylight ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 255, 255, 0.12)',
+                        '--st-raise-shadow': 'inset 0 1px 0 rgba(255, 255, 255, 0.45), inset 0 0 2px 1px rgba(255, 255, 255, var(--glass-glow, 0.16)), inset 0 0 10px 4px rgba(255, 255, 255, calc(var(--glass-glow, 0.16) * 0.94)), 0 1px 2px rgba(17, 17, 26, 0.18), 0 2px 8px rgba(17, 17, 26, 0.1)',
+                    } as React.CSSProperties) : {}),
                 }}
                 onClick={(event) => event.stopPropagation()}
             >
