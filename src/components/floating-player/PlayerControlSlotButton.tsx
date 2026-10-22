@@ -38,7 +38,7 @@ const PlayerControlSlotButton: React.FC<PlayerControlSlotButtonProps> = ({
         ? 'cursor-not-allowed opacity-20'
         : slot.active
             ? (isDaylight ? 'bg-black/10 text-black' : 'bg-white/20')
-            : `opacity-40 hover:opacity-100 ${isDaylight ? 'hover:bg-black/5' : 'hover:bg-white/10'}`;
+            : `opacity-70 hover:opacity-100 ${isDaylight ? 'hover:bg-black/5' : 'hover:bg-white/10'}`;
 
     return (
         <button

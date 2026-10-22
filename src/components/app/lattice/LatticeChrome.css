@@ -2,7 +2,7 @@
 /* No card of its own — the controls sit straight on the poster and rely on its bottom shade for contrast. */
 .lattice-chrome {
     --lattice-chrome-ink: currentColor;
-    color: inherit;
+    color: #000;
     width: min(100%, 480px);
     margin-inline: 0;
     padding: 0;
@@ -29,10 +29,11 @@
 .lattice-chrome button { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 1px solid transparent; background: transparent; color: inherit; cursor: pointer; flex-shrink: 0; }
 .lattice-root .lattice-chrome button { border-radius: 12px !important; }
 .lattice-chrome button svg { width: 20px; height: 20px; }
-.lattice-secondary-action, .lattice-chrome-actions button { opacity: 0.65; }
+/* 这些次级按钮默认就是全色（不再靠悬浮加深）；悬浮只加框与底色。 */
+.lattice-secondary-action, .lattice-chrome-actions button { opacity: 1; }
 /* The rounded frame is a hover affordance only; at rest the row stays free of strokes. */
 .lattice-chrome button:hover { border-color: color-mix(in srgb, currentColor 26%, transparent); }
-.lattice-chrome button:hover, .lattice-chrome button.is-active { opacity: 1; background: color-mix(in srgb, currentColor 16%, transparent); }
+.lattice-chrome button:hover, .lattice-chrome button.is-active { background: color-mix(in srgb, currentColor 16%, transparent); }
 .lattice-chrome button:disabled { opacity: 0.25; cursor: default; border-color: transparent; background: transparent; }
 .lattice-chrome button:focus-visible { outline: 2px solid currentColor; outline-offset: -2px; }
 /* The one control of a grown collection card (explore wall): a word beside the glyph, so it is as wide as the word needs. */

@@ -78,7 +78,8 @@ export default function LatticePlaybackControls({
                     onSeek={canControlCurrent ? onSeek : ignoreSeek}
                     primaryColor="var(--lattice-chrome-ink)"
                     secondaryColor="var(--lattice-chrome-ink)"
-                    trackColor="color-mix(in srgb, var(--lattice-chrome-ink) 20%, transparent)"
+                    // 轨道默认就画深一些，不靠悬浮加深（与同一排的图标一致）。
+                    trackColor="color-mix(in srgb, var(--lattice-chrome-ink) 40%, transparent)"
                     disabled={!canControlCurrent}
                     edgeStyle="square"
                 />
