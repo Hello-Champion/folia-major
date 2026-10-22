@@ -94,6 +94,8 @@ export default {
     "searchOnline": "Cari di platform online",
     "searchSubmit": "Cari",
     "searchClose": "Tutup pencarian",
+    "searchHistory": "Riwayat pencarian",
+    "searchHistoryClear": "Hapus riwayat pencarian",
     "backToPlayer": "Kembali ke pemutar",
     "stagePlayer": "Pemutar panggung",
     "stageShort": "Panggung",

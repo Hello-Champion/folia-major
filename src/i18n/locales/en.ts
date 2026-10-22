@@ -94,6 +94,8 @@ export default {
     "searchOnline": "Search online platforms",
     "searchSubmit": "Search",
     "searchClose": "Close search",
+    "searchHistory": "Search history",
+    "searchHistoryClear": "Clear search history",
     "backToPlayer": "Back to the player",
     "stagePlayer": "Stage player",
     "stageShort": "Stage",

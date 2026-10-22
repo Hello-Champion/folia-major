@@ -1,7 +1,9 @@
 import React, { useEffect, useRef, type FormEvent, type KeyboardEvent } from 'react';
-import { Search, X } from 'lucide-react';
+import { Search, Trash2, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type { BravaisLayer } from './bravaisLayer';
 import { setBravaisSearchOpen } from './bravaisHomeUiStore';
+import { addBravaisSearchHistory, clearBravaisSearchHistory, useBravaisSearchHistoryStore } from './bravaisSearchHistoryStore';
 import BravaisSeamCrumbs from './BravaisSeamCrumbs';
 
 // src/library/suites/bravais/BravaisSeamSearch.tsx
@@ -12,19 +14,26 @@ import BravaisSeamCrumbs from './BravaisSeamCrumbs';
 // 占整条缝（面包屑「书库 › 搜索」），提交才发 provider 请求、换到搜索结果；过滤是漏斗 + 下划线，只收窄当前墙、不发请求。
 
 const BravaisSeamSearch: React.FC<{ layer: BravaisLayer }> = ({ layer }) => {
+    const { t } = useTranslation();
     const inputRef = useRef<HTMLInputElement>(null);
+    const history = useBravaisSearchHistoryStore(state => state.history);
     const search = layer.seam.home?.search;
     useEffect(() => {
         inputRef.current?.focus({ preventScroll: true });
     }, []);
     if (!search) return null;
     const close = () => setBravaisSearchOpen(false);
-    const submit = (event: FormEvent) => {
-        event.preventDefault();
-        const query = inputRef.current?.value.trim() ?? '';
+    // 提交与点历史走同一条路：记进历史（已有的词提到最前）后交给宿主搜索并关上搜索框。
+    const runSearch = (value: string) => {
+        const query = value.trim();
         if (!query) return;
+        addBravaisSearchHistory(query);
         search.onSubmit(query);
         close();
+    };
+    const submit = (event: FormEvent) => {
+        event.preventDefault();
+        runSearch(inputRef.current?.value ?? '');
     };
     const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
         if (event.key !== 'Escape' || event.nativeEvent.isComposing) return;
@@ -63,6 +72,30 @@ const BravaisSeamSearch: React.FC<{ layer: BravaisLayer }> = ({ layer }) => {
                     <Search aria-hidden />{search.submitLabel}
                 </button>
             </span>
+            {history.length > 0 && (
+                <div className="bravais-search-history" data-bravais-search-history>
+                    <div className="bravais-search-history-head">
+                        <span>{t('libraryBravaisHome.searchHistory')}</span>
+                        <button
+                            type="button"
+                            className="bravais-search-history-clear"
+                            data-bravais-seam-action="clear-search-history"
+                            aria-label={t('libraryBravaisHome.searchHistoryClear')}
+                            title={t('libraryBravaisHome.searchHistoryClear')}
+                            onClick={clearBravaisSearchHistory}
+                        >
+                            <Trash2 aria-hidden />
+                        </button>
+                    </div>
+                    <ul>
+                        {history.map(entry => (
+                            <li key={entry}>
+                                <button type="button" title={entry} onClick={() => runSearch(entry)}>{entry}</button>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
         </div>
     );
 };

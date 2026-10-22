@@ -458,8 +458,12 @@
     flex-direction: column;
     gap: 16px;
     padding: 42px 22px 0;
+    overflow-y: auto;
     box-sizing: border-box;
 }
+
+/* 「搜索」按钮留在说明下面的原位置，只把对齐从靠左改成靠右。 */
+.bravais-seam-search > .bravais-form-buttons { align-self: flex-end; }
 
 /* 搜索在线平台：带框的输入框（放大镜 + 「搜索在线平台」 + 「搜索」按钮），与当前页过滤的下划线输入位明确区分。 */
 .bravais-search-form {
@@ -490,6 +494,77 @@
 }
 
 .bravais-search-form input::-webkit-search-cancel-button { display: none; }
+
+/* 搜索历史（最近十条，点一条直接再搜）：标题行右侧是清空用的垃圾桶；高度不够时列表自己滚。 */
+.bravais-search-history {
+    display: flex;
+    min-height: 0;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.bravais-search-history-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    color: var(--bravais-seam-ink-soft);
+    font-size: 12px;
+}
+
+.bravais-search-history-clear {
+    display: grid;
+    width: 24px;
+    height: 24px;
+    flex: none;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 7px;
+    color: inherit;
+    background: none;
+    cursor: pointer;
+    transition: background-color 160ms ease, color 160ms ease;
+}
+
+.bravais-search-history-clear:hover { color: var(--text-primary); background: color-mix(in srgb, currentColor 12%, transparent); }
+.bravais-search-history-clear svg { width: 15px; height: 15px; }
+
+/* 历史做成带边框的标签，横排换行；每条不单独占一整行。 */
+.bravais-search-history ul {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.bravais-search-history li { min-width: 0; max-width: 100%; }
+
+.bravais-search-history li button {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    padding: 4px 10px;
+    border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+    border-radius: 999px;
+    color: inherit;
+    background: none;
+    font: inherit;
+    font-size: 12px;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.bravais-search-history li button:hover {
+    border-color: color-mix(in srgb, currentColor 36%, transparent);
+    background: color-mix(in srgb, currentColor 8%, transparent);
+}
 
 /* ---------- 目录树面板 ---------- */
 

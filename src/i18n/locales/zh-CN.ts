@@ -94,6 +94,8 @@ export default {
     "searchOnline": "搜索在线平台",
     "searchSubmit": "搜索",
     "searchClose": "关闭搜索",
+    "searchHistory": "搜索历史",
+    "searchHistoryClear": "清空搜索历史",
     "backToPlayer": "回到播放页",
     "stagePlayer": "舞台播放器",
     "stageShort": "舞台",
