@@ -107,7 +107,15 @@ const BravaisFocusCardBody: React.FC<BravaisFocusCardBodyProps> = ({ slotKey, it
             </span>
         )}
         <span className="lattice-poster-copy bravais-focus-copy" data-bravais-focus-card={item.key}>
-            <WallTitle title={item.title} expanded targetPosterWidth={titleWidth} />
+            <span className="bravais-focus-title">
+                <WallTitle title={item.title} expanded targetPosterWidth={titleWidth} />
+                {/* 正在播放时标题后面跟一段跳动的分线图标；暂停时不画。 */}
+                {isPlaying && (
+                    <span className="bravais-focus-playing" aria-hidden="true">
+                        <span /><span /><span /><span />
+                    </span>
+                )}
+            </span>
             <span className="bravais-focus-links">
                 {artists.map((name, index) => (
                     <React.Fragment key={`${index}:${name}`}>
