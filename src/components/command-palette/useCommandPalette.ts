@@ -360,6 +360,7 @@ export const useCommandPalette = ({
             activeIndex,
             setActiveIndex,
             isExecuting,
+            availableCommands,
             executeMatch,
             executeCommand,
             close,
@@ -368,7 +369,7 @@ export const useCommandPalette = ({
             return handled;
         }
         return executeMatch(activeIndex);
-    }, [activeIndex, close, commitQuery, context, executeCommand, executeMatch, isExecuting, matches, query, surface]);
+    }, [activeIndex, availableCommands, close, commitQuery, context, executeCommand, executeMatch, isExecuting, matches, query, surface]);
     // Surface match lists use live input, so their selection must reset with that same query.
     const selectionQuery = surface?.buildMatches || surface?.useLiveQuery ? query : matchQuery;
     useEffect(() => {
@@ -446,11 +447,12 @@ export const useCommandPalette = ({
             activeIndex,
             setActiveIndex,
             isExecuting,
+            availableCommands,
             executeMatch,
             executeCommand,
             close,
         });
-    }, [activeIndex, close, commitQuery, context, executeCommand, executeMatch, isExecuting, matches, query, surface]);
+    }, [activeIndex, availableCommands, close, commitQuery, context, executeCommand, executeMatch, isExecuting, matches, query, surface]);
 
     // Space-to-pill conversion for commands requiring input
     useEffect(() => {

@@ -142,12 +142,13 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
         activeIndex,
         setActiveIndex: onActiveIndexChange,
         isExecuting,
+        availableCommands,
         isDaylight,
         theme,
         executeMatch: onExecuteMatch,
         executeCommand: onExecutePinnedCommand,
         close: onClose,
-    }), [activeIndex, context, isDaylight, isExecuting, matches, onActiveIndexChange, onClose, onExecuteMatch, onExecutePinnedCommand, onQueryCommit, query, theme]);
+    }), [activeIndex, availableCommands, context, isDaylight, isExecuting, matches, onActiveIndexChange, onClose, onExecuteMatch, onExecutePinnedCommand, onQueryCommit, query, theme]);
     const surfaceBody = surface ? resolveSurfaceComponent(surface) : null;
 
     // Generic `--` completions for any command that declares flags. Built from the live query, not

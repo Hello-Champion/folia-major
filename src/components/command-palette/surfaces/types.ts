@@ -17,6 +17,13 @@ export type CommandSurfaceArgs = {
     activeIndex: number;
     setActiveIndex: (index: number) => void;
     isExecuting: boolean;
+    /**
+     * The commands the palette can offer right now (enabled for the context, hidden ones left out).
+     * Passed in rather than imported from commandRegistry: a surface that imports the registry closes
+     * a cycle back through commands/index, and depending on which module loads first a command binding
+     * is read before initialization.
+     */
+    availableCommands: CommandPaletteCommand[];
     executeMatch: (index: number) => Promise<boolean>;
     /** Runs one command through the normal pipeline, or enters it when it takes input. */
     executeCommand: (command: CommandPaletteCommand) => Promise<boolean>;
