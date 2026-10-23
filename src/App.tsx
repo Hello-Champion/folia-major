@@ -1633,8 +1633,10 @@ export default function App() {
         refreshObsBrowserSourceStatus,
     } = useObsBrowserSourcePublisher({
         isElectronWindow,
+        audioRef,
+        getDisplayAudioElement: automix.getDisplayElement,
         stageSource,
-        coverUrl,
+        coverUrl: displayCoverUrl,
         offsetMs: effectiveLyricTimelineOffsetMs,
         theme: visualizerTheme,
         subtitleTheme: visualizerSubtitleTheme,
@@ -2775,6 +2777,7 @@ export default function App() {
                                 currentSong={displaySong}
                                 playerState={displayPlayerState}
                                 currentTime={currentTime}
+                                lyricCurrentTime={lyricCurrentTime}
                                 playbackDuration={displayDuration}
                                 canTogglePlayback={canToggleCurrentPlayback}
                                 queue={playQueue}
