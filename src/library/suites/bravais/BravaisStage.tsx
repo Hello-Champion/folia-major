@@ -602,8 +602,8 @@ const BravaisStage: React.FC<LibrarySuiteStageProps> = ({
                     leftRef={leftRef}
                     rightRef={rightRef}
                     plates={plates}
-                    // 贴着缝左边的卡片留 4 屏幕像素的右边距（世界单位按当前缩放换算）。
-                    seamEdgeMargin={4 / (view?.scale || 1)}
+                    // 贴着缝左边的卡片留 5 屏幕像素的右边距（世界单位按当前缩放换算）。
+                    seamEdgeMargin={5 / (view?.scale || 1)}
                 />
                 <BravaisWallHint ref={hintRef} hint={wallHint ?? lastWallHintRef.current} shown={wallHintShown} />
             </div>
