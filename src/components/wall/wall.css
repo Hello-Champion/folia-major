@@ -120,7 +120,8 @@
    hairline behind it so the accent still reads over a bright sleeve, and a soft inward glow that
    makes the card look lit rather than stickered. The third slot is a placeholder that keeps this
    list the same length as the focused one below, so the two interpolate. */
-.lattice-poster.is-current::before {
+/* 只在展开的卡上画播放描边：未展开的小卡片不带边框。 */
+.lattice-poster.is-current.is-expanded::before {
     content: '';
     position: absolute;
     inset: 0;
@@ -139,6 +140,14 @@
     filter: saturate(1.08) brightness(1.05);
 }
 
+/* 平移中（useWallPointerPan 给拖动容器挂的 data-wall-panning）不做悬浮反馈：墙在动，光标下的卡片不停更换，
+   每换一张都要重画一次滤镜 / 缩放，是拖动时最没必要的逐帧开销。停手 160ms 后标记摘掉，悬浮照旧。 */
+.lattice-field[data-wall-panning] .lattice-poster:hover { filter: none; }
+
+.lattice-field[data-wall-panning] .bravais-tile:hover > .bravais-tile-face:not(.is-wall):not(.is-expanded) {
+    transform: none;
+}
+
 /* Keyboard focus. The ring is drawn with box-shadow rather than outline so it follows the
    poster's rounded corners, and the native outline is dropped only once ours is showing.
    This rule carries the lift only; the ring is split out below, because the playing card already
@@ -154,13 +163,12 @@
         var(--lattice-poster-elevation, var(--lattice-focus-lift));
 }
 
-/* Cards with no mark of their own get one: a hairline, the ring, then a second hairline, so the
-   ring stays crisp against both the artwork inside it and the wall outside. */
-.lattice-poster.is-focused:not(.is-current),
-.lattice-poster:focus-visible:not(.is-current) {
+/* 只有展开的卡带描边：没展开的卡（含键盘焦点）不加边框。环仍是发丝线 + 主题色 + 发丝线，
+   在内侧封面与外侧墙面之间保持清晰。 */
+.lattice-poster.is-expanded:not(.is-current) {
     box-shadow:
         0 0 0 1px rgb(0 0 0 / 62%),
-        0 0 0 4px var(--text-primary, #fff),
+        0 0 0 4px var(--text-accent, var(--text-primary, #fff)),
         0 0 0 5px rgb(0 0 0 / 38%),
         var(--lattice-poster-elevation, var(--lattice-focus-lift));
 }
@@ -186,11 +194,10 @@
 
 .lattice-poster.is-focused::after { opacity: 1; }
 
-.lattice-root.is-daylight .lattice-poster.is-focused:not(.is-current),
-.lattice-root.is-daylight .lattice-poster:focus-visible:not(.is-current) {
+.lattice-root.is-daylight .lattice-poster.is-expanded:not(.is-current) {
     box-shadow:
         0 0 0 1px rgb(255 255 255 / 78%),
-        0 0 0 4px var(--text-primary, #111),
+        0 0 0 4px var(--text-accent, var(--text-primary, #111)),
         0 0 0 5px rgb(255 255 255 / 45%),
         var(--lattice-poster-elevation, var(--lattice-focus-lift));
 }

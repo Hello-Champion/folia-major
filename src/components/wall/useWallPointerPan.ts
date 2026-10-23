@@ -48,8 +48,28 @@ export const useWallPointerPan = ({
     // Read by the poster click handler so a drag that ends on a card does not open it.
     const didDragRef = useRef(false);
 
+    // 拖动 / 滚轮 / 惯性期间在容器上挂一个标记，停手一小段时间后摘掉：墙在动时，光标扫过的卡片不停换，
+    // 每换一张都要重画一次悬浮滤镜 / 缩放；平移期间不做悬浮反馈能省掉这些逐帧重画（样式见 wall.css）。
+    const panMarkRef = useRef<{ timer: number | null }>({ timer: null });
+    const markPanning = useCallback(() => {
+        const container = containerRef.current;
+        if (!container) return;
+        if (container.dataset.wallPanning === undefined) container.dataset.wallPanning = '';
+        const mark = panMarkRef.current;
+        if (mark.timer !== null) window.clearTimeout(mark.timer);
+        mark.timer = window.setTimeout(() => {
+            mark.timer = null;
+            delete container.dataset.wallPanning;
+        }, 160);
+    }, [containerRef]);
+    useEffect(() => () => {
+        if (panMarkRef.current.timer !== null) window.clearTimeout(panMarkRef.current.timer);
+        delete containerRef.current?.dataset.wallPanning;
+    }, [containerRef]);
+
     // Republishing bounds is what triggers a re-cull, so only do it near the edge of what is culled.
     const updateCamera = useCallback((x: number, y: number) => {
+        markPanning();
         const next = { ...cameraRef.current, x, y };
         const visible = getWorldBounds(next, viewportRef.current);
         const culled = boundsRef.current;
@@ -59,7 +79,7 @@ export const useWallPointerPan = ({
             || visible.top < culled.top - padding
             || visible.bottom > culled.bottom + padding;
         applyCamera(next, nearCullEdge);
-    }, [applyCamera, cameraRef, getWorldBounds, overscan, viewportRef]);
+    }, [applyCamera, cameraRef, getWorldBounds, markPanning, overscan, viewportRef]);
 
     const interrupt = useCallback(() => {
         stopPan();
