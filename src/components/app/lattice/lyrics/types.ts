@@ -11,6 +11,8 @@ export type LatticeLyricInput = LatticeLyricSource & {
     keywordColoringEnabled: boolean;
     reducedMotion: boolean;
     fontsEpoch: number;
+    /** 日光主题：发光层取正文色会变成黑边阴影，这时不画光。 */
+    isDaylight: boolean;
 };
 
 export interface LatticeLyricRuntime {

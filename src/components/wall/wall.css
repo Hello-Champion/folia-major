@@ -50,6 +50,44 @@
 
 .lattice-root.is-daylight::after { opacity: 0.07; }
 
+/* 日光主题下黑字靠白纱衬托，但整张铺满会泛白。标题在左边与左下角，白纱只从这两侧淡入，
+   再给文字加一圈白色柔光：字清楚，卡片右上大部分保持原来的封面颜色。 */
+.lattice-root.is-daylight .lattice-poster-shade {
+    background:
+        linear-gradient(0deg, rgb(var(--lattice-shade-rgb) / 34%) 0%, rgb(var(--lattice-shade-rgb) / 12%) 20%, transparent 42%),
+        linear-gradient(90deg, rgb(var(--lattice-shade-rgb) / 24%) 0%, rgb(var(--lattice-shade-rgb) / 8%) 32%, transparent 58%);
+}
+
+.lattice-root.is-daylight .lattice-poster.is-expanded .lattice-poster-shade {
+    background:
+        linear-gradient(0deg, rgb(var(--lattice-shade-rgb) / 44%) 0%, rgb(var(--lattice-shade-rgb) / 18%) 22%, transparent 46%),
+        linear-gradient(90deg, rgb(var(--lattice-shade-rgb) / 40%) 0%, rgb(var(--lattice-shade-rgb) / 16%) 48%, transparent 72%);
+}
+
+/* 播放中的展开卡会显示歌词：在遮罩上再叠一小层白纱，用 opacity 淡入（渐变本身不能补间，
+   直接换 background 会一跳一跳的）。 */
+.lattice-poster-shade::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 480ms ease-out 80ms;
+    background:
+        linear-gradient(0deg, rgb(var(--lattice-shade-rgb) / 25%) 0%, rgb(var(--lattice-shade-rgb) / 10%) 24%, transparent 46%),
+        linear-gradient(90deg, rgb(var(--lattice-shade-rgb) / 20%) 0%, rgb(var(--lattice-shade-rgb) / 5%) 52%, transparent 74%);
+}
+
+.lattice-root.is-daylight .lattice-poster.is-expanded.is-current .lattice-poster-shade::after {
+    opacity: 1;
+}
+
+:root[data-reduce-motion~='lattice'] .lattice-poster-shade::after { transition: none; }
+
+/* 日光下靠局部白纱托底就够了。此前给文字加的白色 text-shadow 会在黑字边缘形成白边，去掉。 */
+.lattice-root.is-daylight .lattice-poster-copy :is(strong, small) {
+    text-shadow: none;
+}
+
 /* Edge falloff over the posters. Sits under the header, the hint and the panel button (z-index 4
    and 5) so chrome never dims, and stays deliberately shallow: the wall is a browsing surface, and
    a heavy vignette would fight the artwork it is there to show. */

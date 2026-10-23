@@ -188,7 +188,7 @@ export default function Lattice({
         <LatticePlaybackProvider actions={controls} currentSong={currentSong} queue={queue} lyrics={lyrics}
             currentTime={currentTime} duration={playbackDuration} onSeek={onSeek} isDaylight={isDaylight}>
         <LatticeLyricsProvider source={lyricSource} songKey={currentSong ? getPlaybackSongKey(currentSong) : ''}
-            keywordColoringEnabled={lyricKeywordColoringEnabled}>
+            keywordColoringEnabled={lyricKeywordColoringEnabled} isDaylight={isDaylight}>
         <section
             className={`lattice-root lattice-queue-root ${isDaylight ? 'is-daylight' : ''} ${vignette ? 'has-vignette' : ''} ${lightsOn ? '' : 'is-lights-out'} ${posterTintEnabled ? 'has-poster-tint' : ''} ${posterTintUseCustomColor ? 'uses-custom-poster-tint' : ''} ${surfaceOff ? 'is-handoff-surface-off' : ''} ${fadesIn && !reducedMotion ? 'is-returning' : ''}`}
             data-wall-handoff={handoffRole ?? undefined}

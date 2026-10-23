@@ -456,7 +456,8 @@ export const useBravaisDisplay = (layer: BravaisLayer | null, controls: BravaisD
             const next = { ...draft, finite: resolveFinite(layer, null), entrance };
             commit(next, depth, entering ? 'enter' : 'first');
             if (entrance) markSettling(entrance.until - entrance.startedAt);
-            controlsNow.restoreFocus(memory?.focusSlotKey ?? focusSessionEntry(next));
+            // 刚挂上时不恢复键盘焦点：进来就该是一面干净的墙，焦点只在方向键 / 点击时出现。
+            controlsNow.restoreFocus(null);
             return;
         }
 
@@ -571,7 +572,6 @@ export const useBravaisDisplay = (layer: BravaisLayer | null, controls: BravaisD
             toOrigin: navigation.origin,
         });
         const leaving = kind === 'back' || kind === 'exit';
-        const hadKeyboardFocus = controlsNow.getFocusedSlotKey() !== null;
         controlsNow.collapseFocusCard();
         // 起点只给 push 用（整墙入场没有起点磁贴：被点的不在墙上）；任何换层都把它取走丢掉。
         const taken = takeBravaisPendingOrigin(previous.layer.key);
@@ -616,9 +616,9 @@ export const useBravaisDisplay = (layer: BravaisLayer | null, controls: BravaisD
             );
             startSlotKey = start.key;
             origin = pointOrigin(start.slot ? { x: start.slot.centerX, y: start.slot.centerY } : plannedSeamPoint());
-            if (hadKeyboardFocus) focusKey = startSlotKey;
-            // 不是从一张磁贴打开的（从别处、换 suite 时正开着）：焦点落在会话记着的那一项上。
-            focusFromSession = !pending && !hadKeyboardFocus;
+            // 刚进入一层不默认聚焦：焦点只在方向键 / 点击时出现（返回时仍按记忆恢复，见上面的 leaving 分支）。
+            focusKey = null;
+            focusFromSession = false;
         }
         // 换形状：这次换层先在旧形状上整墙出场，相机、锚点与新内容等出场放完再一起换（finishShapeChange）。
         if (resolveLayerShape(layer.shape, startSlotKey).id !== previous.shape.id) {

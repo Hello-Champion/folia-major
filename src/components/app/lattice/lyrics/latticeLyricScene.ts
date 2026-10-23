@@ -79,7 +79,8 @@ export function createLatticeLineView(pixi: Pixi, raster: LatticeRaster, parent:
             const clipped = status !== 'active' && piece.row === 1 && layout.rows > 2;
             uniforms.uVerticalFade[0] = clipped ? (view.pad + type.lineHeight * 0.55) / view.height : 2;
             uniforms.uVerticalFade[1] = clipped ? (view.pad + type.lineHeight) / view.height : 3;
-            const glow = !quiet && !piece.translation && token.timed && status !== 'waiting'
+            // 日光主题的正文色是深色，发光层会变成黑边阴影：这张卡上不画光。
+            const glow = !input.isDaylight && !quiet && !piece.translation && token.timed && status !== 'waiting'
                 ? resolveMonetGlow(time, start, end, getLineRenderEndTime(entry.line)) : 0;
             glowing ||= glow > 0;
             const word = uniforms.uWord;
