@@ -24,7 +24,8 @@
     left: 0;
 }
 
-.bravais-tile:hover { z-index: 3; }
+/* 悬浮的那张压过键盘焦点停留的那张（焦点卡还原后仍占着更高的层，会把悬浮卡盖住）；展开卡（20）仍在最上。 */
+.bravais-tile:hover { z-index: 5; }
 .bravais-tile.is-focused { z-index: 4; }
 .bravais-tile.is-expanded { z-index: 20; }
 
@@ -34,10 +35,20 @@
     transition: box-shadow 600ms ease, filter 600ms ease, transform 300ms ease-out;
 }
 
-/* 悬停与键盘焦点：四边各外扩一个 GAP（--bravais-pop-x / -y 由外框按自己的尺寸给出）。 */
+/* 悬停与键盘焦点：四边各外扩一个 GAP（--bravais-pop-x / -y 由外框按自己的尺寸给出），以中心为原点放大。 */
 .bravais-tile:hover > .bravais-tile-face:not(.is-wall):not(.is-expanded),
 .bravais-tile.is-focused > .bravais-tile-face:not(.is-wall):not(.is-expanded) {
     transform: scale(var(--bravais-pop-x, 1), var(--bravais-pop-y, 1));
+}
+
+/* 悬浮放大的那张始终完全不透明：批量置灰、隐藏管理等把它压暗的规则都不再作用。 */
+.lattice-root .bravais-tile:hover > .lattice-poster.bravais-tile-face {
+    opacity: 1;
+}
+
+/* 同时只放大一张：悬浮别的卡时，键盘焦点停留在的那张先还原。 */
+.lattice-field:has(.bravais-tile:hover) .bravais-tile.is-focused:not(:hover) > .bravais-tile-face:not(.is-wall):not(.is-expanded) {
+    transform: none;
 }
 
 /* 空画框（墙面）：只有一道主色 7% 的发丝线。 */
@@ -607,6 +618,13 @@
    2026-10-09（用户定）：去掉底部的封面底条，透着的磁贴上只有标题。 */
 .lattice-poster.bravais-tile-face.is-see-through {
     background: var(--bravais-window-glow);
+}
+
+/* 全透明档悬浮放大的那张画回封面：放大时要看得清，不再透出下面的画面。 */
+.bravais-tile:hover > .lattice-poster.bravais-tile-face.is-see-through {
+    background-image: var(--bravais-cover-image);
+    background-position: center;
+    background-size: cover;
 }
 
 

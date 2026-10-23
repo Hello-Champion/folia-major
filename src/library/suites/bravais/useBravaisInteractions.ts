@@ -117,7 +117,9 @@ export const useBravaisInteractions = ({
                 collapse();
                 return;
             }
-            focusSlot(slot);
+            // 曲目点开就是聚焦卡，不再顺手把它设成键盘焦点：收起后又留着放大状态会像「默认选中」。
+            // 歌单 / 专辑仍记焦点，返回时回到被点的那张（openFrom 的会话写回靠它）。
+            if (item.kind !== 'track') focusSlot(slot);
             // B9 批量模式：点卡片只切换选中，绝不进入文件夹（GridMap onSelect 里批量模式的提前 return）。
             const batch = layer.home?.batch;
             if (batch) {

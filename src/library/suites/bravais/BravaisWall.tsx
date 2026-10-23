@@ -5,6 +5,7 @@ import BravaisBlockPlates from './BravaisBlockPlates';
 import { resolveSlotFace, type BravaisDisplay } from './bravaisDisplay';
 import { isSeeThroughFace } from './bravaisLook';
 import BravaisTile, { type BravaisTileHandlers, type BravaisTileRect } from './BravaisTile';
+import { BRAVAIS_METRICS } from './bravaisConstants';
 import { BRAVAIS_BLOCK_SHAPE } from './bravaisWallShape';
 
 // src/library/suites/bravais/BravaisWall.tsx
@@ -33,6 +34,8 @@ type BravaisWallProps = {
     rightRef: RefObject<HTMLDivElement | null>;
     /** 透光档的块底板（按缝锚点分好左右）；实色档为空。 */
     plates?: PlateBlockSet;
+    /** 贴着缝左边的卡片在右边留的 margin（世界单位；由 stage 按 6 屏幕像素换算）。 */
+    seamEdgeMargin: number;
 };
 
 const BravaisWall: React.FC<BravaisWallProps> = ({
@@ -51,6 +54,7 @@ const BravaisWall: React.FC<BravaisWallProps> = ({
     leftRef,
     rightRef,
     plates = EMPTY_PLATE_BLOCKS,
+    seamEdgeMargin,
 }) => {
     const left: React.ReactNode[] = [];
     const right: React.ReactNode[] = [];
@@ -60,11 +64,16 @@ const BravaisWall: React.FC<BravaisWallProps> = ({
     for (const slot of slots) {
         const { item, kind } = resolveSlotFace(display, slot);
         const expanded = slot.key === expandedSlotKey;
+        const baseRect = reflow.get(slot.key) ?? slot;
+        // 只有竖缝左边那列、右边缘正贴着缝的卡片收窄 margin，给缝多留一点空隙。
+        const atLeftSeam = anchorY === null && anchorX !== null && slot.x < anchorX
+            && Math.abs(anchorX - (baseRect.x + baseRect.width) - BRAVAIS_METRICS.gap / 2) < 0.5;
+        const rect = atLeftSeam ? { ...baseRect, width: Math.max(1, baseRect.width - seamEdgeMargin) } : baseRect;
         const tile = (
             <BravaisTile
                 key={`${shape.blockKey(slot.column, slot.row)}:${slot.key}`}
                 slotKey={slot.key}
-                rect={reflow.get(slot.key) ?? slot}
+                rect={rect}
                 item={item}
                 kind={kind}
                 seeThrough={isSeeThroughFace(display?.look ?? 'solid', kind, expanded)}

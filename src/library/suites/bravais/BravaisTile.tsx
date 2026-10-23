@@ -317,12 +317,15 @@ function BravaisTile({
         handlers.activate(slotKey);
     };
 
+    // 悬浮 / 聚焦的放大：以宽度为基准多让 5 个 gap，宽高共用这一个系数（等比例，不拉变形）。
+    const popScale = (rect.width + BRAVAIS_METRICS.gap * 5) / Math.max(rect.width, 1);
     const style = {
         transform: `translate3d(${rect.x}px, ${rect.y}px, 0)`,
         width: rect.width,
         height: rect.height,
-        '--bravais-pop-x': ((rect.width + BRAVAIS_METRICS.gap * 2) / Math.max(rect.width, 1)).toFixed(4),
-        '--bravais-pop-y': ((rect.height + BRAVAIS_METRICS.gap * 2) / Math.max(rect.height, 1)).toFixed(4),
+        // 悬浮 / 聚焦的放大倍数：宽高用同一个系数，保持卡片比例不变。
+        '--bravais-pop-x': popScale.toFixed(4),
+        '--bravais-pop-y': popScale.toFixed(4),
     } as React.CSSProperties;
 
     return (
@@ -350,7 +353,12 @@ function BravaisTile({
             <article
                 ref={faceRef}
                 className={`lattice-poster bravais-tile-face${isHeading ? ' is-heading' : display ? '' : isWindow ? ' is-window' : ' is-wall'}${face.seeThrough ? ' is-see-through' : ''}${isExpanded ? ' is-expanded' : ''}${keyboardFocused ? ' is-focused' : ''}${isCurrent ? ' is-current' : ''}${display?.unavailable ? ' is-unavailable' : ''}${linked && display ? ' is-linked' : ''}${display?.dimmed ? ' is-dimmed' : ''}${display?.selected ? ' is-selected' : ''}${isStack ? ' is-stack' : ''}${isPortrait ? ' is-portrait' : ''}`}
-                style={display && !face.seeThrough && !isHeading ? { backgroundImage: cover } : undefined}
+                // 全透明档不画封面，但把封面留给 CSS：悬浮放大时用它把卡片补成不透明。
+                style={display && !isHeading
+                    ? (face.seeThrough
+                        ? ({ '--bravais-cover-image': cover } as React.CSSProperties)
+                        : { backgroundImage: cover })
+                    : undefined}
                 data-bravais-art={art?.mode}
                 role={display && !isHeading ? (isExpanded ? 'group' : 'button') : undefined}
                 aria-label={display ? `${display.title} · ${display.subtitle}${display.trackCountLabel ? ` · ${display.trackCountLabel}` : ''}` : undefined}

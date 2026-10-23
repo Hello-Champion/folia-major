@@ -700,14 +700,14 @@
 .bravais-tile > .lattice-poster.bravais-tile-face.is-selected:not(.is-focused) {
     box-shadow:
         0 0 0 1px rgb(0 0 0 / 62%),
-        0 0 0 4px var(--text-primary, #fff),
+        0 0 0 4px var(--text-accent, var(--text-primary, #fff)),
         0 0 0 5px rgb(0 0 0 / 38%);
 }
 
 .lattice-root.is-daylight .bravais-tile > .lattice-poster.bravais-tile-face.is-selected:not(.is-focused) {
     box-shadow:
         0 0 0 1px rgb(255 255 255 / 78%),
-        0 0 0 4px var(--text-primary, #111),
+        0 0 0 4px var(--text-accent, var(--text-primary, #111)),
         0 0 0 5px rgb(255 255 255 / 45%);
 }
 
