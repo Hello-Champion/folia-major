@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, type MutableRefObject, type PointerEven
 import type { Bounds } from './layout';
 import type { LatticeCamera } from './useWallCameraPan';
 import { createWallWheelClassifier, stepWallWheel, wallWheelDelta, WALL_PAN_INERTIA } from './wallPanMotion';
+import { setWallPanning } from './wallPanning';
 
 // Drag and wheel panning. Camera writes bypass React state; only the cull bounds are published.
 // 鼠标滚轮平滑、触控板直接跟手（判别与参数见 wallPanMotion.ts）。平滑滚动占用共享的 animationRef，
@@ -55,16 +56,19 @@ export const useWallPointerPan = ({
         const container = containerRef.current;
         if (!container) return;
         if (container.dataset.wallPanning === undefined) container.dataset.wallPanning = '';
+        setWallPanning(true);
         const mark = panMarkRef.current;
         if (mark.timer !== null) window.clearTimeout(mark.timer);
         mark.timer = window.setTimeout(() => {
             mark.timer = null;
             delete container.dataset.wallPanning;
+            setWallPanning(false);
         }, 160);
     }, [containerRef]);
     useEffect(() => () => {
         if (panMarkRef.current.timer !== null) window.clearTimeout(panMarkRef.current.timer);
         delete containerRef.current?.dataset.wallPanning;
+        setWallPanning(false);
     }, [containerRef]);
 
     // Republishing bounds is what triggers a re-cull, so only do it near the edge of what is culled.

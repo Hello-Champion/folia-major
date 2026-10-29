@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { COVER_SIZE_STEPS, getOriginalCoverUrl, getSizedCoverUrl, resolveCoverSizeStep } from '../../utils/coverUrl';
+import { isWallPanning, subscribeWallPanning } from './wallPanning';
 
 // src/components/wall/useWallPosterArtwork.ts
 // Picks which variant of a cover one poster paints. The wall draws the same list (the play queue,
@@ -93,6 +94,13 @@ const pickDisplay = (cover: string, targetStep: number): PosterArtwork => {
         if (decodedVariants.has(url)) return { cover, step, url };
     }
 
+    // 墙在动、这张封面一张都没解过：先画最小的一档（像素少 4 倍，解起来便宜），停手后再换清晰的。
+    // 冷封面在拖动半路解码会卡住栅格线程，一次长拖能掉好几帧。
+    if (isWallPanning() && targetStep > COVER_SIZE_STEPS[0]) {
+        const step = COVER_SIZE_STEPS[0];
+        return { cover, step, url: variantUrl(cover, step) };
+    }
+
     return { cover, step: targetStep, url: targetUrl };
 };
 
@@ -125,15 +133,23 @@ export const useWallPosterArtwork = (cover: string | undefined, sizePx: number):
     useEffect(() => {
         if (!source || (current.cover === source && current.step >= targetStep)) return;
         const url = variantUrl(source, targetStep);
-        const upgrade = () => setReady({ cover: source, step: targetStep, url });
-        if (decodedVariants.has(url)) {
-            upgrade();
-            return;
-        }
         let cancelled = false;
-        void decodeVariant(url).then(decoded => {
-            if (decoded && !cancelled) upgrade();
-        });
+        const upgrade = () => {
+            if (cancelled) return;
+            if (decodedVariants.has(url)) {
+                setReady({ cover: source, step: targetStep, url });
+                return;
+            }
+            void decodeVariant(url).then(decoded => {
+                if (decoded && !cancelled) setReady({ cover: source, step: targetStep, url });
+            });
+        };
+        // 墙在动的时候不升级：拖动中新进场的一批卡片同时解码会把栅格线程堵住，掉帧就出在这里。停手再补。
+        if (isWallPanning()) {
+            const off = subscribeWallPanning(upgrade);
+            return () => { cancelled = true; off(); };
+        }
+        upgrade();
         return () => { cancelled = true; };
     }, [current, source, targetStep]);
 
