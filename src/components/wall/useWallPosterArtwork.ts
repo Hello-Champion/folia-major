@@ -94,9 +94,9 @@ const pickDisplay = (cover: string, targetStep: number): PosterArtwork => {
         if (decodedVariants.has(url)) return { cover, step, url };
     }
 
-    // 墙在动、这张封面一张都没解过：先画最小的一档（像素少 4 倍，解起来便宜），停手后再换清晰的。
-    // 冷封面在拖动半路解码会卡住栅格线程，一次长拖能掉好几帧。
-    if (isWallPanning() && targetStep > COVER_SIZE_STEPS[0]) {
+    // 墙在动、这张封面一张都没解过：先画最小的一档（像素少 4 倍），停手后再换清晰的。
+    // 冷封面在拖动半路下载 / 解码会堵住栅格线程，一次长拖能掉好几帧。
+    if (isWallPanning()) {
         const step = COVER_SIZE_STEPS[0];
         return { cover, step, url: variantUrl(cover, step) };
     }

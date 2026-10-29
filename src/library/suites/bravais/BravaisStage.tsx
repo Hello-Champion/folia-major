@@ -11,7 +11,8 @@ import { useLibraryWallLookStore } from '../../../stores/useLibraryWallLookStore
 import type { LibrarySuiteStageProps } from '../../core/suite/suite.contract';
 import { BRAVAIS_METRICS, BRAVAIS_OVERSCAN, BRAVAIS_SEAM_ACRYLIC_BLUR } from './bravaisConstants';
 import { WALL_REFLOW_CONTROLS_REVEAL } from '../../../components/wall/wallReflowMotion';
-import { resolveSlotItem, type BravaisDisplay } from './bravaisDisplay';
+import { prewarmWallPosterArtwork } from '../../../components/wall/useWallPosterArtwork';
+import { resolveSlotFace, resolveSlotItem, type BravaisDisplay } from './bravaisDisplay';
 import type { BravaisLayer } from './bravaisLayer';
 import { useBravaisSeamStore, type BravaisSeamLevel } from './bravaisSeamLevel';
 import { resolveCurrentLayer, useBravaisStageStore } from './bravaisStageStore';
@@ -298,6 +299,28 @@ const BravaisStage: React.FC<LibrarySuiteStageProps> = ({
         camera.bounds ? collectShapeSlots(shape, expandBounds(camera.bounds, BRAVAIS_OVERSCAN), FLIP_MAX_TILES) : []
     ), [camera.bounds, shape]);
     slotsRef.current = slots;
+    // 墙外一圈的封面在空闲时先取好：拖动滑到那一带时卡片已经有图，不会在移动途中下载 / 解码。
+    // 冷封面是拖动掉帧的来源（一次长拖能掉到 200ms 一帧）；这里只预热，不改画法。
+    useEffect(() => {
+        if (!display || !camera.bounds) return undefined;
+        const band = collectShapeSlots(shape, expandBounds(camera.bounds, BRAVAIS_OVERSCAN * 3), FLIP_MAX_TILES);
+        const drawn = new Set(slots.map(slot => slot.key));
+        const pixelScale = (view?.scale ?? 1) * devicePixelRatio;
+        const run = () => {
+            for (const slot of band) {
+                if (drawn.has(slot.key)) continue;
+                const { item } = resolveSlotFace(display, slot);
+                if (!item?.coverUrl) continue;
+                prewarmWallPosterArtwork(item.coverUrl, Math.max(slot.width, slot.height) * pixelScale);
+            }
+        };
+        if (typeof window.requestIdleCallback !== 'function') {
+            const timer = window.setTimeout(run, 300);
+            return () => window.clearTimeout(timer);
+        }
+        const handle = window.requestIdleCallback(run);
+        return () => window.cancelIdleCallback(handle);
+    }, [camera.bounds, devicePixelRatio, display, shape, slots, view?.scale]);
     // B11 transitions.beforePush：宿主压栈之前，没经过墙上磁贴的打开用键盘焦点所在的 slot 当起点磁贴。
     const getFocusedSlotKey = useCallback(() => focus.focusedRef.current, [focus.focusedRef]);
     useBravaisBeforePush(displayRef, getFocusedSlotKey);
