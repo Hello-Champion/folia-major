@@ -4,6 +4,7 @@ import type { MotionValue } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { getCacheUsageByCategory, clearCacheByCategory } from '../../services/db';
 import { forgetSettledDrumHits } from '../../services/analysis/drumHits';
+import { clearBalanceRuntime } from '../../services/volumeBalance/balanceRecords';
 import { DualTheme, StageStatus, StageSource, Theme, ThemeMode, type NowPlayingConnectionStatus, type ReplayGainMode } from '../../types';
 import { getNavidromeConfig, saveNavidromeConfig, clearNavidromeConfig, hashPassword, navidromeApi, setNavidromeEnabled, getCachedNavidromeServerProfile, refreshNavidromeServerProfile, getNavidromeConfigOrigin, dismissNavidromeServerPreset } from '../../services/navidromeService';
 import { fetchNavidromeServerPreset, markNavidromeConfigAsPresetIfMatching, restoreNavidromeServerPreset } from '../../services/navidromeServerPreset';
@@ -198,6 +199,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
         hidePlayerTranslationSubtitle,
         showSubtitleTranslation,
         subtitleContentMode,
+        subtitleOverlayLayout,
         subtitleOverlayOpacity,
         subtitleOverlayBackground,
         subtitleUpcomingLyricsBlur,
@@ -216,6 +218,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
         handleToggleHidePlayerTranslationSubtitle: onToggleHidePlayerTranslationSubtitle,
         handleToggleShowSubtitleTranslation: onToggleShowSubtitleTranslation,
         handleSetSubtitleContentMode: onSubtitleContentModeChange,
+        handleSetSubtitleOverlayLayout: onSubtitleOverlayLayoutChange,
         handleSetSubtitleOverlayOpacity: setSubtitleOverlayOpacity,
         handleToggleSubtitleOverlayBackground: onToggleSubtitleOverlayBackground,
         handleToggleSubtitleUpcomingLyricsBlur: onToggleSubtitleUpcomingLyricsBlur,
@@ -235,8 +238,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
         handleSetSubtitleFontFallbackFamilies: onSubtitleFontFallbackFamiliesChange,
     } = useTypographySettingsStore(useShallow(selectTypographySettingsSnapshot));
     const {
-        lyricFilterPattern,
-        lyricFilterEnabled,
+        lyricLineRules,
         lyricStaffPolicy,
         lyricStaffMinDwellSeconds,
         lyricStaffAbsorbMode,
@@ -377,7 +379,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
         lyrics: '0 B',
         cover: '0 B',
         media: '0 B',
-        analysis: '0 B'
+        analysis: '0 B',
+        volumeBalance: '0 B'
     });
     const [mediaCount, setMediaCount] = useState(0);
     const [isCleaning, setIsCleaning] = useState<CacheCategory | null>(null);
@@ -818,7 +821,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
             lyrics: formatBytes(usage.lyrics),
             cover: formatBytes(usage.cover),
             media: formatBytes(usage.media),
-            analysis: formatBytes(usage.analysis)
+            analysis: formatBytes(usage.analysis),
+            volumeBalance: formatBytes(usage.volumeBalance)
         });
         setMediaCount(usage.mediaCount);
     };
@@ -836,6 +840,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
 
     const handleClear = async (category: CacheCategory) => {
         setIsCleaning(category);
+        // 智能平衡's readings held in memory go with its stored ones, or they would be written back. First, so
+        // a write already sent lands before the clear and none is sent after it.
+        if (category === 'volumeBalance') clearBalanceRuntime();
         await clearCacheByCategory(category);
         // The drum hits' memory of which tracks are stored goes with the stored analyses.
         if (category === 'analysis') forgetSettledDrumHits();
@@ -1327,6 +1334,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                         hideTranslationSubtitle={hidePlayerTranslationSubtitle}
                         showSubtitleTranslation={showSubtitleTranslation}
                         subtitleContentMode={subtitleContentMode}
+                        subtitleOverlayLayout={subtitleOverlayLayout}
                         subtitleOverlayOpacity={subtitleOverlayOpacity}
                         subtitleOverlayBackground={subtitleOverlayBackground}
                         subtitleUpcomingLyricsBlur={subtitleUpcomingLyricsBlur}
@@ -1361,6 +1369,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                         onToggleHideTranslationSubtitle={onToggleHidePlayerTranslationSubtitle}
                         onToggleShowSubtitleTranslation={onToggleShowSubtitleTranslation}
                         onSubtitleContentModeChange={onSubtitleContentModeChange}
+                        onSubtitleOverlayLayoutChange={onSubtitleOverlayLayoutChange}
                         onSubtitleOverlayOpacityChange={setSubtitleOverlayOpacity}
                         onToggleSubtitleOverlayBackground={onToggleSubtitleOverlayBackground}
                         onToggleSubtitleUpcomingLyricsBlur={onToggleSubtitleUpcomingLyricsBlur}
@@ -1399,6 +1408,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                         monetPortraitImage={monetPortraitImage}
                         showSubtitleTranslation={showSubtitleTranslation}
                         subtitleContentMode={subtitleContentMode}
+                        subtitleOverlayLayout={subtitleOverlayLayout}
                         lyricsFontStyle={lyricsFontStyle}
                         lyricsFontScale={lyricsFontScale}
                         lyricsFontWeight={lyricsFontWeight}
@@ -1420,8 +1430,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 isOpen={showLyricFilterSettings}
                 isDaylight={isDaylight}
                 currentSongTitle={currentSongTitle}
-                initialPattern={lyricFilterPattern}
-                initialFilterEnabled={lyricFilterEnabled}
+                initialRules={lyricLineRules}
                 initialStaffPolicy={lyricStaffPolicy}
                 initialStaffMinDwellSeconds={lyricStaffMinDwellSeconds}
                 initialStaffAbsorbMode={lyricStaffAbsorbMode}
