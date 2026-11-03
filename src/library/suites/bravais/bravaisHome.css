@@ -432,6 +432,16 @@
     box-shadow: 0 0 0 1px color-mix(in srgb, currentColor 14%, transparent), 0 12px 32px rgb(0 0 0 / 34%);
 }
 
+/* 首页工具格的「⋯」菜单开了玻璃时给一个不透明下限：这里的项多、字小（过滤当前页、管理隐藏、导入……），
+   沿着玻璃参数透出后面的墙时菜单本身读不清；全局玻璃调的 alpha 更高时仍按用户的来。 */
+.bravais-seam-menu.is-home.has-glass {
+    background: rgb(0 0 0 / max(0.6, var(--glass-alpha, 0.1)));
+}
+
+.bravais-root.is-daylight .bravais-seam-menu.is-home.has-glass {
+    background: rgb(255 255 255 / max(0.75, var(--glass-alpha, 0.4)));
+}
+
 .bravais-seam .bravais-seam-menu.is-home button {
     display: flex;
     align-items: center;
