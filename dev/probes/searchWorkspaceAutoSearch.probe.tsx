@@ -46,6 +46,8 @@ const SearchWorkspaceAutoSearchProbe: React.FC = () => {
                 onAddTrackToQueue={() => { }}
                 onOpenArtist={() => { }}
                 onOpenAlbum={() => { }}
+                onOpenCollection={() => { }}
+                hasLocalSongs={false}
             />
             {/* 搜索面板是 fixed inset-0 全屏遮罩，场景按钮要挂在更高层才能点 */}
             <div className="fixed left-2 top-2 z-[60] flex flex-col gap-2">

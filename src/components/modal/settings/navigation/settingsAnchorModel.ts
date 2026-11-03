@@ -90,6 +90,7 @@ export const SETTINGS_ANCHOR_DEFINITIONS = {
     graphicsPerformance: { section: 'graphics' },
     graphicsMotion: { section: 'graphics' },
     gpuPreference: { section: 'graphics' },
+    lyricRenderScale: { section: 'graphics' },
 
     // 用户功能：底部控制条与全局玻璃的调节区。
     playerBottomBarGlass: { section: 'player' },

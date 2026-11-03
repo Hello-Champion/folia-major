@@ -1,5 +1,6 @@
 import { DEFAULT_FUME_TUNING, type FumeTuning } from '../../../types';
-import { defineVisualizerTuning, type StoredTuningFields } from '../tuningDefinition';
+import { normalizeLyricRenderOverride } from '../../../utils/lyricRenderQuality';
+import { defineVisualizerTuning, modNumber, MOD_SWITCH, modChoice, type StoredTuningFields } from '../tuningDefinition';
 
 // src/components/visualizer/fume/tuning.ts
 // Fume's tuning: its defaults, the settings store fields it lives in, where it is stored and how
@@ -41,6 +42,17 @@ const cameraTrackingMode = (value: FumeTuning['cameraTrackingMode'] | undefined)
 export default defineVisualizerTuning<FumeTuning>({
     mode: 'fume',
     defaults: DEFAULT_FUME_TUNING,
+    // What mods may read and write (folium.visualizer.setTuning): the panel's own controls, without what the picture costs.
+    modKeys: {
+        hidePrintSymbols: MOD_SWITCH,
+        disableGeometricBackground: MOD_SWITCH,
+        backgroundObjectOpacity: modNumber(0, 1),
+        textHoldRatio: modNumber(0, 1),
+        cameraSpeed: modNumber(0.55, 1.85),
+        cameraTrackingMode: modChoice(['stepped', 'smooth']),
+        glowIntensity: modNumber(0, 1.8),
+        heroScale: modNumber(0.82, 1.32),
+    },
     settingsKey: 'fumeTuning',
     settingsSetterKey: 'handleSetFumeTuning',
     settingsResetterKey: 'handleResetFumeTuning',
@@ -69,6 +81,8 @@ export default defineVisualizerTuning<FumeTuning>({
                 printStampOffsetY: printStampOffsetY(stored.printStampOffsetY ?? DEFAULT_FUME_TUNING.printStampOffsetY, DEFAULT_FUME_TUNING.printStampOffsetY),
                 printStampOpacity: printStampOpacity(stored.printStampOpacity ?? DEFAULT_FUME_TUNING.printStampOpacity, DEFAULT_FUME_TUNING.printStampOpacity),
                 printStampColor: printStampColor(stored.printStampColor),
+                // 分辨率覆盖（#929）：旧存档没有这一项就是全跟随全局。
+                render: normalizeLyricRenderOverride(stored.render),
             };
         },
         merge: (held, patch) => ({
@@ -89,6 +103,7 @@ export default defineVisualizerTuning<FumeTuning>({
             printStampOffsetY: printStampOffsetY(patch.printStampOffsetY ?? held.printStampOffsetY, held.printStampOffsetY),
             printStampOpacity: printStampOpacity(patch.printStampOpacity ?? held.printStampOpacity, held.printStampOpacity),
             printStampColor: printStampColor(patch.printStampColor ?? held.printStampColor),
+            render: normalizeLyricRenderOverride(patch.render ?? held.render),
         }),
         resetNotice: 'notifications.fumeReset',
     },
