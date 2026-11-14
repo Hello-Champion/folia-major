@@ -59,6 +59,11 @@ export type CommandPaletteCommand = {
     icon?: LucideIcon;
     keywords: string[];
     placeholder?: (context: CommandPaletteContext) => string;
+    /**
+     * While this command is open, the name its chip shows in place of the title: a command whose surface
+     * changes its subject (the FM radio on air) names it the way the surface does.
+     */
+    activeTitle?: (context: CommandPaletteContext) => string;
     requiresInput?: boolean;
     /** Environment gating: which platforms ship this feature at all. */
     platform?: CommandPlatform[];
@@ -102,8 +107,9 @@ export type CommandPaletteCommand = {
      * Offered in the row that floats above the player bar. Only for things done to what is playing
      * right now (like, shuffle, volume, the lyric style…), never settings or navigation: the row is
      * not the palette's frequent list. The command declares it itself, so there is no list to keep.
+     * 'mouse-only' leaves it out of the row a finger opens (volume: a phone has its own volume keys).
      */
-    capsuleAction?: boolean;
+    capsuleAction?: boolean | 'mouse-only';
     execute: (input: string, context: CommandPaletteContext) => Promise<boolean> | boolean;
 };
 
@@ -182,7 +188,10 @@ export type CommandPalettePlaybackContext = {
     personalFmCatalog?: PersonalFmCatalog;
     /** Only the providers that actually implement FM modes offer the picker. */
     isPersonalFmModeSupported: boolean;
+    /** The extra radio FM plays, if any: its modes come under a command of their own. */
+    personalFmStation?: string | null;
     setPersonalFmSelection: (selection: PersonalFmSelection) => Promise<void> | void;
+    isRecommendationPreferencesOffered: () => boolean;
     toggleMute: () => void;
     /**
      * The like/star action from the controls tab. It travels here rather than staying inside the
@@ -339,8 +348,10 @@ export type CommandPaletteSettingsContext = {
     toggleAlwaysShowTrackSwitchButtons: () => void;
     toggleAlwaysShowMainWindowTitlebar: () => void;
     togglePlayerHeaderBlur: () => void;
+    toggleTitlebarSide: () => void;
     toggleHideFullscreenButton: () => void;
     toggleNativeMacFullscreenButton: () => void;
+    toggleNativeMacTrafficLights: () => void;
     toggleAutoHideCursorWithPlayerChrome: () => void;
     toggleHideCursorWhenIdle: () => void;
     /** Lab switch: whether the restored session starts playing by itself on launch. */
@@ -350,6 +361,7 @@ export type CommandPaletteSettingsContext = {
     togglePlaybackFade: () => void;
     /** Whether restricted songs and unknown failures count down to a skip, like taken-down ones. */
     toggleAutoSkipUnplayable: () => void;
+    toggleShuffleRoundNoRepeat: () => void;
     /**
      * Whether this build can watch the imported local folders at all. A getter because the answer
      * is a runtime API check (FileSystemObserver) rather than a stored value, and the settings
@@ -364,6 +376,9 @@ export type CommandPaletteSettingsContext = {
      */
     canReportPlayback: () => boolean;
     togglePlaybackReport: () => void;
+    /** 自动 AI 分词: segment songs with no saved split by themselves (issue #960). */
+    toggleAutoAiLyricSegmentation: () => void;
+    toggleKeepProviderWordTiming: () => void;
     voiceInputPauseSupported: boolean;
     /** Lab switch for the experimental mod system; gates the `mods` command. */
     modSystemEnabled: boolean;
@@ -384,6 +399,8 @@ export type CommandPaletteSettingsContext = {
     unlockRemoteControl: () => void;
     /** OBS browser source: keep the main window's heavy animation while an OBS client is connected. */
     toggleObsKeepMainWindowAnimation: () => void;
+    /** The now playing card in the OBS browser source (local source and the web link alike). */
+    toggleTrackCardInObs: () => void;
     /** macOS-only: the wallpaper-mode Dock auto-hide override (on by default). */
     toggleWallpaperMacAutohideDock: () => void;
     /** Windows-only: the saved render GPU choice, read when asked (it can change while the palette is open). */

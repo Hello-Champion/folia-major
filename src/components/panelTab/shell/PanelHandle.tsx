@@ -7,6 +7,7 @@ import { usePlayerBottomBarBottomPx } from '../../../hooks/usePlayerBottomBarBot
 import { useMediaQuery } from '../../../hooks/useMediaQuery';
 import { usePlayerOverlayObstacle } from '../../../hooks/usePlayerOverlayLayout';
 import { useGlobalGlassStyle } from '../../../utils/playerBarGlass';
+import { holdCompanionHover, releaseCompanionHover, useBottomDockStore, useIsDockCompactWithCapsule } from '../../../stores/useBottomDockStore';
 
 // src/components/panelTab/shell/PanelHandle.tsx
 // The round button at the bottom right of the playing page that opens the panel and, white, closes
@@ -55,13 +56,30 @@ const PanelHandle: React.FC<PanelHandleProps> = ({
     const toggleButtonRef = React.useRef<HTMLButtonElement | null>(null);
     const trackEndIconRef = React.useRef<HTMLDivElement | null>(null);
     const trackFillRef = React.useRef<HTMLDivElement | null>(null);
-    const canSlideOpenCommandPalette = !isOpen && Boolean(onOpenCommandPalette);
+    // 紧凑档（窗口窄于 960，progress-bar v3）里按钮挂到进度条胶囊的右端：缩成 40、去掉自己的底色，
+    // 位置由 bottomDock.css 按 <html data-bottom-layout> 平移过去。挂着时没有左滑开命令面板的手势：
+    // 滑轨会横在胶囊上；命令面板从点胶囊或快捷行最右那一格开。
+    const isDocked = useIsDockCompactWithCapsule();
+    const canSlideOpenCommandPalette = !isOpen && Boolean(onOpenCommandPalette) && !isDocked;
+    // 按钮这一刻画不画（下面 AnimatePresence 的条件）。它被拿掉时浏览器不会补发 pointerleave：
+    // 不在这里清掉，胶囊会一直当作还在悬停、一直展开着。
+    const isButtonShown = !hideToggleButton && (!isOpen || showOpenPanelCloseButton) && !isCommandPaletteOpen;
+    React.useEffect(() => {
+        if (!isButtonShown) releaseCompanionHover(true);
+    }, [isButtonShown]);
     // 导轨 hover 即显示、不随面板开合消失（与首页墙面按钮的 SlideActionButton 一致）：
     // 面板打开瞬间不再因为 canSlideOpenCommandPalette 变 false 而收起。
     const isGuideLineVisible = showGuideLine || isPanelGuideHotspotActive;
-    // 玻璃开启时去掉 hover 放大（md:hover:scale-105）：放大会让磨砂区域跟着缩放，
-    // 悬浮与不悬浮的玻璃观感不一致；非玻璃按钮保留放大反馈。
-    const toggleButtonMotionClass = (isOpen || isGuideLineVisible || isDragging)
+    React.useEffect(() => {
+        if (hideToggleButton) return undefined;
+        const store = useBottomDockStore.getState();
+        store.setCompanion('panel-toggle', true);
+        return () => {
+            useBottomDockStore.getState().setCompanion('panel-toggle', false);
+            releaseCompanionHover(true);
+        };
+    }, [hideToggleButton]);
+    const toggleButtonMotionClass = (isOpen || isGuideLineVisible || isDragging || isDocked)
         ? 'translate-x-0 opacity-100'
         : supportsHover
             ? `translate-x-1/2 opacity-60 group-hover:translate-x-0 group-hover:opacity-100 md:translate-x-0 md:opacity-100${globalGlassStyle ? '' : ' md:hover:scale-105'}`
@@ -282,6 +300,18 @@ const PanelHandle: React.FC<PanelHandleProps> = ({
             setShowGuideLine(false);
         }
     };
+    // 挂在胶囊上时，鼠标停在按钮上胶囊也算在悬停，不会从展开缩回去。只认鼠标和笔：
+    // 手指点完浏览器会补发 mouseenter，又没有对应的离开，胶囊就会一直展开着。
+    const handleCompanionPointerEnter = (event: React.PointerEvent<HTMLDivElement>) => {
+        if (isDocked && event.pointerType !== 'touch') {
+            holdCompanionHover();
+        }
+    };
+    const handleCompanionPointerLeave = (event: React.PointerEvent<HTMLDivElement>) => {
+        if (event.pointerType !== 'touch') {
+            releaseCompanionHover();
+        }
+    };
     const handleToggleHotspotPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
         if (event.pointerType !== 'touch' || !canSlideOpenCommandPalette) {
             return;
@@ -330,7 +360,7 @@ const PanelHandle: React.FC<PanelHandleProps> = ({
 
     return (
         <AnimatePresence>
-            {!hideToggleButton && (!isOpen || showOpenPanelCloseButton) && !isCommandPaletteOpen && (
+            {isButtonShown && (
                 <motion.div
                     // 去掉进入播放页时的滑入/缩放出现动画（退出保留淡出，隐藏按钮/命令面板时仍播）。
                     exit={isCommandPaletteOpen
@@ -341,10 +371,15 @@ const PanelHandle: React.FC<PanelHandleProps> = ({
                     data-testid="panel-toggle"
                     ref={layoutRef}
                     onUpdate={invalidateLayout}
+                    // 挂上、取下只动 CSS 的 translate / scale，尺寸观察和 framer 的 onUpdate 都不会响：
+                    // 平移走完再请模组的 player.layout 量一次，不然它拿到的是半路的位置。
+                    onTransitionEnd={invalidateLayout}
                     style={{ bottom: bottomBarBottomPx }}
-                    className="pointer-events-auto fixed right-0 z-[160] pr-6 group w-20 flex justify-end"
+                    className={`dock-companion dock-companion--panel ${isDocked ? 'is-docked' : ''} pointer-events-auto fixed right-0 z-[160] pr-6 group w-20 flex justify-end`}
                     onMouseEnter={handleToggleButtonMouseEnter}
                     onMouseLeave={handleToggleButtonMouseLeave}
+                    onPointerEnter={handleCompanionPointerEnter}
+                    onPointerLeave={handleCompanionPointerLeave}
                     onPointerDown={handleToggleHotspotPointerDown}
                 >
                     {/* Wrapper for both track and button to guarantee perfect alignment across browsers */}
@@ -413,8 +448,15 @@ const PanelHandle: React.FC<PanelHandleProps> = ({
                             onPointerCancel={clearToggleButtonGesture}
                             onClick={handleToggleButtonClick}
                             style={{ touchAction: canSlideOpenCommandPalette ? 'none' : undefined, ...(globalGlassStyle ? globalGlassStyle : undefined) }}
-                            className={`group/act w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg backdrop-blur-md transform
-                                border-none absolute right-0 top-0 z-10 ${globalGlassStyle ? (isDaylight ? 'text-zinc-900' : 'text-white') : (isDaylight ? 'bg-white/70 text-zinc-900' : 'bg-black/40 text-white')}`}
+                            className={`group/act w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 transform
+                                border-none absolute right-0 top-0 z-10 ${isOpen
+                    ? 'bg-white text-black shadow-lg'
+                    : isDocked
+                    // 挂在胶囊上：胶囊的玻璃就是它的底，不再叠一层自己的。
+                        ? `bg-transparent ${isDaylight ? 'text-zinc-900 hover:bg-black/5' : 'text-white hover:bg-white/10'}`
+                        : globalGlassStyle
+                            ? `shadow-lg backdrop-blur-md ${isDaylight ? 'text-zinc-900' : 'text-white'}`
+                            : `shadow-lg backdrop-blur-md ${isDaylight ? 'bg-white/70 text-zinc-900' : 'bg-black/40 text-white'}`}`}
                         >
                             {/* 固定用 Settings2（面板开合不再切换 X 图标）；hover 时图标旋转 90°（Mineradio fx-fab 同款）。
                                 面板打开时保持旋转位（与首页墙面按钮一致）：鼠标移进面板不随 hover 离开转回，面板收起才转回。 */}

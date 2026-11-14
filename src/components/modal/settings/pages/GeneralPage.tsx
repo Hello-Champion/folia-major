@@ -10,6 +10,7 @@ import { useSettingsModalStore } from '../../../../stores/useSettingsModalStore'
 import { Button, Group, Reveal, Row, Segmented, Select, Toggle, option, type SettingsGroupDef, type SettingsOptionDef } from '../kit';
 import GlobalGlassSettingsSection from '../GlobalGlassSettingsSection';
 import { FoundUpdateRow } from './FoundUpdateRow';
+import { ChinaDrivesRow } from './ChinaDrivesRow';
 import { useSettingsPage } from './settingsPageContext';
 
 // src/components/modal/settings/pages/GeneralPage.tsx
@@ -131,6 +132,7 @@ const GeneralPage: React.FC = () => {
                     foot={t(autoUpdateSupported ? 'options.autoUpdateGithubNotice' : 'options.updateCheckGithubNotice')}
                 >
                     <FoundUpdateRow />
+                    <ChinaDrivesRow />
                     <Row
                         option={O.updateCheck}
                         hint={t(updateStatus?.updateCheckSupportReason === 'channel' ? 'options.updateUnsupportedChannel' : 'options.enableUpdateCheckDesc')}

@@ -39,6 +39,11 @@ export interface SlideActionButtonProps {
      * 鼠标从按钮移进面板，图标停在旋转位；面板收起才转回。
      */
     spinPersist?: boolean;
+    /**
+     * 挂在紧凑档进度条胶囊的右端（progress-bar v3）：缩成 40、不再半藏在窗口边上、去掉自己的底色
+     * （胶囊的玻璃就是它的底），也没有左滑那一下（滑轨会横在胶囊上），只剩点按。位置由调用方平移。
+     */
+    docked?: boolean;
 }
 
 export const SlideActionButton: React.FC<SlideActionButtonProps> = ({
@@ -55,6 +60,7 @@ export const SlideActionButton: React.FC<SlideActionButtonProps> = ({
     glass = false,
     spinOnHover = false,
     spinPersist = false,
+    docked = false,
 }) => {
     const [showGuideLine, setShowGuideLine] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
@@ -66,13 +72,15 @@ export const SlideActionButton: React.FC<SlideActionButtonProps> = ({
     const trackEndIconRef = useRef<HTMLDivElement>(null);
     const trackFillRef = useRef<HTMLDivElement>(null);
     const supportsHover = typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-    const motionClass = showGuideLine || isDragging
-        ? 'translate-x-0 opacity-100'
-        : supportsHover
-            // 玻璃开启时去掉 hover 放大（md:hover:scale-105）：放大会让磨砂区域跟着缩放，
-            // 悬浮与不悬浮的玻璃观感不一致；非玻璃按钮保留放大反馈。
-            ? `translate-x-1/2 opacity-60 group-hover:translate-x-0 group-hover:opacity-100 md:translate-x-0 md:opacity-100${glass ? '' : ' md:hover:scale-105'}`
-            : 'translate-x-1/2 opacity-60';
+    const motionClass = docked
+        ? 'translate-x-0 opacity-100 scale-[0.8333] origin-right'
+        : showGuideLine || isDragging
+            ? 'translate-x-0 opacity-100'
+            : supportsHover
+                // 玻璃开启时去掉 hover 放大（md:hover:scale-105）：放大会让磨砂区域跟着缩放，
+                // 悬浮与不悬浮的玻璃观感不一致；非玻璃按钮保留放大反馈。
+                ? `translate-x-1/2 opacity-60 group-hover:translate-x-0 group-hover:opacity-100 md:translate-x-0 md:opacity-100${glass ? '' : ' md:hover:scale-105'}`
+                : 'translate-x-1/2 opacity-60';
 
     const setDestinationFeedback = (progress: number) => {
         const icon = trackEndIconRef.current;
@@ -193,7 +201,8 @@ export const SlideActionButton: React.FC<SlideActionButtonProps> = ({
                 type="button"
                 disabled={disabled}
                 onPointerDown={(event) => {
-                    if (disabled) return;
+                    // 挂在胶囊上（docked）时没有滑动，按下就是一次普通的点按。
+                    if (disabled || docked) return;
                     gestureRef.current = { startX: event.clientX, startY: event.clientY, triggered: false };
                     suppressClickRef.current = false;
                     // 导轨（框）不随按下消失：鼠标移出按钮（onMouseLeave）时才收起。
@@ -217,7 +226,7 @@ export const SlideActionButton: React.FC<SlideActionButtonProps> = ({
                 }}
                 onPointerUp={clearGesture}
                 onPointerCancel={clearGesture}
-                onMouseEnter={() => { if (supportsHover) setShowGuideLine(true); }}
+                onMouseEnter={() => { if (supportsHover && !docked) setShowGuideLine(true); }}
                 onMouseLeave={() => { if (supportsHover) setShowGuideLine(false); }}
                 onClick={(event) => {
                     if (suppressClickRef.current) {
@@ -228,8 +237,12 @@ export const SlideActionButton: React.FC<SlideActionButtonProps> = ({
                     }
                     onActivate();
                 }}
-                style={{ touchAction: 'none', ...(glass ? globalGlassStyle : undefined) }}
-                className={`group/act w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg backdrop-blur-md transform border-none absolute right-0 top-0 z-10 disabled:opacity-40 disabled:cursor-default ${isDaylight ? (glass ? 'text-zinc-900' : 'bg-white/70 text-zinc-900') : (glass ? 'text-white' : 'bg-black/40 text-white')}`}
+                style={{ touchAction: docked ? undefined : 'none', ...(!docked && glass ? globalGlassStyle : undefined) }}
+                className={`group/act w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 transform border-none absolute right-0 top-0 z-10 disabled:opacity-40 disabled:cursor-default ${docked
+                    ? `bg-transparent ${isDaylight ? 'text-zinc-900 hover:bg-black/5' : 'text-white hover:bg-white/10'}`
+                    : glass
+                        ? `shadow-lg backdrop-blur-md ${isDaylight ? 'text-zinc-900' : 'text-white'}`
+                        : `shadow-lg backdrop-blur-md ${isDaylight ? 'bg-white/70 text-zinc-900' : 'bg-black/40 text-white'}`}`}
                 title={title}
                 aria-label={title}
             >

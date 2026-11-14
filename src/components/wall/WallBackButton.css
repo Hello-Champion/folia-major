@@ -3,13 +3,11 @@
    隐藏式用法：平时不显示，鼠标进入左上角热区或键盘聚焦时出现（与播放页 VisualizerShell 左上角那颗的行为一致）。 */
 
 /* Same shape and weight as the grid and player back buttons, and the one place the wall's
-   square-everything rule is deliberately overridden.
-   top: 42px 而不是 20px：顶部悬停时出现的毛玻璃标题栏（Electron，约 32px 高，含向下扩散的阴影）会盖住按钮，
-   下移 22px 让它完整露出并留出余量（桌面端实测反馈：36px 只差 4px、太贴边，用户仍觉得被压）。
-   与播放页返回按钮（VisualizerShell top-[42px]）和信息条顶部（.bravais-seam-* padding-top）统一。 */
+   square-everything rule is deliberately overridden. */
 .lattice-back {
     position: absolute;
-    top: 42px;
+    /* --window-buttons-drop：窗口按钮靠左时 AppShell 设的下移量，让开标题栏；借用这个类的刷新钮、分区胶囊一起下移。 */
+    top: calc(20px + var(--window-buttons-drop, 0px));
     left: 24px;
     z-index: 5;
     display: grid;
@@ -29,18 +27,6 @@
 .lattice-root.is-daylight .lattice-back { background: rgb(0 0 0 / 5%); }
 .lattice-back:hover { transform: scale(1.05); }
 .lattice-back:active { transform: scale(0.95); }
-
-/* 玻璃开关（.has-glass，底部控制台同款 Mineradio 配方）：更通透的底 + blur/saturate/brightness + 白色内发光描边。
-   底色 alpha 与 backdrop-filter 由全局玻璃调节区经 CSS 变量注入（--glass-alpha / --glass-backdrop）。 */
-.lattice-back.has-glass {
-    background: rgb(255 255 255 / var(--glass-alpha, 10%));
-    box-shadow: inset 0 0 2px 1px rgb(255 255 255 / var(--glass-glow, 0.16)), inset 0 0 10px 4px rgb(255 255 255 / calc(var(--glass-glow, 0.16) * 0.94)),
-        0 4px 16px rgb(17 17 26 / 5%), 0 8px 24px rgb(17 17 26 / 5%), 0 16px 56px rgb(17 17 26 / 5%),
-        inset 0 4px 16px rgb(17 17 26 / 5%), inset 0 8px 24px rgb(17 17 26 / 5%), inset 0 16px 56px rgb(17 17 26 / 5%);
-    backdrop-filter: var(--glass-backdrop, blur(12px) saturate(1.8) brightness(1.16));
-}
-
-.lattice-root.is-daylight .lattice-back.has-glass { background: rgb(255 255 255 / var(--glass-alpha, 40%)); }
 
 /* 隐藏式：出现 / 消失与播放页那颗相同（0.2s 淡入、略缩小并左移 6px）。隐藏时不接指针，热区判定在组件里。 */
 .lattice-back.is-concealed {
@@ -71,5 +57,5 @@
 :root[data-reduce-motion~='lattice'] .lattice-back.is-concealed { transition: none; }
 
 @media (max-width: 640px) {
-    .lattice-back { top: 42px; left: 16px; }
+    .lattice-back { top: calc(14px + var(--window-buttons-drop, 0px)); left: 16px; }
 }

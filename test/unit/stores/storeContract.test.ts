@@ -174,6 +174,10 @@ describe('store contract', () => {
             // Search's online tabs default to the provider the user is signed into, so the
             // navigation store reads the account store's active provider.
             useSearchNavigationStore: ['useOnlineProviderAccountStore'],
+            // The explore feed's own memory across sessions (section order, collections taken
+            // out): a module of the store's, not another store, kept beside it in src/stores/.
+            // Nothing else imports it, and it imports no store besides storagePrimitives.
+            useExploreFeedStore: ['exploreFeedMemory'],
         };
         const INFRASTRUCTURE = new Set([
             'storagePrimitives', 'useStatusMessageStore', 'visualizerSettingsPersistence', 'motionSignals',
