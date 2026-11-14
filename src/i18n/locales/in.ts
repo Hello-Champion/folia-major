@@ -2734,7 +2734,7 @@ export default {
     "alwaysShowMainWindowTitlebar": "Selalu Tampilkan Tombol Kontrol Jendela",
     "alwaysShowMainWindowTitlebarDesc": "Tombol minimalkan, maksimalkan, dan tutup selalu terlihat.",
     "showSplashAnimation": "Animasi pembuka",
-    "showSplashAnimationDesc": "Menampilkan judul Folia dan animasi gelombang saat aplikasi dimulai.",
+    "showSplashAnimationDesc": "Menampilkan judul Folia dan animasi balok bergeser saat aplikasi dimulai.",
     "playerHeaderBlur": "Header Pemutar Buram",
     "playerHeaderBlurDesc": "Memasang bilah buram seperti di beranda di belakang tombol jendela pada halaman pemutar, agar tetap terbaca di atas gambar gelap saat tema terang.",
     "titlebarSide": "Posisi tombol jendela",

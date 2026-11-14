@@ -2734,7 +2734,7 @@ export default {
     "alwaysShowMainWindowTitlebar": "Always Show Window Control Buttons",
     "alwaysShowMainWindowTitlebarDesc": "Keeps the minimize, maximize and close buttons in view.",
     "showSplashAnimation": "Splash animation",
-    "showSplashAnimationDesc": "Shows the Folia title and waveform overlay while the app starts.",
+    "showSplashAnimationDesc": "Shows the Folia title and the sliding-block loading animation while the app starts.",
     "playerHeaderBlur": "Blurred Player Header",
     "playerHeaderBlurDesc": "Puts the home page's frosted bar behind the window buttons on the player page, so they stay readable over a dark picture in the light theme.",
     "titlebarSide": "Window controls position",

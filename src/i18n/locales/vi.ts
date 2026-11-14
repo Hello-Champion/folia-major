@@ -2734,7 +2734,7 @@ export default {
     "alwaysShowMainWindowTitlebar": "Luôn hiện nút điều khiển cửa sổ",
     "alwaysShowMainWindowTitlebarDesc": "Luôn hiển thị các nút thu nhỏ, phóng to và đóng mà không hiện thanh tiêu đề.",
     "showSplashAnimation": "Hiệu ứng mở đầu",
-    "showSplashAnimationDesc": "Hiển thị tiêu đề Folia và hiệu ứng sóng khi khởi động ứng dụng.",
+    "showSplashAnimationDesc": "Hiển thị tiêu đề Folia và hiệu ứng khối trượt khi khởi động ứng dụng.",
     "playerHeaderBlur": "Làm mờ thanh đầu trình phát",
     "playerHeaderBlurDesc": "Đặt thanh mờ kính của trang chủ phía sau các nút cửa sổ ở trang trình phát, để chúng vẫn dễ đọc trên ảnh tối khi dùng giao diện sáng.",
     "titlebarSide": "Vị trí nút cửa sổ",

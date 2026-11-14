@@ -54,8 +54,8 @@
    再给文字加一圈白色柔光：字清楚，卡片右上大部分保持原来的封面颜色。 */
 .lattice-root.is-daylight .lattice-poster-shade {
     background:
-        linear-gradient(0deg, rgb(var(--lattice-shade-rgb) / 34%) 0%, rgb(var(--lattice-shade-rgb) / 12%) 20%, transparent 42%),
-        linear-gradient(90deg, rgb(var(--lattice-shade-rgb) / 24%) 0%, rgb(var(--lattice-shade-rgb) / 8%) 32%, transparent 58%);
+        linear-gradient(0deg, rgb(var(--lattice-shade-rgb) / 20%) 0%, rgb(var(--lattice-shade-rgb) / 7%) 20%, transparent 40%),
+        linear-gradient(90deg, rgb(var(--lattice-shade-rgb) / 14%) 0%, rgb(var(--lattice-shade-rgb) / 4%) 32%, transparent 54%);
 }
 
 .lattice-root.is-daylight .lattice-poster.is-expanded .lattice-poster-shade {

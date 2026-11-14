@@ -2734,7 +2734,7 @@ export default {
     "alwaysShowMainWindowTitlebar": "始终显示标题栏控制按钮",
     "alwaysShowMainWindowTitlebarDesc": "保持显示最小化、最大化和关闭按钮。",
     "showSplashAnimation": "开屏动画",
-    "showSplashAnimationDesc": "启动时显示 Folia 标题与波形动画。",
+    "showSplashAnimationDesc": "启动时显示 Folia 标题与色块滑动的加载动画。",
     "playerHeaderBlur": "播放页顶栏模糊背景",
     "playerHeaderBlurDesc": "在播放页的窗口按钮后面垫上和主页一样的磨砂底，浅色主题遇上深色画面时按钮也看得清。",
     "titlebarSide": "窗口按钮位置",
