@@ -55,7 +55,7 @@ export default function WallBackButton({ label, onBack, concealed = false }: Wal
     const className = `${concealed ? `lattice-back is-concealed${revealed ? ' is-revealed' : ''}` : 'lattice-back'}${globalGlassEnabled ? ' has-glass' : ''}`;
     return (
         <button type="button" className={className} onClick={onBack} aria-label={label} title={label}>
-            <ChevronLeft size={20} />
+            <ChevronLeft size={22} />
         </button>
     );
 }

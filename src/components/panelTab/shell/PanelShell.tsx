@@ -4,8 +4,10 @@ import type { Theme } from '../../../types';
 import { usePlayerBottomBarBottomPx } from '../../../hooks/usePlayerBottomBarBottomPx';
 import { useMediaQuery } from '../../../hooks/useMediaQuery';
 import { usePlayerOverlayObstacle } from '../../../hooks/usePlayerOverlayLayout';
+import { usePlayerChromeSettingsStore } from '../../../stores/usePlayerChromeSettingsStore';
 import { kitTransition, useKitReducedMotion } from '../../modal/settings/kit/motion';
 import { panelTokens } from './panelTheme';
+import './panelSwitch.css';
 import { useGlobalGlassStyle } from '../../../utils/playerBarGlass';
 import { FOLDED_PX } from './SongHeader';
 import { useMeasuredSize } from './useMeasuredSize';
@@ -68,6 +70,7 @@ const PanelSurface: React.FC<PanelSurfaceProps> = ({ hasHandle, isCover, tabKey,
     // 全局玻璃：开关打开时，面板换用同一套可调玻璃配方（磨砂/透明度/高亮/描边），
     // 内联 backdropFilter/backgroundColor/boxShadow 覆盖下方 className 的 --pn-glass 与固定 blur。
     const globalGlassStyle = useGlobalGlassStyle(isDaylight);
+    const globalGlassEnabled = usePlayerChromeSettingsStore(state => state.globalGlassEnabled);
     // What is under the surface: the handle, or a small gap. A variable, so the two heights below follow it at once.
     // Docked on the compact capsule the surface always clears the capsule, handle or not.
     const underPx = hasHandle || isDocked ? HANDLE_ROOM_PX : BARE_GAP_PX;
@@ -110,7 +113,7 @@ const PanelSurface: React.FC<PanelSurfaceProps> = ({ hasHandle, isCover, tabKey,
             data-still={isStill || undefined}
             className="st-window pointer-events-auto @container hide-scrollbar flex w-[360px] max-w-[calc(100vw-2rem)] flex-col overflow-y-auto overflow-x-hidden rounded-[20px] bg-[var(--pn-glass)] text-[color:var(--st-t1)] shadow-[var(--pn-shadow)] backdrop-blur-[40px] backdrop-saturate-[1.3] [&[data-still]_*]:transition-none"
             style={{
-                ...panelTokens(isDaylight, theme, reduced),
+                ...panelTokens(isDaylight, theme, reduced, globalGlassEnabled),
                 ...(globalGlassStyle ?? {}),
                 '--pn-under': `${underPx}px`,
                 '--pn-room': headerRoom,
@@ -198,6 +201,8 @@ const PanelShell: React.FC<PanelShellProps> = ({ isOpen, handle, onTogglePanel, 
                 className={`dock-companion dock-companion--panel-surface ${isDocked ? 'is-docked' : ''} pr-4 md:pr-8`}
                 // 挂上、取下的平移走完再请 player.layout 量一次面板（CSS 平移不触发它自己的测量）。
                 onTransitionEnd={invalidateLayout}
+                // 整体缩小一档：只缩这一层的外观，尺寸与开合动画仍按原尺寸算；右下角对齐，按钮不受影响。
+                style={{ transform: 'scale(0.9)', transformOrigin: '100% 100%' }}
             >
                 <AnimatePresence>
                     {isOpen && <PanelSurface {...surface} isDocked={isDocked} layoutRef={layoutRef} onLayoutUpdate={invalidateLayout} />}

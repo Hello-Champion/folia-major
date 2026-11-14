@@ -17,6 +17,12 @@ import { holdCompanionHover, releaseCompanionHover, useBottomDockStore, useIsDoc
 
 const TOUCH_GUIDE_DISPLAY_MS = 1400;
 
+/** 那颗圆按钮固定的玻璃身：悬浮、点击、拖动提示结束后都回到这一身，不跟全局玻璃参数变。 */
+const TOGGLE_GLASS_SHADOW = 'inset 0 1px 0 rgba(255, 255, 255, 0.45), inset 0 0 2px 1px rgba(255, 255, 255, 0.16), inset 0 0 10px 4px rgba(255, 255, 255, 0.15), 0 10px 30px rgba(0, 0, 0, 0.24)';
+const toggleGlassBackground = (isDaylight: boolean) => (
+    isDaylight ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.1)'
+);
+
 type PanelHandleProps = {
     isOpen: boolean;
     onToggle: () => void;
@@ -53,6 +59,8 @@ const PanelHandle: React.FC<PanelHandleProps> = ({
     const supportsHover = typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
     const commandSlideRef = React.useRef<{ startX: number; startY: number; triggered: boolean; } | null>(null);
     const suppressToggleClickRef = React.useRef(false);
+    // 拖动提示有没有接管过按钮自己的底色 / 投影：没拖动就别去碰它们（那是内联的玻璃身）。
+    const dragFeedbackAppliedRef = React.useRef(false);
     const toggleButtonRef = React.useRef<HTMLButtonElement | null>(null);
     const trackEndIconRef = React.useRef<HTMLDivElement | null>(null);
     const trackFillRef = React.useRef<HTMLDivElement | null>(null);
@@ -129,10 +137,12 @@ const PanelHandle: React.FC<PanelHandleProps> = ({
         }
 
         if (progress >= 1) {
+            dragFeedbackAppliedRef.current = true;
             button.style.backgroundColor = theme.accentColor;
             button.style.color = '#ffffff';
             button.style.boxShadow = `0 0 16px ${theme.accentColor}66, 0 18px 42px rgba(0, 0, 0, ${0.24 + progress * 0.16})`;
-        } else {
+        } else if (progress > 0) {
+            dragFeedbackAppliedRef.current = true;
             button.style.backgroundColor = '';
             button.style.color = '';
             button.style.boxShadow = `0 18px 42px rgba(0, 0, 0, ${0.24 + progress * 0.16})`;
@@ -202,6 +212,7 @@ const PanelHandle: React.FC<PanelHandleProps> = ({
 
             resetCommandDestinationFeedback();
 
+            dragFeedbackAppliedRef.current = false;
             button.style.transition = '';
             button.style.transform = '';
             button.style.filter = '';
@@ -235,9 +246,12 @@ const PanelHandle: React.FC<PanelHandleProps> = ({
         button.style.transition = 'transform 160ms ease-out, filter 160ms ease-out, box-shadow 160ms ease-out, background-color 160ms ease-out, color 160ms ease-out';
         button.style.transform = '';
         button.style.filter = '';
-        button.style.boxShadow = '';
-        button.style.backgroundColor = '';
-        button.style.color = '';
+        if (dragFeedbackAppliedRef.current) {
+            dragFeedbackAppliedRef.current = false;
+            button.style.backgroundColor = toggleGlassBackground(Boolean(isDaylight));
+            button.style.boxShadow = TOGGLE_GLASS_SHADOW;
+            button.style.color = isDaylight ? '#18181b' : '#ffffff';
+        }
 
         const icon = button.querySelector('svg');
         if (icon) {
@@ -343,9 +357,9 @@ const PanelHandle: React.FC<PanelHandleProps> = ({
             return;
         }
 
-        // 悬浮打开模式下点击只负责打开：鼠标移出按钮与面板整体 / 点外部 / Esc 才收起，
-        // 避免面板已经打开后点一下按钮就消失。
-        if (supportsHover && isOpen) {
+        // 鼠标设备上面板本来就靠悬浮开合，点击不再切换（点了会重渲染、按钮掉玻璃样式）。
+        // 触屏没有悬浮，点击仍是开合的唯一入口。
+        if (supportsHover) {
             return;
         }
 
@@ -447,16 +461,22 @@ const PanelHandle: React.FC<PanelHandleProps> = ({
                             onPointerUp={clearToggleButtonGesture}
                             onPointerCancel={clearToggleButtonGesture}
                             onClick={handleToggleButtonClick}
-                            style={{ touchAction: canSlideOpenCommandPalette ? 'none' : undefined, ...(globalGlassStyle ? globalGlassStyle : undefined) }}
+                            style={{
+                                touchAction: canSlideOpenCommandPalette ? 'none' : undefined,
+                                // 固定的玻璃身：悬浮、点击、开关面板都不换色，也不跟着全局玻璃参数变。
+                                // 浅色主题白 40% 底 + 白内发光，深色主题黑 10% 底 + 白内发光。
+                                ...(isDocked ? undefined : {
+                                    backgroundColor: toggleGlassBackground(Boolean(isDaylight)),
+                                    backdropFilter: 'blur(12px) saturate(1.8) brightness(1.16)',
+                                    WebkitBackdropFilter: 'blur(12px) saturate(1.8) brightness(1.16)',
+                                    boxShadow: TOGGLE_GLASS_SHADOW,
+                                }),
+                            }}
                             className={`group/act w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 transform
-                                border-none absolute right-0 top-0 z-10 ${isOpen
-                    ? 'bg-white text-black shadow-lg'
-                    : isDocked
+                                border-none absolute right-0 top-0 z-10 ${isDocked
                     // 挂在胶囊上：胶囊的玻璃就是它的底，不再叠一层自己的。
-                        ? `bg-transparent ${isDaylight ? 'text-zinc-900 hover:bg-black/5' : 'text-white hover:bg-white/10'}`
-                        : globalGlassStyle
-                            ? `shadow-lg backdrop-blur-md ${isDaylight ? 'text-zinc-900' : 'text-white'}`
-                            : `shadow-lg backdrop-blur-md ${isDaylight ? 'bg-white/70 text-zinc-900' : 'bg-black/40 text-white'}`}`}
+                    ? `bg-transparent ${isDaylight ? 'text-zinc-900 hover:bg-black/5' : 'text-white hover:bg-white/10'}`
+                    : (isDaylight ? 'text-zinc-900' : 'text-white')}`}
                         >
                             {/* 固定用 Settings2（面板开合不再切换 X 图标）；hover 时图标旋转 90°（Mineradio fx-fab 同款）。
                                 面板打开时保持旋转位（与首页墙面按钮一致）：鼠标移进面板不随 hover 离开转回，面板收起才转回。 */}

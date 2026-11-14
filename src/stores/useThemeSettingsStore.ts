@@ -6,7 +6,7 @@
 // own subscription would wake 187 components on every toggle without removing the re-render.
 // Changing how it is consumed is a separate, one-shot migration.
 //
-// @note default_theme_daylight（OBS 链接另有 isDaylight 参数）、disable_home_dynamic_background（以及只在迁移时读的旧键 enable_home_dynamic_background） 是用户明确决定「不进外观配置导入导出」的设置（2026-11-08）：配置码也用于 web 版 OBS 链接，
+// @note default_theme_daylight、home_theme_daylight、player_theme_daylight（OBS 链接另有 isDaylight 参数）、disable_home_dynamic_background（以及只在迁移时读的旧键 enable_home_dynamic_background） 是用户明确决定「不进外观配置导入导出」的设置（2026-11-08）：配置码也用于 web 版 OBS 链接，
 // 只加 OBS 页面看得到的，这些在 OBS 页面上看不到。不要按 settings-feature-integration「视觉设置必须进
 // buildCurrentConfig / compressConfig / decompressConfig / validKeys / handleImportConfig」的规则把它们补进短码或 JSON。
 
@@ -31,6 +31,12 @@ const initialStoredDaylight = getStoredBoolean('default_theme_daylight', false);
 const initialDaylight = initialFollowSystemTheme
     ? (readSystemThemeIsDaylight() ?? initialStoredDaylight)
     : initialStoredDaylight;
+// 首页（资料库墙）与播放页各记一份明暗偏好；旧键 default_theme_daylight 保持在两者之间同步写入，
+// 老版本、设置页与命令面板改它时两边一起变。
+const HOME_DAYLIGHT_KEY = 'home_theme_daylight';
+const PLAYER_DAYLIGHT_KEY = 'player_theme_daylight';
+const initialHomeDaylight = getStoredBoolean(HOME_DAYLIGHT_KEY, initialStoredDaylight);
+const initialPlayerDaylight = getStoredBoolean(PLAYER_DAYLIGHT_KEY, initialStoredDaylight);
 
 const readStoredDisableHomeDynamicBackground = (): boolean => {
     if (typeof window === 'undefined') {
@@ -56,11 +62,19 @@ export type ThemeSettingsState = {
     staticMode: boolean;
     disableHomeDynamicBackground: boolean;
     isDaylight: boolean;
+    /** 首页（含 Lattice 歌曲墙）自己的明暗偏好：切回首页时主题换成它。 */
+    homeDaylight: boolean;
+    /** 播放页自己的明暗偏好：切到播放页时主题换成它。 */
+    playerDaylight: boolean;
     followSystemTheme: boolean;
     handleToggleCoverColorBg: (enable: boolean) => void;
     handleToggleStaticMode: (enable: boolean) => void;
     handleToggleDisableHomeDynamicBackground: (disable: boolean) => void;
     setDaylightPreference: (isDaylight: boolean) => void;
+    /** 某一页上手动切换明暗：只改那一页的偏好（跟随系统会因此关掉）。 */
+    setPageDaylight: (page: 'home' | 'player', isDaylight: boolean) => void;
+    /** 切页时把主题换成那一页的偏好（跟随系统时不动）。 */
+    syncDaylightToPage: (page: 'home' | 'player') => void;
     setDaylightPreferenceFromSystem: (isDaylight: boolean) => void;
     setFollowSystemTheme: (enabled: boolean) => void;
 };
@@ -71,6 +85,8 @@ export const useThemeSettingsStore = create<ThemeSettingsState>((set, get) => ({
     disableHomeDynamicBackground: readStoredDisableHomeDynamicBackground(),
     followSystemTheme: initialFollowSystemTheme,
     isDaylight: initialDaylight,
+    homeDaylight: initialHomeDaylight,
+    playerDaylight: initialPlayerDaylight,
     handleToggleCoverColorBg: (enable) => {
         setStoredBoolean('use_cover_color_bg', enable);
         set({ useCoverColorBg: enable });
@@ -122,13 +138,46 @@ export const useThemeSettingsStore = create<ThemeSettingsState>((set, get) => ({
             }
         }
     },
+    // 设置页、命令面板这类全局入口改的是两边一起：两页都换成同一个模式。
     setDaylightPreference: (enabled) => {
         const wasFollowingSystem = get().followSystemTheme;
         if (wasFollowingSystem) {
             setStoredBoolean(FOLLOW_SYSTEM_THEME_STORAGE_KEY, false);
         }
         setStoredBoolean('default_theme_daylight', enabled);
-        set({ isDaylight: enabled, ...(wasFollowingSystem ? { followSystemTheme: false } : {}) });
+        setStoredBoolean(HOME_DAYLIGHT_KEY, enabled);
+        setStoredBoolean(PLAYER_DAYLIGHT_KEY, enabled);
+        set({
+            isDaylight: enabled,
+            homeDaylight: enabled,
+            playerDaylight: enabled,
+            ...(wasFollowingSystem ? { followSystemTheme: false } : {}),
+        });
+        if (typeof window !== 'undefined' && window.electron?.setNativeTheme) {
+            void window.electron.setNativeTheme(enabled ? 'light' : 'dark');
+        }
+    },
+    setPageDaylight: (page, enabled) => {
+        const wasFollowingSystem = get().followSystemTheme;
+        if (wasFollowingSystem) {
+            setStoredBoolean(FOLLOW_SYSTEM_THEME_STORAGE_KEY, false);
+        }
+        setStoredBoolean(page === 'player' ? PLAYER_DAYLIGHT_KEY : HOME_DAYLIGHT_KEY, enabled);
+        setStoredBoolean('default_theme_daylight', enabled);
+        set({
+            isDaylight: enabled,
+            ...(page === 'player' ? { playerDaylight: enabled } : { homeDaylight: enabled }),
+            ...(wasFollowingSystem ? { followSystemTheme: false } : {}),
+        });
+        if (typeof window !== 'undefined' && window.electron?.setNativeTheme) {
+            void window.electron.setNativeTheme(enabled ? 'light' : 'dark');
+        }
+    },
+    syncDaylightToPage: (page) => {
+        if (get().followSystemTheme) return;
+        const enabled = page === 'player' ? get().playerDaylight : get().homeDaylight;
+        if (get().isDaylight === enabled) return;
+        set({ isDaylight: enabled });
         if (typeof window !== 'undefined' && window.electron?.setNativeTheme) {
             void window.electron.setNativeTheme(enabled ? 'light' : 'dark');
         }

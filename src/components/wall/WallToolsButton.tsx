@@ -91,6 +91,8 @@ export function WallToolsSurface({ idPrefix, label, isDaylight, destination, ent
     const rootRef = useRef<HTMLDivElement>(null);
     // 玻璃开关：打开时面板、队列浮岛与触发按钮都换用 Mineradio 风格玻璃（has-glass 类驱动 CSS）。
     const globalGlassEnabled = usePlayerChromeSettingsStore(state => state.globalGlassEnabled);
+    // 鼠标设备上按钮与播放页那颗面板按钮一样：悬浮打开、移开收起；点击不再切换。
+    const supportsHover = typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
     // 快捷排的顺序（拖动换位后存下来）：两面墙共用一份。
     const wallToolsQuickOrder = useLatticeSettingsStore(state => state.wallToolsQuickOrder);
     const setWallToolsQuickOrder = useLatticeSettingsStore(state => state.setWallToolsQuickOrder);
@@ -164,7 +166,7 @@ export function WallToolsSurface({ idPrefix, label, isDaylight, destination, ent
     const rows = isOpen ? (typeof entries === 'function' ? entries() : entries) : [];
     // 快捷排的固定顺序：洗牌、主题、队列、去处、播放器、设置；缺的跳过。
     const quick: WallToolsQuickAction[] = isOpen
-        ? [common.shuffle, common.theme, common.queue, resolveSlot(destination), common.openPlayer, common.settings]
+        ? [common.daylight, common.shuffle, common.theme, common.queue, resolveSlot(destination), common.openPlayer, common.settings]
             .filter((action): action is WallToolsQuickAction => action !== null)
         : [];
     // 叠色开关两边都有（颜色与强度的细调仍在设置页与命令面板）。
@@ -181,10 +183,14 @@ export function WallToolsSurface({ idPrefix, label, isDaylight, destination, ent
         <motion.div
             ref={rootRef}
             style={{ bottom: bottomPx, '--wall-tools-bottom': bottomVar } as unknown as MotionStyle}
-            className={`lattice-tools group dock-companion dock-companion--wall-tools ${isDocked ? 'is-docked' : ''} ${above && !isDocked ? 'has-above' : ''} ${isDaylight ? 'is-daylight' : ''} ${globalGlassEnabled ? 'has-glass' : ''}`}
+            className={`lattice-tools group dock-companion dock-companion--wall-tools ${isDocked ? 'is-docked' : ''} ${isDaylight ? 'is-daylight' : ''} ${globalGlassEnabled ? 'has-glass' : ''}`}
             // 挂在胶囊上时鼠标停在这里胶囊也算悬停；只认鼠标和笔，手指点完补发的 mouseenter 不算。
             onPointerEnter={(event) => { if (isDocked && event.pointerType !== 'touch') holdCompanionHover(); }}
             onPointerLeave={(event) => { if (event.pointerType !== 'touch') releaseCompanionHover(); }}
+            // 悬浮开合：面板、队列浮岛与按钮在同一棵子树里，进出都不会误收；stack 的 padding-bottom
+            // 把按钮上方的间隙也算进命中区（与播放页面板同一种做法）。
+            onMouseEnter={() => { if (supportsHover && !isOpen) { setIslandTrailsPanel(false); setIsOpen(true); } }}
+            onMouseLeave={() => { if (supportsHover && isOpen) close(); }}
         >
             {/* 面板与队列浮岛叠在按钮上方的一列里（column-reverse：面板在下、浮岛在上）：定位在 stack 上，面板自己不再 absolute。 */}
             <div className={showQueueIsland ? 'lattice-tools-stack has-queue-island' : 'lattice-tools-stack'}>
@@ -259,11 +265,16 @@ export function WallToolsSurface({ idPrefix, label, isDaylight, destination, ent
                 </AnimatePresence>
             </div>
 
+            {/* 打开时按钮这一整行都算命中区（与播放页面板一致）：从面板下来、或从旁边经过按钮那一带都不会收起。
+                它只接指针、不画东西，压在按钮下层，点击仍落在按钮或墙上。 */}
+            {isOpen && !isDocked && <div aria-hidden className="lattice-tools-hover-bridge" />}
             <SlideActionButton
                 docked={isDocked}
                 icon={isOpen ? X : Settings2}
                 title={label}
                 onActivate={() => {
+                    // 鼠标设备上开合交给悬浮（点击只会把刚悬浮打开的面板关掉）。
+                    if (supportsHover) return;
                     setIslandTrailsPanel(!isOpen);
                     setIsOpen(open => {
                         if (open) setShowHelp(false);

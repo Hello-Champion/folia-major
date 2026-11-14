@@ -2552,6 +2552,8 @@ export default {
     "rememberHomeCardPositionDesc": "切换顶部入口或从播放界面返回时，回到各入口上次浏览的卡片。位置仅在本次打开应用期间保留。",
     "homeTabsVisibilityDesc": "自定义首页顶部显示的胶囊选项",
     "scratchpadSettings": "速记簿",
+    "scratchpadEnabled": "启用速记簿",
+    "scratchpadEnabledDesc": "关掉后左缘的速记簿把手、抽屉，以及各处「加入速记簿」的入口一起隐藏，命令面板里也不再有速记簿命令。",
     "scratchpadShowHandle": "显示左侧悬浮标签",
     "scratchpadShowHandleDesc": "窗口左缘的那道把手。关掉后仍可用 Ctrl / ⌘ + J 或命令面板打开速记簿。",
     "scratchpadHandlePosition": "悬浮标签高度",
@@ -4447,6 +4449,8 @@ export default {
         "description": "在 Bravais 或 Lattice 右下角的「墙面工具」里点「播放队列」，面板上方会展开队列：点歌直接播放、不跳页，拖动手柄排序，悬停可下一首播放、移到末尾或移除，还能存为本地歌单或两步确认清空。键盘可用 ↑↓ 移动、Alt+↑↓ 挪动、Delete 移除。私人 FM 下不可用，外部舞台播放时只能点歌。"
       },
       "wallTools": {
+        "toDark": "切换到深色",
+        "toLight": "切换到浅色",
         "title": "两面墙共用一套工具面板",
         "description": "Bravais 与 Lattice 的墙面工具统一为同一套布局：顶上一排六个快捷格（定位正在播放、打乱队列、生成主题、播放队列、前往 Lattice 或回到主页、前往播放页），下面是音量、墙面外观、海报叠色与灯光。面板更紧凑，Lattice 原来的「队列命令」由队列浮岛取代。"
       },

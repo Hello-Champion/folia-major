@@ -2552,6 +2552,8 @@ export default {
     "rememberHomeCardPositionDesc": "Return to the last card in each section when switching tabs or leaving the player. Positions are kept until you close or reload the app.",
     "homeTabsVisibilityDesc": "Customize the capsule entries shown at the top of the home page",
     "scratchpadSettings": "Scratchpad",
+    "scratchpadEnabled": "Enable the scratchpad",
+    "scratchpadEnabledDesc": "Off hides the scratchpad’s edge tab and drawer and every “add to scratchpad” entry, and removes its commands from the command palette.",
     "scratchpadShowHandle": "Show the side tab",
     "scratchpadShowHandleDesc": "The tab on the left edge of the window. With it hidden, Ctrl / ⌘ + J or the command palette still opens the scratchpad.",
     "scratchpadHandlePosition": "Side tab height",
@@ -4447,6 +4449,8 @@ export default {
         "description": "Open Wall tools in the bottom-right corner of Bravais or Lattice and choose Play queue to show the queue above the panel. Click a song to play it without leaving the page, drag the handle to reorder, hover to play next, move to the end or remove, save the queue as a local playlist, or clear it with a two-step confirm. Keyboard: ↑↓ to move, Alt+↑↓ to reorder, Delete to remove. Not available in Personal FM; while an external Stage is playing you can only pick songs."
       },
       "wallTools": {
+        "toDark": "Switch to dark",
+        "toLight": "Switch to light",
         "title": "One Tools Panel for Both Walls",
         "description": "Wall tools in Bravais and Lattice now share one layout: a row of six quick buttons (locate the playing song, shuffle the queue, generate a theme, play queue, go to Lattice or Home, open the player), then volume, wall appearance, poster tint and lighting. The panel is more compact, and Lattice's old queue commands row is replaced by the queue."
       },

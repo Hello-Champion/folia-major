@@ -1,9 +1,10 @@
 import { useSyncExternalStore } from 'react';
-import { Disc3, ListMusic, Settings, Shuffle, Sparkles, Volume1, Volume2, VolumeX } from 'lucide-react';
+import { Disc3, ListMusic, Moon, Settings, Shuffle, Sparkles, Sun, Volume1, Volume2, VolumeX } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAudioSettingsStore } from '../../stores/useAudioSettingsStore';
 import { useLatticeSettingsStore } from '../../stores/useLatticeSettingsStore';
 import { usePlaybackStore } from '../../stores/usePlaybackStore';
+import { useThemeSettingsStore } from '../../stores/useThemeSettingsStore';
 import type { WallToolsEntry, WallToolsQuickAction } from './WallToolsRows';
 import { useWallToolsHost, type WallToolsHostSnapshot } from './wallToolsHost';
 
@@ -34,6 +35,8 @@ export type WallToolsCommonActions = {
     queue: WallToolsQuickAction;
     openPlayer: WallToolsQuickAction | null;
     settings: WallToolsQuickAction | null;
+    /** 首页这一页自己的明暗切换：一个按钮，点了在浅色 / 深色之间换（播放页另有自己的一份）。 */
+    daylight: WallToolsQuickAction;
     volume: WallToolsEntry;
     /** 队列浮岛此刻该不该显示（面板打开时）：有宿主、不在私人 FM、偏好是展开。 */
     queueIslandShown: boolean;
@@ -51,7 +54,17 @@ export const useWallToolsCommonActions = ({ queueIslandId }: { queueIslandId: st
     const volume = useAudioSettingsStore(state => state.volume);
     const isMuted = useAudioSettingsStore(state => state.isMuted);
     const queueIslandOpen = useLatticeSettingsStore(state => state.wallToolsQueueIslandOpen);
+    const homeDaylight = useThemeSettingsStore(state => state.homeDaylight);
+    const setPageDaylight = useThemeSettingsStore(state => state.setPageDaylight);
 
+    const daylight: WallToolsQuickAction = {
+        id: 'daylight-mode',
+        icon: homeDaylight ? Moon : Sun,
+        label: t(homeDaylight ? 'wallTools.toDark' : 'wallTools.toLight'),
+        // 不收起：换完还能立刻换回来，面板留在原地。
+        keepOpen: true,
+        onSelect: () => setPageDaylight('home', !homeDaylight),
+    };
     const themeBusy = snapshot.themeGeneration === 'busy';
     const shuffle: WallToolsQuickAction | null = host ? {
         id: 'shuffle-queue',
@@ -135,5 +148,5 @@ export const useWallToolsCommonActions = ({ queueIslandId }: { queueIslandId: st
         },
     };
 
-    return { shuffle, theme, queue, openPlayer, settings, volume: volumeEntry, queueIslandShown };
+    return { shuffle, theme, queue, openPlayer, settings, daylight, volume: volumeEntry, queueIslandShown };
 };

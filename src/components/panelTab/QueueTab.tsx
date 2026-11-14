@@ -1,3 +1,4 @@
+import { useScratchpadSettingsStore } from '../../stores/useScratchpadSettingsStore';
 import React from 'react';
 import { List, useListRef, type RowComponentProps } from 'react-window';
 import { ListEnd, ListMusic, ListPlus, NotebookPen, PanelsTopLeft, Shuffle, Trash2 } from 'lucide-react';
@@ -145,6 +146,7 @@ const QueueTab: React.FC<QueueTabProps> = ({
     isDaylight = false,
 }) => {
     const { t } = useTranslation();
+    const scratchpadEnabled = useScratchpadSettingsStore(state => state.enabled);
     const reduced = useKitReducedMotion();
     const currentSongKey = currentSong ? getPlaybackSongKey(currentSong) : null;
     // As tall as its rows up to the most it shows; never under two rows, so in a very low window
@@ -255,7 +257,7 @@ const QueueTab: React.FC<QueueTabProps> = ({
                             {t('localMusic.saveQueueAsPlaylist')}
                         </Button>
                     )}
-                    {onOpenScratchpadQueue && (
+                    {onOpenScratchpadQueue && scratchpadEnabled && (
                         <PanelIconButton size="s" label={t('scratchpad.openQueueCanvas')} onClick={onOpenScratchpadQueue}>
                             <NotebookPen size={15} />
                         </PanelIconButton>

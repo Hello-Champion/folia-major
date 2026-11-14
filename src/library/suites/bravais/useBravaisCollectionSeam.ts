@@ -1,5 +1,6 @@
 import { useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useScratchpadSettingsStore } from '../../../stores/useScratchpadSettingsStore';
 import { FileDown, FolderSync, IdCard, ImagePlus, ListMusic, NotebookPen, PencilLine, WandSparkles } from 'lucide-react';
 import type { SongResult, UnifiedSong } from '../../../types';
 import type { LibraryActionId, LibraryCollectionSurfaceProps } from '../../core/suite/suite.contract';
@@ -61,6 +62,7 @@ const isLocalSong = (track: SongResult | undefined) => Boolean((track as Unified
 
 export const useBravaisCollectionSeam = (input: BravaisCollectionSeamInput) => {
     const { t } = useTranslation();
+    const scratchpadEnabled = useScratchpadSettingsStore(state => state.enabled);
     const latest = useRef(input);
     latest.current = input;
     const { collection, snapshot, mutationSnapshot: mutation, view, actions, offers, declares, forms, notice } = input;
@@ -135,7 +137,7 @@ export const useBravaisCollectionSeam = (input: BravaisCollectionSeamInput) => {
             });
         }
         // 收进速记簿（core 的 collect-scope）：当前范围，过滤时只收匹配项，不动队列。
-        if (declares('collect-scope') && actions.capabilities.collect) {
+        if (scratchpadEnabled && declares('collect-scope') && actions.capabilities.collect) {
             items.push({
                 ...quick('collect-scratchpad', NotebookPen),
                 label: t('scratchpad.collectScope'),

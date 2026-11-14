@@ -6,10 +6,11 @@ import { getStoredBoolean, getStoredString, setStoredBoolean, setStoredString } 
 // 命令面板和 ScratchpadHost 三处读写。把手藏起来以后 Ctrl / ⌘ + J 与命令面板照常能开合抽屉。
 // 另有把手常驻时的样子（handleStyle）：视觉设置，随外观配置导入导出（appearanceCodec 的短码 sphs）。
 //
-// @note scratchpad_show_handle、scratchpad_handle_position 是用户明确决定「不进外观配置导入导出」的设置（2026-11-08）：配置码也用于 web 版 OBS 链接，
+// @note scratchpad_enabled 是功能总开关（不是视觉设置），与 scratchpad_show_handle、scratchpad_handle_position 是用户明确决定「不进外观配置导入导出」的设置（2026-11-08）：配置码也用于 web 版 OBS 链接，
 // 只加 OBS 页面看得到的，这些在 OBS 页面上看不到。不要按 settings-feature-integration「视觉设置必须进
 // buildCurrentConfig / compressConfig / decompressConfig / validKeys / handleImportConfig」的规则把它们补进短码或 JSON。
 
+const ENABLED_KEY = 'scratchpad_enabled';
 const SHOW_HANDLE_KEY = 'scratchpad_show_handle';
 const HANDLE_POSITION_KEY = 'scratchpad_handle_position';
 const HANDLE_STYLE_KEY = 'scratchpad_handle_style';
@@ -47,9 +48,12 @@ const readStoredStyle = (): ScratchpadHandleStyle => {
 };
 
 export type ScratchpadSettingsState = {
+    /** 速记簿总开关：关掉后左缘把手、抽屉、各处「加入速记簿」入口与命令面板里的速记簿命令一起隐藏。 */
+    enabled: boolean;
     showHandle: boolean;
     handlePosition: number;
     handleStyle: ScratchpadHandleStyle;
+    setEnabled: (enabled: boolean) => void;
     setShowHandle: (show: boolean) => void;
     toggleShowHandle: () => void;
     setHandlePosition: (position: number) => void;
@@ -57,9 +61,14 @@ export type ScratchpadSettingsState = {
 };
 
 export const useScratchpadSettingsStore = create<ScratchpadSettingsState>((set, get) => ({
+    enabled: getStoredBoolean(ENABLED_KEY, true),
     showHandle: getStoredBoolean(SHOW_HANDLE_KEY, true),
     handlePosition: readStoredPosition(),
     handleStyle: readStoredStyle(),
+    setEnabled: (enabled) => {
+        set({ enabled });
+        setStoredBoolean(ENABLED_KEY, enabled);
+    },
     setShowHandle: (show) => {
         set({ showHandle: show });
         setStoredBoolean(SHOW_HANDLE_KEY, show);

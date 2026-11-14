@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { useReducedMotionFor } from '../../hooks/useReducedMotionFor';
 import { setStatusMessage } from '../../stores/useStatusMessageStore';
 import { openScratchpadQueueCanvas } from '../../stores/useScratchpadStore';
+import { useScratchpadSettingsStore } from '../../stores/useScratchpadSettingsStore';
 import type { WallToolsHost } from './wallToolsHost';
 
 // src/components/wall/WallToolsQueueIslandHeader.tsx
@@ -87,6 +88,7 @@ export type QueueIslandSearch = {
 
 export function WallToolsQueueIslandHeader({ host, count, readOnly, canSave, announce, isDragging, search, onOpenScratchpad }: WallToolsQueueIslandHeaderProps) {
     const { t } = useTranslation();
+    const scratchpadEnabled = useScratchpadSettingsStore(state => state.enabled);
     const reduceMotion = useReducedMotionFor('uiMicroMotion');
     const headerRef = useRef<HTMLElement>(null);
     const searchButtonRef = useRef<HTMLButtonElement>(null);
@@ -223,6 +225,7 @@ export function WallToolsQueueIslandHeader({ host, count, readOnly, canSave, ann
                         className="lattice-tools-island-header-action"
                         data-queue-island-action="scratchpad"
                         aria-label={t('scratchpad.openQueueCanvas')}
+                        hidden={!scratchpadEnabled}
                         title={t('scratchpad.openQueueCanvas')}
                         onClick={() => {
                             stopClearPending();

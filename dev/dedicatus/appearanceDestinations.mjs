@@ -73,6 +73,7 @@ export const APPEARANCE_DESTINATIONS = {
     // src/stores/useScratchpadSettingsStore.ts
     'scratchpad_handle_position': { config: null, why: '速记簿把手，OBS 页面没有（用户 2026-11-08 定：配置码也用于 web 版 OBS 链接，只加 OBS 页面看得到的）' },
     'scratchpad_handle_style': { config: 'scratchpadHandleStyle' },
+    'scratchpad_enabled': { config: null, why: '速记簿功能总开关（不是视觉设置）：关掉后整块界面都不在，与 OBS 页面无关，也不该随配置码搬来搬去' },
     'scratchpad_show_handle': { config: null, why: '速记簿把手，OBS 页面没有（用户 2026-11-08 定：配置码也用于 web 版 OBS 链接，只加 OBS 页面看得到的）' },
     // src/stores/useStageSettingsStore.ts
     'enable_now_playing_stage': { config: null, why: '本机集成的开关，不是 OBS 页面的样子（用户 2026-11-08 定：配置码也用于 web 版 OBS 链接，只加 OBS 页面看得到的）' },
@@ -90,6 +91,8 @@ export const APPEARANCE_DESTINATIONS = {
     'web_obs_theme_mode': { config: null, why: 'OBS 链接的主题方式另有链接参数 obsTheme（用户 2026-11-08 定：配置码也用于 web 版 OBS 链接，只加 OBS 页面看得到的）' },
     // src/stores/useThemeSettingsStore.ts
     'default_theme_daylight': { config: null, why: '明暗模式，OBS 链接另有参数（isDaylight）（用户 2026-11-08 定：配置码也用于 web 版 OBS 链接，只加 OBS 页面看得到的）' },
+    'home_theme_daylight': { config: null, why: '首页自己的明暗模式，OBS 链接另有参数（isDaylight），且 OBS 页面没有首页' },
+    'player_theme_daylight': { config: null, why: '播放页自己的明暗模式，OBS 链接另有参数（isDaylight），且 OBS 页面没有播放页' },
     'disable_home_dynamic_background': { config: null, why: '首页动态背景，OBS 页面没有首页（用户 2026-11-08 定：配置码也用于 web 版 OBS 链接，只加 OBS 页面看得到的）' },
     'enable_home_dynamic_background': { config: null, why: '旧键：只在迁移成 disable_home_dynamic_background 时读一次（用户 2026-11-08 定：配置码也用于 web 版 OBS 链接，只加 OBS 页面看得到的）' },
     'follow_system_theme': { config: 'followSystemTheme' },

@@ -2552,6 +2552,8 @@ export default {
     "rememberHomeCardPositionDesc": "Kembali ke kartu terakhir di setiap bagian saat berpindah tab atau keluar dari pemutar. Posisi disimpan hingga aplikasi ditutup atau dimuat ulang.",
     "homeTabsVisibilityDesc": "Sesuaikan entri capsule yang ditampilkan di bagian atas halaman beranda",
     "scratchpadSettings": "Buku catatan",
+    "scratchpadEnabled": "Aktifkan buku catatan",
+    "scratchpadEnabledDesc": "Saat dimatikan, tab tepi dan laci buku catatan serta semua entri “tambahkan ke buku catatan” disembunyikan, dan perintahnya hilang dari palet perintah.",
     "scratchpadShowHandle": "Tampilkan tab samping",
     "scratchpadShowHandleDesc": "Tab di tepi kiri jendela. Saat disembunyikan, Ctrl / ⌘ + J atau palet perintah tetap membuka buku catatan.",
     "scratchpadHandlePosition": "Tinggi tab samping",
@@ -4447,6 +4449,8 @@ export default {
         "description": "Buka Alat dinding di pojok kanan bawah Bravais atau Lattice lalu pilih Antrean putar untuk menampilkan antrean di atas panel. Klik lagu untuk memutarnya tanpa pindah halaman, seret pegangan untuk mengurutkan, arahkan kursor untuk putar berikutnya, pindah ke akhir, atau hapus, simpan antrean sebagai playlist lokal, atau kosongkan dengan konfirmasi dua langkah. Keyboard: ↑↓ untuk berpindah, Alt+↑↓ untuk menggeser, Delete untuk menghapus. Tidak tersedia di FM Pribadi; saat Stage eksternal sedang memutar, Anda hanya bisa memilih lagu."
       },
       "wallTools": {
+        "toDark": "Ganti ke gelap",
+        "toLight": "Ganti ke terang",
         "title": "Satu Panel Alat untuk Kedua Dinding",
         "description": "Alat dinding di Bravais dan Lattice kini memakai tata letak yang sama: satu baris enam tombol cepat (temukan lagu yang diputar, acak antrean, buat tema, antrean putar, buka Lattice atau Beranda, buka pemutar), lalu volume, tampilan dinding, warna poster, dan pencahayaan. Panelnya lebih ringkas, dan baris perintah antrean lama di Lattice digantikan oleh antrean."
       },

@@ -11,7 +11,7 @@ import { useScratchpadSettingsStore } from '../../../stores/useScratchpadSetting
 // 另有显示 / 隐藏左缘的悬浮把手，和跳到设置里速记簿那一组（主页与歌单页）。
 // 开合抽屉是 Ctrl+J（J 取 jot / 记，设置帮助页「键盘快捷键」里列着），执行模式 `:j`；记下这首是 `:s`（收）。
 
-export const scratchpadCommands: CommandPaletteCommand[] = [
+const commands: CommandPaletteCommand[] = [
     createToggleCommand(
         'scratchpad-toggle',
         'panel',
@@ -55,3 +55,10 @@ export const scratchpadCommands: CommandPaletteCommand[] = [
         'scratchpadSettings',
     ),
 ];
+
+// 速记簿总开关关掉时，这一组命令整体不可用（命令面板里看不到，快捷键也不响应）。
+export const scratchpadCommands: CommandPaletteCommand[] = commands.map(command => ({
+    ...command,
+    isAvailable: context => useScratchpadSettingsStore.getState().enabled
+        && (command.isAvailable ? command.isAvailable(context) : true),
+}));

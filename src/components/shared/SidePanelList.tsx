@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Play, Plus, NotebookPen } from 'lucide-react';
 import { List as VirtualList } from 'react-window';
 import { useTranslation } from 'react-i18next';
+import { useScratchpadSettingsStore } from '../../stores/useScratchpadSettingsStore';
 import { getSizedCoverUrl } from '../../utils/coverUrl';
 import { getSongArtistLabel, getSongCoverUrl } from '../../services/onlineMusic/songMetadata';
 import { useSidePanelBottomPx } from '../../hooks/usePlayerBottomBarBottomPx';
@@ -172,6 +173,7 @@ export const TrackListItem = React.memo<{
     albumTrackLabel?: string | null;
 }>(({ track, index, style, onPlay, onAddToQueue, onCollect, isUnavailable, isActive, albumTrackLabel }) => {
     const { t } = useTranslation();
+    const scratchpadEnabled = useScratchpadSettingsStore(state => state.enabled);
     const coverUrl = getSongCoverUrl(track) || '';
     const artistName = getSongArtistLabel(track).split(',')[0]?.trim() || 'Unknown Artist';
     
@@ -216,7 +218,7 @@ export const TrackListItem = React.memo<{
                     </div>
                     <div className="text-[10px] opacity-60 truncate leading-tight mt-0.5">{artistName}</div>
                 </div>
-                {!isUnavailable && onCollect && (
+                {!isUnavailable && onCollect && scratchpadEnabled && (
                     <button
                         onClick={(e) => {
                             e.stopPropagation();

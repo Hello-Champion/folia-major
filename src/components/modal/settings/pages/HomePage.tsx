@@ -51,6 +51,7 @@ const O = {
     squareCard: option(GRID, 'gridViewSquareCard', 'options.gridViewSquareCard'),
     minCardScale: option(GRID, 'gridViewMinCardScale', 'options.gridViewMinCardScale'),
     minCardOpacity: option(GRID, 'gridViewMinCardOpacity', 'options.gridViewMinCardOpacity'),
+    scratchpadEnabled: option(SCRATCHPAD, 'scratchpadEnabled', 'options.scratchpadEnabled'),
     scratchpadShowHandle: option(SCRATCHPAD, 'scratchpadShowHandle', 'options.scratchpadShowHandle'),
     scratchpadHandlePosition: option(SCRATCHPAD, 'scratchpadHandlePosition', 'options.scratchpadHandlePosition'),
     scratchpadHandleStyle: option(SCRATCHPAD, 'scratchpadHandleStyle', 'options.scratchpadHandleStyle'),
@@ -92,9 +93,11 @@ const HomePage: React.FC = () => {
         resetFalloff: state.resetGridViewCardFalloff,
     })));
     const scratchpad = useScratchpadSettingsStore(useShallow(state => ({
+        enabled: state.enabled,
         showHandle: state.showHandle,
         handlePosition: state.handlePosition,
         handleStyle: state.handleStyle,
+        setEnabled: state.setEnabled,
         setShowHandle: state.setShowHandle,
         setHandlePosition: state.setHandlePosition,
         setHandleStyle: state.setHandleStyle,
@@ -201,6 +204,10 @@ const HomePage: React.FC = () => {
             )}
 
             <Group def={SCRATCHPAD}>
+                <Row option={O.scratchpadEnabled} note={t('options.scratchpadEnabledDesc')}>
+                    <Toggle checked={scratchpad.enabled} onChange={scratchpad.setEnabled} />
+                </Row>
+                <Reveal when={scratchpad.enabled}>
                 <Row option={O.scratchpadShowHandle} note={t('options.scratchpadShowHandleDesc')}>
                     <Toggle checked={scratchpad.showHandle} onChange={scratchpad.setShowHandle} />
                 </Row>
@@ -227,6 +234,7 @@ const HomePage: React.FC = () => {
                             format={percent}
                         />
                     </Row>
+                </Reveal>
                 </Reveal>
             </Group>
         </>

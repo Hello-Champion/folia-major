@@ -1,6 +1,7 @@
 import React, { type MouseEvent } from 'react';
 import { NotebookPen, Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useScratchpadSettingsStore } from '../../../stores/useScratchpadSettingsStore';
 import type { BravaisItem } from './bravaisLayer';
 import type { BravaisFocusCardActions } from './BravaisFocusCardBody';
 
@@ -23,9 +24,10 @@ type BravaisTileQuickActionsProps = {
 
 const BravaisTileQuickActions: React.FC<BravaisTileQuickActionsProps> = ({ slotKey, item, actions, beside }) => {
     const { t } = useTranslation();
+    const scratchpadEnabled = useScratchpadSettingsStore(state => state.enabled);
     if (item.kind !== 'track' || item.unavailable) return null;
     const buttons = [
-        ...(actions.canCollect(item.key)
+        ...(scratchpadEnabled && actions.canCollect(item.key)
             ? [{ id: 'collect', label: t('scratchpad.collect'), icon: NotebookPen, run: () => actions.collect(slotKey) }]
             : []),
         ...(actions.canSaveToPlaylist(item.key)

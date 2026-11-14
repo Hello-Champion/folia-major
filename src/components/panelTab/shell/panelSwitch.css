@@ -1,0 +1,33 @@
+/* src/components/panelTab/shell/panelSwitch.css — 播放页面板里的开关，做成首页右下角面板（「海报聚焦叠色」那一行）
+   同一种细身开关：30×18 的描边胶囊，旋钮 12，关时半透明、开时强调色底。只作用于面板表面（unified-panel-surface），
+   设置窗口的同一个 kit 开关不受影响。 */
+
+[data-testid='unified-panel-surface'] button[role='switch'] {
+    width: 30px;
+    height: 18px;
+    background: transparent;
+    border: 1px solid currentColor;
+    opacity: 0.42;
+    transition: background-color 160ms ease, opacity 160ms ease;
+}
+
+[data-testid='unified-panel-surface'] button[role='switch'][aria-checked='true'] {
+    background: var(--text-accent, currentColor);
+    border-color: transparent;
+    opacity: 1;
+}
+
+[data-testid='unified-panel-surface'] button[role='switch'] > span {
+    left: 2px;
+    top: 2px;
+    width: 12px;
+    height: 12px;
+    background: currentColor;
+    box-shadow: none;
+    translate: 0 0;
+}
+
+[data-testid='unified-panel-surface'] button[role='switch'][aria-checked='true'] > span {
+    color: var(--text-on-accent, var(--bg-color, #09090b));
+    translate: 12px 0;
+}

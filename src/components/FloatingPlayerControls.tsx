@@ -12,7 +12,7 @@ import PlayerBarVolumeControl from './floating-player/PlayerBarVolumeControl';
 import PlayerBottomBarPositioner from './floating-player/PlayerBottomBarPositioner';
 import PlayerControlSlotPicker from './floating-player/PlayerControlSlotPicker';
 import PlayerControlSlotSuggestion from './floating-player/PlayerControlSlotSuggestion';
-import CapsuleQuickActions, { useCapsuleQuickActionsDwell } from './floating-player/CapsuleQuickActions';
+import { useCapsuleQuickActionsDwell } from './floating-player/CapsuleQuickActions';
 import { usePlayerControlSlotCustomization } from './floating-player/usePlayerControlSlotCustomization';
 import { usePlayerBottomBarBottomPx } from '../hooks/usePlayerBottomBarBottomPx';
 import { playerBottomBarLiveOffset } from '../stores/motionSignals';
@@ -26,7 +26,6 @@ import { usePlayerOverlayObstacle } from '../hooks/usePlayerOverlayLayout';
 import { useSupportsFinePointer } from '../hooks/useSupportsFinePointer';
 import { resolvePlayerCapsuleNavigationTarget } from '../hooks/useAppNavigation';
 import { useCapsulePaletteStore } from '../stores/useCapsulePaletteStore';
-import { openCommandPalette } from '../stores/useAppViewStore';
 import { usePlaybackEntryViewStore } from '../stores/usePlaybackEntryViewStore';
 import { usePlaybackStore } from '../stores/usePlaybackStore';
 import { resolveLyricSeekMediaTime } from '../utils/lyrics/lyricSeekTime';
@@ -679,10 +678,9 @@ const FloatingPlayerControls: React.FC<FloatingPlayerControlsProps> = ({
             return;
         }
         if (clickOpensPalette) {
-            // 手指这一下没开面板的，抬起时已经把那排点出来了（handleTouchRevealRelease）。
-            if (pressOpensPaletteRef.current) {
-                openCommandPalette();
-            }
+            // 播放页上点胶囊不再打开命令面板：手指这一下要的是那排控件，抬起时已经点出来了
+            // （handleTouchRevealRelease）；鼠标这一下什么都不做。命令面板仍可从快捷键 /
+            // 右键菜单 / 面板按钮打开。
             return;
         }
         if (currentView !== 'lattice') {
@@ -768,21 +766,8 @@ const FloatingPlayerControls: React.FC<FloatingPlayerControlsProps> = ({
                             )}
                         </AnimatePresence>
                     </div>
-                    <div className="pointer-events-none absolute bottom-full left-0 right-0 flex justify-center">
-                        <AnimatePresence>
-                            {/* 紧凑档里快捷操作是展开胶囊里的一行（CompactCapsuleContent），不浮在外面。 */}
-                            {showQuickActions && !isCompact && (
-                                <CapsuleQuickActions
-                                    key="quick-actions"
-                                    slotPrimary={slotPrimary}
-                                    slotSecondary={slotSecondary}
-                                    context={resolvedSlotContext}
-                                    isDaylight={isDaylight}
-                                    touch={showTouchQuickActions}
-                                />
-                            )}
-                        </AnimatePresence>
-                    </div>
+                    {/* 胶囊上方的浮动快捷行已去掉：那排操作在命令面板和面板里都有；紧凑档里的那一行仍在
+                        CompactCapsuleContent 内。 */}
                     {/* 包一层是为了紧凑档的 automix 描边：它贴着胶囊外沿画，得是胶囊的兄弟、和胶囊同一个参照框。 */}
                     <div className="relative flex w-full justify-center">
                     {isCompact && compactInfo && transitionCue && (
@@ -796,7 +781,7 @@ const FloatingPlayerControls: React.FC<FloatingPlayerControlsProps> = ({
                     )}
                     <motion.div
                         ref={capsuleRef}
-                        title={clickOpensPalette && !isPositioning ? t('player.capsuleOpensPalette') : undefined}
+                        title={undefined}
                         onUpdate={invalidateLayout}
                         onLayoutAnimationComplete={invalidateLayout}
                         // layout 一直开着（framer 只在挂载时决定要不要跟踪布局，中途打开不生效：窗口从窄拉宽后

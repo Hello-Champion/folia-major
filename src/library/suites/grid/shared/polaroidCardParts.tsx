@@ -1,3 +1,4 @@
+import { useScratchpadSettingsStore } from '../../../../stores/useScratchpadSettingsStore';
 import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Disc, NotebookPen, Pause, Play, Plus, Star, X } from 'lucide-react';
@@ -234,9 +235,11 @@ export const PolaroidCardQuickActions: React.FC<{
     isFocused: boolean;
     t: any;
 }> = ({ onCollect, onSaveToPlaylist, isFocused, t }) => {
-    if (!onCollect && !onSaveToPlaylist) return null;
+    const scratchpadEnabled = useScratchpadSettingsStore(state => state.enabled);
+    const collect = scratchpadEnabled ? onCollect : undefined;
+    if (!collect && !onSaveToPlaylist) return null;
     const buttons = [
-        ...(onCollect ? [{ id: 'collect', label: t('scratchpad.collect'), icon: NotebookPen, run: onCollect }] : []),
+        ...(collect ? [{ id: 'collect', label: t('scratchpad.collect'), icon: NotebookPen, run: collect }] : []),
         ...(onSaveToPlaylist ? [{ id: 'save-to-playlist', label: t('playlist.saveToPlaylist'), icon: Star, run: onSaveToPlaylist }] : []),
     ];
     return (

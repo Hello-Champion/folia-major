@@ -4,6 +4,7 @@ import { motion, useMotionValue, animate, AnimatePresence, useDragControls, useI
 import { ChevronLeft, Crosshair, Disc, Download, ImagePlus, Play, Plus, Shuffle, Loader2, Heart, ListPlus, NotebookPen, Pencil, RefreshCw, Trash2, Star, Tags } from 'lucide-react';
 import GridPanelToggleIndicator from '../shared/GridPanelToggleIndicator';
 import { useTranslation } from 'react-i18next';
+import { useScratchpadSettingsStore } from '../../../../stores/useScratchpadSettingsStore';
 import { SongResult, type LocalSong, type StatusMessage, Theme, type UnifiedSong } from '../../../../types';
 import { isSongUnavailable } from '../../../../services/onlineMusic/songAvailability';
 import { formatSongName } from '../../../../utils/songNameFormatter';
@@ -284,6 +285,7 @@ export const GridView: React.FC<GridViewProps> = ({
     const lowerBackButton = useWindowButtonsAtTopLeft();
     const bottomBarPanelBottomPx = useSidePanelBottomPx();
     const fullBleedCover = useGridViewSettingsStore(state => state.gridViewFullBleedCover);
+    const scratchpadEnabled = useScratchpadSettingsStore(state => state.enabled);
     // Only the full-bleed layout can be square: the polaroid frame needs the extra height for the
     // printed label under its artwork.
     const squareCards = useGridViewSettingsStore(state => state.gridViewSquareCards) && fullBleedCover;
@@ -2059,7 +2061,7 @@ export const GridView: React.FC<GridViewProps> = ({
                                         ? t('playlist.addFilteredTracksToQueue', { count: contextActionTracks.length })
                                         : t('navidrome.addToQueue')}
                                 </button>
-                                {onCollectAll && (
+                                {onCollectAll && scratchpadEnabled && (
                                     <button
                                         onClick={() => {
                                             if (contextActionTracks.length > 0) onCollectAll(contextActionTracks);

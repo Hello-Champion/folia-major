@@ -2,6 +2,7 @@ import { type MouseEvent } from 'react';
 import { NotebookPen, Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { collectToScratchpad } from '../../../stores/useScratchpadStore';
+import { useScratchpadSettingsStore } from '../../../stores/useScratchpadSettingsStore';
 import { canOpenPlaylistPickerFor, openAddSongsToPlaylist } from '../../../stores/useAddToPlaylistStore';
 import { isStagePlaybackSong } from '../../../utils/appPlaybackGuards';
 import type { LatticeSongTile } from './latticeModel';
@@ -24,10 +25,11 @@ type LatticeQuickActionsProps = {
 
 const LatticeQuickActions = ({ tile, width, expanded }: LatticeQuickActionsProps) => {
     const { t } = useTranslation();
+    const scratchpadEnabled = useScratchpadSettingsStore(state => state.enabled);
     if (width < LATTICE_QUICK_ACTIONS_MIN_WIDTH) return null;
     const { song } = tile;
     const buttons = [
-        ...(!isStagePlaybackSong(song)
+        ...(!isStagePlaybackSong(song) && scratchpadEnabled
             ? [{
                 id: 'collect',
                 label: t('scratchpad.collect'),

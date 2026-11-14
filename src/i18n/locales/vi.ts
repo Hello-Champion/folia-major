@@ -2552,6 +2552,8 @@ export default {
     "rememberHomeCardPositionDesc": "Quay lại thẻ cuối cùng trong từng phần khi chuyển tab hoặc rời trình phát. Vị trí được lưu cho đến khi đóng hoặc tải lại ứng dụng.",
     "homeTabsVisibilityDesc": "Tùy chỉnh các mục trên thanh điều hướng bo tròn (Capsule) ở đầu trang chủ",
     "scratchpadSettings": "Sổ ghi nhanh",
+    "scratchpadEnabled": "Bật sổ ghi chú",
+    "scratchpadEnabledDesc": "Khi tắt, tab cạnh và ngăn kéo sổ ghi chú cùng mọi mục “thêm vào sổ ghi chú” bị ẩn, và lệnh của nó bị bỏ khỏi bảng lệnh.",
     "scratchpadShowHandle": "Hiện thẻ bên cạnh",
     "scratchpadShowHandleDesc": "Thẻ ở mép trái cửa sổ. Khi ẩn, Ctrl / ⌘ + J hoặc bảng lệnh vẫn mở được sổ ghi nhanh.",
     "scratchpadHandlePosition": "Độ cao thẻ bên cạnh",
@@ -4447,6 +4449,8 @@ export default {
         "description": "Mở Công cụ tường ở góc dưới bên phải của Bravais hoặc Lattice và chọn Hàng đợi phát để hiển thị hàng đợi phía trên bảng điều khiển. Nhấp vào bài hát để phát mà không cần rời trang, kéo tay cầm để sắp xếp lại, rê chuột để phát tiếp theo, chuyển xuống cuối hoặc xóa, lưu hàng đợi thành danh sách phát nội bộ, hoặc xóa hàng đợi với xác nhận 2 bước. Phím tắt: ↑↓ để di chuyển, Alt+↑↓ để sắp xếp lại, Delete để xóa. Không khả dụng trong FM cá nhân; khi Sân khấu ngoài đang phát bạn chỉ có thể chọn bài."
       },
       "wallTools": {
+        "toDark": "Chuyển sang tối",
+        "toLight": "Chuyển sang sáng",
         "title": "Một bảng công cụ chung cho cả hai không gian tường",
         "description": "Công cụ tường trong Bravais và Lattice giờ đây dùng chung một bố cục: một hàng 6 nút nhanh (định vị bài đang phát, xáo trộn hàng đợi, tạo chủ đề, hàng đợi phát, đến Lattice hoặc Trang chủ, mở trình phát), tiếp theo là âm lượng, diện mạo tường, màu phủ poster và ánh sáng. Bảng điều khiển gọn gàng hơn, và hàng lệnh hàng đợi cũ của Lattice được thay thế bởi hàng đợi phát mới."
       },

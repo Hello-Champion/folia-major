@@ -78,7 +78,8 @@ export const Segments = <T extends string>({ value, options, onChange, size = 'm
                                     layoutDependency={value}
                                     transition={kitTransition('move', reduced)}
                                     className="absolute inset-0 bg-[var(--st-raise)]"
-                                    style={{ borderRadius: look.markRadius, boxShadow: '0 1px 2px rgba(0, 0, 0, 0.2)' }}
+                                    // --st-raise-shadow：玻璃开启时由面板换成带高光与投影的玻璃配方。
+                                    style={{ borderRadius: look.markRadius, boxShadow: 'var(--st-raise-shadow, 0 1px 2px rgba(0, 0, 0, 0.2))' }}
                                 />
                             )}
                             <span className="relative flex min-w-0 items-center gap-1.5">

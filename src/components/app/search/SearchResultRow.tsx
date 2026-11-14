@@ -1,6 +1,7 @@
 import React from 'react';
 import { Disc, NotebookPen, Play, Plus, Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useScratchpadSettingsStore } from '../../../stores/useScratchpadSettingsStore';
 import type { UnifiedSong } from '../../../types';
 import type { MediaId } from '../../../types/onlineMusic';
 import { formatSongName } from '../../../utils/songNameFormatter';
@@ -46,6 +47,7 @@ const SearchResultRow: React.FC<SearchResultRowProps> = ({
     onOpenAlbum,
 }) => {
     const { t } = useTranslation();
+    const scratchpadEnabled = useScratchpadSettingsStore(state => state.enabled);
     const isUnavailable = isSongUnavailable(track);
     const tag = getSongTag(track, { unavailable: t('status.songUnavailableTag'), video: t('status.songVideoTag') });
     const metadata = getProviderSongMetadata(track);
@@ -146,7 +148,7 @@ const SearchResultRow: React.FC<SearchResultRowProps> = ({
                     {formatDuration(metadata.durationMs)}
                 </span>
                 {/* 行尾的三颗与队列那颗一样，宽屏上悬停或键盘聚焦这一行才出现（search.css 的 .search-row-action）。 */}
-                {!isUnavailable && onCollectTrack && (
+                {!isUnavailable && onCollectTrack && scratchpadEnabled && (
                     <button
                         type="button"
                         onClick={() => onCollectTrack(track)}

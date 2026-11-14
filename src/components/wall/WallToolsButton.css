@@ -30,11 +30,24 @@
    max-height 是按钮上方到窗口顶的距离，顶上让出 --wall-tools-top-reserve（标题栏 + 间距）：窗口矮时只压缩浮岛
    （它 flex-shrink、最小 112px），面板不缩；浮岛压到最小还放不下时由帮助列表让（见文件末尾的预算）。
    --wall-tools-bottom 是按钮此刻的底距（WallToolsSurface 随底栏抬升量写到根节点上）。 */
+/* 打开面板期间按钮这一整行的命中区：面板宽、从窗口底到按钮顶再往上一点。
+   它没有��面内容，只让指针经过时仍算在 .lattice-tools 子树里，mouseleave 不会触发收起。 */
+.lattice-tools-hover-bridge {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    z-index: 0;
+    width: var(--wall-tools-panel-width);
+    height: 60px;
+    pointer-events: auto;
+}
+
 .lattice-tools-stack {
     position: absolute;
     right: 0;
     bottom: 48px;
-    padding-bottom: 16px;
+    /* 与播放页面板一致：面板底边离按钮顶 12px，这段也算命中区（padding 撑开 stack 的框）。 */
+    padding-bottom: 12px;
     display: flex;
     max-height: calc(100vh - var(--wall-tools-bottom, 24px) - 48px - var(--wall-tools-top-reserve));
     flex-direction: column-reverse;
@@ -42,20 +55,6 @@
     gap: 8px;
 }
 
-/* 按钮上方还有一样东西（`above`，Lattice 的定位按钮：40px 高）时，二者排成一列，与集合页的右下角一样；
-   面板与浮岛整体上移它的高度和 12px 间距（stack 的底与 padding 同上：底边对齐按钮顶，16px 间隙归进命中区）。 */
-.lattice-tools.has-above {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 12px;
-}
-
-.lattice-tools.has-above .lattice-tools-stack {
-    bottom: 100px;
-    padding-bottom: 16px;
-    max-height: calc(100vh - var(--wall-tools-bottom, 24px) - 100px - var(--wall-tools-top-reserve));
-}
 
 .lattice-tools-panel {
     display: flex;

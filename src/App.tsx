@@ -7,6 +7,7 @@ import SceneHost from './components/scenes/engine/SceneHost';
 import CommandPalette from './components/command-palette/CommandPalette';
 import AddToPlaylistHost from './components/app/AddToPlaylistHost';
 import ScratchpadHost from './components/app/scratchpad/ScratchpadHost';
+import { useScratchpadSettingsStore } from './stores/useScratchpadSettingsStore';
 import { useScratchpadPlayback, useScratchpadQueuePort } from './components/app/scratchpad/useScratchpadPlayback';
 import { useCommandPalette } from './components/command-palette/useCommandPalette';
 import { useCommandPaletteContext } from './hooks/useCommandPaletteContext';
@@ -459,6 +460,9 @@ export default function App() {
         isDaylight,
         setDaylightPreference,
     } = useThemeSettingsStore(useShallow(selectThemeSettingsSnapshot));
+    const setPageDaylight = useThemeSettingsStore(state => state.setPageDaylight);
+    const scratchpadEnabled = useScratchpadSettingsStore(state => state.enabled);
+    const syncDaylightToPage = useThemeSettingsStore(state => state.syncDaylightToPage);
     const {
         hidePlayerProgressBar,
         playerBottomBarOffset,
@@ -740,6 +744,11 @@ export default function App() {
     } = useAppNavigation();
     const reduceLatticeMotion = useReducedMotionFor('lattice');
     const visualizerAroundWall = useVisualizerAroundWall();
+
+    // 首页与播放页各记一份明暗：切到哪一页就把主题换成那一页的（跟随系统时不动）。
+    useEffect(() => {
+        syncDaylightToPage(currentView === 'player' ? 'player' : 'home');
+    }, [currentView, syncDaylightToPage]);
 
     usePlayerBottomBarOffset(playerBottomBarOffset);
     usePlayerBottomBarPositioningEntry(navigateToPlayer);
@@ -1691,8 +1700,9 @@ export default function App() {
         void generateAITheme(lyrics, currentSong);
     }, [currentSong, generateAITheme, lyrics]);
     const toggleDaylightMode = useCallback(() => {
-        handleToggleDaylight(!isDaylight);
-    }, [handleToggleDaylight, isDaylight]);
+        // 播放页面板里的明暗切换只改播放页的偏好，首页另有自己的一份。
+        setPageDaylight('player', !isDaylight);
+    }, [isDaylight, setPageDaylight]);
     const currentSearchSourceTabInPalette = useMemo(() => resolveCommandPaletteSearchSource(
         currentSong,
         searchSourceTab,
@@ -2946,13 +2956,14 @@ export default function App() {
                 onCreateNavidromePlaylistWithSongs={createNavidromePlaylistWithSongs}
             />
 
-            {/* 速记簿：左缘的把手与滑出的抽屉，非模态，三个视图里都在；播放页隐藏 UI 时把手跟着藏起来。 */}
-            <ScratchpadHost
+            {/* 速记簿：左缘的把手与滑出的抽屉，非模态，三个视图里都在；播放页隐藏 UI 时把手跟着藏起来。
+                设置里关掉速记簿后整块不挂载（把手、抽屉、快捷键都不在）。 */}
+            {scratchpadEnabled && <ScratchpadHost
                 isDaylight={isDaylight}
                 playback={scratchpadPlayback}
                 queue={scratchpadQueue}
                 isHandleHidden={currentView === 'player' && isPlayerChromeHidden}
-            />
+            />}
 
             <CommandPalette
                 activeIndex={commandPalette.activeIndex}
