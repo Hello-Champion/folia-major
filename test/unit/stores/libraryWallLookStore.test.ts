@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SLOTS_PER_BLOCK } from '@/components/wall/blockTemplates';
 import {
+    clampLibraryWallTiltDeg,
     clampLibraryWallWindowsPerBlock,
     DEFAULT_LIBRARY_WALL_LOOK,
     DEFAULT_LIBRARY_WALL_WINDOWS_PER_BLOCK,
@@ -69,6 +70,19 @@ describe('library wall look rules', () => {
     it('offers one to six windows per block, three by default', () => {
         expect(LIBRARY_WALL_WINDOW_COUNTS).toEqual([1, 2, 3, 4, 5, 6]);
         expect(DEFAULT_LIBRARY_WALL_WINDOWS_PER_BLOCK).toBe(3);
+    });
+
+    it('clamps the wall tilt to 0–12 degrees and falls back to 0 for non-numbers', () => {
+        expect(clampLibraryWallTiltDeg(0)).toBe(0);
+        expect(clampLibraryWallTiltDeg(7)).toBe(7);
+        expect(clampLibraryWallTiltDeg('9')).toBe(9);
+        expect(clampLibraryWallTiltDeg(20)).toBe(12);
+        expect(clampLibraryWallTiltDeg(-4)).toBe(0);
+        expect(clampLibraryWallTiltDeg(3.6)).toBe(4);
+        expect(clampLibraryWallTiltDeg(Number.NaN)).toBe(0);
+        expect(clampLibraryWallTiltDeg('abc')).toBe(0);
+        expect(clampLibraryWallTiltDeg(null)).toBe(0);
+        expect(clampLibraryWallTiltDeg(undefined)).toBe(0);
     });
 
     it('clamps out-of-range counts to the nearest bound and falls back to 3 for non-numbers', () => {

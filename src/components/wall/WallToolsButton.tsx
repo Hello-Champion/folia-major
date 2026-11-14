@@ -91,6 +91,9 @@ export function WallToolsSurface({ idPrefix, label, isDaylight, destination, ent
     const rootRef = useRef<HTMLDivElement>(null);
     // 玻璃开关：打开时面板、队列浮岛与触发按钮都换用 Mineradio 风格玻璃（has-glass 类驱动 CSS）。
     const globalGlassEnabled = usePlayerChromeSettingsStore(state => state.globalGlassEnabled);
+    // 快捷排的顺序（拖动换位后存下来）：两面墙共用一份。
+    const wallToolsQuickOrder = useLatticeSettingsStore(state => state.wallToolsQuickOrder);
+    const setWallToolsQuickOrder = useLatticeSettingsStore(state => state.setWallToolsQuickOrder);
     const lightsOn = useLatticeSettingsStore(state => state.latticeLightsOn);
     const handleToggleLatticeLights = useLatticeSettingsStore(state => state.handleToggleLatticeLights);
     const tintEnabled = useLatticeSettingsStore(state => state.latticePosterTintEnabled);
@@ -198,7 +201,13 @@ export function WallToolsSurface({ idPrefix, label, isDaylight, destination, ent
                             onAnimationComplete={() => setIslandTrailsPanel(false)}
                             className={quick.length > 0 ? 'lattice-tools-panel has-quick-actions' : 'lattice-tools-panel'}
                         >
-                            {quick.length > 0 && <WallToolsQuickRow actions={quick} onDone={close} />}
+                            {/* 定位按钮（above，Lattice / bravais / 集合页的 GridLocateButton）放在面板里：与快捷排并排（同一行第一格）。 */}
+                            {quick.length > 0 ? (
+                                <WallToolsQuickRow actions={quick} onDone={close} lead={above}
+                                    order={wallToolsQuickOrder} onReorder={setWallToolsQuickOrder} />
+                            ) : above ? (
+                                <div className="flex items-center justify-center pb-1">{above}</div>
+                            ) : null}
                             <WallToolsRow entry={common.volume} onDone={close} />
                             {rows.map(entry => <WallToolsRow key={entry.id} entry={entry} onDone={close} />)}
                             <WallToolsRow entry={tintRow} onDone={close} />
@@ -250,7 +259,6 @@ export function WallToolsSurface({ idPrefix, label, isDaylight, destination, ent
                 </AnimatePresence>
             </div>
 
-            {!isDocked && above}
             <SlideActionButton
                 docked={isDocked}
                 icon={isOpen ? X : Settings2}

@@ -1,4 +1,4 @@
-import { useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
 
 // src/components/wall/WallToolsRows.tsx
@@ -160,41 +160,140 @@ function WallToolsSliderRow({ entry }: { entry: Extract<WallToolsEntry, { kind: 
     );
 }
 
-/** 顶部一排纯图标快捷格（menu 里的一个 group，按钮仍是 menuitem）。lead：排在快捷格前面的东西（墙的定位按钮）。 */
-export function WallToolsQuickRow({ actions, onDone, lead }: {
+/** 顶部一排纯图标快捷格（menu 里的一个 group，按钮仍是 menuitem）。lead：排在快捷格前面的东西（墙的定位按钮）。
+ *  `order` / `onReorder`：拖动换位（定位按钮记作 `locate`），松手后把新顺序交出去存起来；没传就只按默认顺序排、不能拖。 */
+export function WallToolsQuickRow({ actions, onDone, lead, order, onReorder }: {
     actions: readonly WallToolsQuickAction[];
     onDone: () => void;
     lead?: ReactNode;
+    order?: readonly string[];
+    onReorder?: (ids: readonly string[]) => void;
 }) {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [preview, setPreview] = useState<readonly string[] | null>(null);
+    const previewRef = useRef<readonly string[] | null>(null);
+    previewRef.current = preview;
+    const dragRef = useRef<{
+        pointerId: number;
+        id: string;
+        x: number;
+        y: number;
+        active: boolean;
+    } | null>(null);
+    // 拖完那一下浏览器还会补一个 click，落在松手位置的格子上：吞掉它，免得顺手触发一个动作又收起面板。
+    const swallowClickRef = useRef(false);
+
+    const cells: { id: string; node: ReactNode; }[] = [];
+    if (lead) cells.push({ id: 'locate', node: lead });
+    for (const action of actions) {
+        const Icon = action.icon;
+        const tooltip = [action.label, action.status, action.kbd].filter(Boolean).join(' · ');
+        cells.push({
+            id: action.id,
+            node: (
+                <button
+                    key={action.id}
+                    type="button"
+                    role="menuitem"
+                    className={action.busy ? 'lattice-tools-quick-action is-busy' : 'lattice-tools-quick-action'}
+                    data-wall-tools-quick={action.id}
+                    aria-label={action.label}
+                    aria-description={action.status}
+                    aria-busy={action.busy || undefined}
+                    aria-expanded={action.expanded}
+                    aria-controls={action.controls}
+                    title={tooltip}
+                    disabled={action.disabled}
+                    onClick={() => {
+                        if (swallowClickRef.current) {
+                            swallowClickRef.current = false;
+                            return;
+                        }
+                        action.onSelect();
+                        if (!action.keepOpen) onDone();
+                    }}
+                >
+                    <Icon aria-hidden="true" />
+                </button>
+            ),
+        });
+    }
+
+    // 存下来的顺序只决定已列出的 id 的先后；没列到的（新加的格子）按默认顺序接在后面。
+    const applied = preview ?? order ?? [];
+    const rank = new Map(applied.map((id, index) => [id, index]));
+    const arranged = cells
+        .map((cell, index) => ({ cell, index }))
+        .sort((one, other) => {
+            const oneRank = rank.get(one.cell.id);
+            const otherRank = rank.get(other.cell.id);
+            if (oneRank !== undefined && otherRank !== undefined) return oneRank - otherRank;
+            if (oneRank !== undefined) return -1;
+            if (otherRank !== undefined) return 1;
+            return one.index - other.index;
+        })
+        .map(entry => entry.cell);
+
+    const cellIdAt = (target: EventTarget | null): string | null => {
+        if (!(target instanceof Element)) return null;
+        const quick = target.closest('[data-wall-tools-quick]');
+        if (quick) return quick.getAttribute('data-wall-tools-quick');
+        return target.closest('[data-grid-locate]') ? 'locate' : null;
+    };
+
+    const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+        if (!onReorder || event.button !== 0) return;
+        const id = cellIdAt(event.target);
+        if (!id) return;
+        dragRef.current = { pointerId: event.pointerId, id, x: event.clientX, y: event.clientY, active: false };
+    };
+
+    const onPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+        const drag = dragRef.current;
+        if (!drag || drag.pointerId !== event.pointerId) return;
+        if (!drag.active) {
+            if (Math.hypot(event.clientX - drag.x, event.clientY - drag.y) < 6) return;
+            drag.active = true;
+            swallowClickRef.current = true;
+            containerRef.current?.setPointerCapture(event.pointerId);
+        }
+        const overId = cellIdAt(document.elementFromPoint(event.clientX, event.clientY));
+        if (!overId || overId === drag.id) return;
+        const current = previewRef.current ?? arranged.map(cell => cell.id);
+        const from = current.indexOf(drag.id);
+        const to = current.indexOf(overId);
+        if (from < 0 || to < 0) return;
+        const next = [...current];
+        next.splice(from, 1);
+        next.splice(to, 0, drag.id);
+        setPreview(next);
+    };
+
+    const finishDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+        const drag = dragRef.current;
+        if (!drag || drag.pointerId !== event.pointerId) return;
+        dragRef.current = null;
+        if (containerRef.current?.hasPointerCapture(event.pointerId)) {
+            containerRef.current.releasePointerCapture(event.pointerId);
+        }
+        const next = previewRef.current;
+        setPreview(null);
+        if (drag.active && next && onReorder) onReorder(next);
+        // 浏览器在 pointerup 之后还会补一个 click；它被上面的 onClick 吃掉一次就清掉，没补的话 300ms 后也放手。
+        window.setTimeout(() => { swallowClickRef.current = false; }, 300);
+    };
+
     return (
-        <div role="group" className="lattice-tools-quick">
-            {lead}
-            {actions.map(action => {
-                const Icon = action.icon;
-                const tooltip = [action.label, action.status, action.kbd].filter(Boolean).join(' · ');
-                return (
-                    <button
-                        key={action.id}
-                        type="button"
-                        role="menuitem"
-                        className={action.busy ? 'lattice-tools-quick-action is-busy' : 'lattice-tools-quick-action'}
-                        data-wall-tools-quick={action.id}
-                        aria-label={action.label}
-                        aria-description={action.status}
-                        aria-busy={action.busy || undefined}
-                        aria-expanded={action.expanded}
-                        aria-controls={action.controls}
-                        title={tooltip}
-                        disabled={action.disabled}
-                        onClick={() => {
-                            action.onSelect();
-                            if (!action.keepOpen) onDone();
-                        }}
-                    >
-                        <Icon aria-hidden="true" />
-                    </button>
-                );
-            })}
+        <div
+            ref={containerRef}
+            role="group"
+            className={preview ? 'lattice-tools-quick is-reordering' : 'lattice-tools-quick'}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={finishDrag}
+            onPointerCancel={finishDrag}
+        >
+            {arranged.map(cell => <span key={cell.id} className="contents">{cell.node}</span>)}
         </div>
     );
 }

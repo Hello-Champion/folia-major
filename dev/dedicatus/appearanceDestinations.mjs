@@ -24,6 +24,7 @@ export const APPEARANCE_DESTINATIONS = {
     'lattice_poster_tint_use_custom_color': { config: null, why: '队列拼贴墙（Lattice）的设置，OBS 页面没有这面墙（用户 2026-11-08 定：配置码也用于 web 版 OBS 链接，只加 OBS 页面看得到的）' },
     'lattice_vignette': { config: null, why: '队列拼贴墙（Lattice）的设置，OBS 页面没有这面墙（用户 2026-11-08 定：配置码也用于 web 版 OBS 链接，只加 OBS 页面看得到的）' },
     'wall_tools_queue_island_open': { config: null, why: '墙面工具的队列浮岛开没开，OBS 页面没有（用户 2026-11-08 定：配置码也用于 web 版 OBS 链接，只加 OBS 页面看得到的）' },
+    'wall_tools_quick_order': { config: null, why: '墙面工具面板快捷格的排列，OBS 页面没有这块面板（用户 2026-11-08 定：配置码也用于 web 版 OBS 链接，只加 OBS 页面看得到的）' },
     // src/stores/useLibraryWallLookStore.ts
     'library_wall_backdrop_blur': { config: 'libraryWallBackdropBlur' },
     'library_wall_backdrop_lyrics': { config: 'libraryWallBackdropLyrics' },
@@ -32,6 +33,7 @@ export const APPEARANCE_DESTINATIONS = {
     'library_wall_seam_direction': { config: 'libraryWallSeamDirection' },
     'library_wall_seam_style': { config: 'libraryWallSeamStyle' },
     'library_wall_stack_edges': { config: 'libraryWallStackEdges' },
+    'library_wall_tilt': { config: 'libraryWallTilt' },
     'library_wall_windows_per_block': { config: null, why: '用户决定不进（2026-10-06，useLibraryWallLookStore.ts 的 @note）' },
     // src/stores/usePlayerChromeSettingsStore.ts
     'always_show_main_window_titlebar': { config: null, why: '主窗口标题栏，OBS 页面没有（用户 2026-11-08 定：配置码也用于 web 版 OBS 链接，只加 OBS 页面看得到的）' },

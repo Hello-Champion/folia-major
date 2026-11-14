@@ -166,7 +166,7 @@ export const usePlayerChrome = (props: PlayerChromeProps | undefined, enabled = 
             className={`absolute ${lowerBackButton ? 'top-12' : 'top-6'} left-6 z-30 h-10 w-10 rounded-full flex items-center justify-center transition-colors backdrop-blur-md text-white/60 pointer-events-auto ${
                 globalGlassStyle ? '' : 'bg-black/20 hover:bg-white/10'
             }`}
-            style={{ pointerEvents: isBackButtonVisible ? 'auto' : 'none', ...globalGlassStyle }}
+            style={{ pointerEvents: isBackButtonVisible ? 'auto' : 'none', boxShadow: '0 10px 30px rgb(0 0 0 / 24%)', ...globalGlassStyle }}
         >
             <ChevronLeft size={20} />
         </motion.button>

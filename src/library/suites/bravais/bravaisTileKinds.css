@@ -28,7 +28,7 @@
     --bravais-stack-far: color-mix(in srgb, color-mix(in srgb, color-mix(in srgb, var(--bravais-stack-page-far), var(--bravais-stack-tint-color) var(--bravais-stack-tint)), var(--bravais-stack-dim-color) var(--bravais-stack-dim)) var(--bravais-stack-alpha), transparent);
     --bravais-stack-line: color-mix(in srgb, color-mix(in srgb, color-mix(in srgb, var(--bravais-stack-page-line), var(--bravais-stack-tint-color) var(--bravais-stack-tint)), var(--bravais-stack-dim-color) var(--bravais-stack-dim)) var(--bravais-stack-alpha), transparent);
     /* 页边的收放与熄灯 / 叠色同节奏（海报原来的 600ms 阴影过渡在抬起时会让页边伸进邻居一会儿）。 */
-    transition: box-shadow 300ms ease, filter 600ms ease, transform 300ms ease-out;
+    transition: box-shadow 300ms ease, filter 600ms ease, transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* 日光：页是比底色深一点的灰，发丝线换成更深的一道。 */

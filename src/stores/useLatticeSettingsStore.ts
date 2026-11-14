@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { getStoredBoolean, getStoredString, setStoredBoolean } from './storagePrimitives';
+import { getStoredBoolean, getStoredString, setStoredBoolean, setStoredString } from './storagePrimitives';
 
 // src/stores/useLatticeSettingsStore.ts
 // Persistent queue-collage preferences. Deliberately separate from useLatticeControlsStore: that
@@ -18,12 +18,23 @@ const LATTICE_POSTER_TINT_COLOR_KEY = 'lattice_poster_tint_color';
 const LATTICE_POSTER_TINT_INTENSITY_KEY = 'lattice_poster_tint_intensity';
 const LATTICE_BADGE_CURRENT_ONLY_KEY = 'lattice_badge_current_only';
 const WALL_TOOLS_QUEUE_ISLAND_OPEN_KEY = 'wall_tools_queue_island_open';
+const WALL_TOOLS_QUICK_ORDER_KEY = 'wall_tools_quick_order';
 const DEFAULT_POSTER_TINT_COLOR = '#161419';
 
 const clampPosterTintIntensity = (value: number) => Math.max(0, Math.min(1, value));
 const normalizePosterTintColor = (value: string) => (
     /^#[0-9a-f]{6}$/i.test(value.trim()) ? value.trim().toLowerCase() : DEFAULT_POSTER_TINT_COLOR
 );
+
+/** 墙面工具面板顶部那一排快捷格的顺序（单元格 id 的数组；定位按钮记作 'locate'）。没存过就是空数组，按默认顺序排。 */
+const getStoredQuickOrder = (): string[] => {
+    try {
+        const raw: unknown = JSON.parse(getStoredString(WALL_TOOLS_QUICK_ORDER_KEY, '[]'));
+        return Array.isArray(raw) ? raw.filter((id): id is string => typeof id === 'string') : [];
+    } catch {
+        return [];
+    }
+};
 
 const getStoredPosterTintIntensity = () => {
     const stored = Number(getStoredString(LATTICE_POSTER_TINT_INTENSITY_KEY, '0.5'));
@@ -49,6 +60,11 @@ export type LatticeSettingsState = {
      * 放在这个 store 里，bravais ↔ Lattice 交接时两面墙读同一份。
      */
     wallToolsQueueIslandOpen: boolean;
+    /**
+     * 面板顶部那一排快捷格的顺序（拖动换位后记下）：两面墙共用一份，`locate` 是定位按钮那一格。
+     * 只是面板的排布，不是外观设置——不进外观导入导出，也不注册命令面板。没列的 id 按默认顺序接在后面。
+     */
+    wallToolsQuickOrder: string[];
     handleToggleLatticeVignette: (enabled: boolean) => void;
     handleToggleAutoFocusOnSongChange: (enabled: boolean) => void;
     handleToggleLatticeLights: (enabled: boolean) => void;
@@ -58,6 +74,7 @@ export type LatticeSettingsState = {
     handleSetLatticePosterTintIntensity: (intensity: number) => void;
     handleToggleLatticeBadgeCurrentOnly: (enabled: boolean) => void;
     setWallToolsQueueIslandOpen: (open: boolean) => void;
+    setWallToolsQuickOrder: (ids: readonly string[]) => void;
 };
 
 export const useLatticeSettingsStore = create<LatticeSettingsState>(set => ({
@@ -70,6 +87,7 @@ export const useLatticeSettingsStore = create<LatticeSettingsState>(set => ({
     latticePosterTintIntensity: getStoredPosterTintIntensity(),
     latticeBadgeCurrentOnly: getStoredBoolean(LATTICE_BADGE_CURRENT_ONLY_KEY, false),
     wallToolsQueueIslandOpen: getStoredBoolean(WALL_TOOLS_QUEUE_ISLAND_OPEN_KEY, false),
+    wallToolsQuickOrder: getStoredQuickOrder(),
     handleToggleLatticeVignette: (enabled) => {
         set({ latticeVignette: enabled });
         setStoredBoolean(LATTICE_VIGNETTE_KEY, enabled);
@@ -107,5 +125,10 @@ export const useLatticeSettingsStore = create<LatticeSettingsState>(set => ({
     setWallToolsQueueIslandOpen: (open) => {
         set({ wallToolsQueueIslandOpen: open });
         setStoredBoolean(WALL_TOOLS_QUEUE_ISLAND_OPEN_KEY, open);
+    },
+    setWallToolsQuickOrder: (ids) => {
+        const next = [...ids];
+        set({ wallToolsQuickOrder: next });
+        setStoredString(WALL_TOOLS_QUICK_ORDER_KEY, JSON.stringify(next));
     },
 }));

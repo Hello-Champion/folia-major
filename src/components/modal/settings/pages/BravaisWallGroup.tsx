@@ -6,6 +6,8 @@ import { useLibraryWallLookStore } from '../../../../stores/useLibraryWallLookSt
 import {
     LIBRARY_WALL_LOOKS,
     LIBRARY_WALL_WINDOW_COUNTS,
+    MAX_LIBRARY_WALL_TILT_DEG,
+    MIN_LIBRARY_WALL_TILT_DEG,
     libraryWallWindowSharePercent,
     type LibraryWallLook,
 } from '../../../../utils/libraryWallLook';
@@ -16,7 +18,7 @@ import {
     type LibraryWallSeamStyle,
 } from '../../../../utils/libraryWallSeamStyle';
 import { LIBRARY_WALL_SEAM_DIRECTIONS, LIBRARY_WALL_SEAM_DIRECTION_TEXT } from '../../../../utils/libraryWallSeamDirection';
-import { Group, PictureChoice, Reveal, Row, Segmented, Toggle, option, type SettingsGroupDef } from '../kit';
+import { Group, PictureChoice, Reveal, Row, Segmented, Slider, Toggle, option, type SettingsGroupDef } from '../kit';
 
 // src/components/modal/settings/pages/BravaisWallGroup.tsx
 // The Bravais 墙面 group of the 主页与歌单 page: every setting only the bravais library UI has. How
@@ -36,6 +38,7 @@ const O = {
     windows: option(BRAVAIS_WALL, 'libraryWallWindows', 'options.libraryWallWindows'),
     stackEdges: option(BRAVAIS_WALL, 'bravaisStackEdges', 'options.bravaisStackEdges'),
     seamDirection: option(BRAVAIS_WALL, 'bravaisSeamDirection', 'options.bravaisSeamDirection'),
+    tilt: option(BRAVAIS_WALL, 'libraryWallTilt', 'options.bravaisTilt'),
     seamClear: option(BRAVAIS_WALL, 'bravaisSeamClear', 'options.bravaisSeamClear'),
     seamStyle: option(BRAVAIS_WALL, 'bravaisSeamStyle', 'options.bravaisSeamStyle'),
     backdropLyrics: option(BRAVAIS_WALL, 'bravaisBackdropLyrics', 'options.bravaisBackdropLyrics'),
@@ -75,6 +78,7 @@ export const BravaisWallGroup: React.FC = () => {
         backdropLyrics: state.backdropLyrics,
         backdropBlur: state.backdropBlur,
         seamDirection: state.seamDirection,
+        tiltDeg: state.tiltDeg,
         setLook: state.setLook,
         setWindowsPerBlock: state.setWindowsPerBlock,
         setStackEdges: state.setCollectionStackEdges,
@@ -83,6 +87,7 @@ export const BravaisWallGroup: React.FC = () => {
         setBackdropLyrics: state.setBackdropLyrics,
         setBackdropBlur: state.setBackdropBlur,
         setSeamDirection: state.setSeamDirection,
+        setTiltDeg: state.setTiltDeg,
     })));
 
     if (!isBravaisActive) return null;
@@ -121,6 +126,16 @@ export const BravaisWallGroup: React.FC = () => {
                     value={wall.seamDirection}
                     options={LIBRARY_WALL_SEAM_DIRECTIONS.map(direction => ({ value: direction, label: t(LIBRARY_WALL_SEAM_DIRECTION_TEXT[direction].label) }))}
                     onChange={wall.setSeamDirection}
+                />
+            </Row>
+            <Row option={O.tilt} hint={t('options.bravaisTiltHint', { deg: wall.tiltDeg })} note={t('options.bravaisTiltDesc')}>
+                <Slider
+                    value={wall.tiltDeg}
+                    min={MIN_LIBRARY_WALL_TILT_DEG}
+                    max={MAX_LIBRARY_WALL_TILT_DEG}
+                    step={1}
+                    onChange={wall.setTiltDeg}
+                    format={value => `${value}°`}
                 />
             </Row>
             <Row option={O.seamClear} note={t('options.bravaisSeamClearDesc')}>

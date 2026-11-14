@@ -16,16 +16,17 @@
     place-items: center;
     border: none;
     border-radius: 999px !important;
-    color: inherit;
-    background: rgb(255 255 255 / 8%);
+    /* 与播放页左上角那颗返回按钮同一身：黑 20% 底、白 60% 图标、悬停白 10%、同样的投影与模糊。
+       日光 / 暗色主题都一样——返回按钮压在墙面或画面上，底下的颜色不由主题定。 */
+    color: rgb(255 255 255 / 60%);
+    background: rgb(0 0 0 / 20%);
     box-shadow: 0 10px 30px rgb(0 0 0 / 24%);
-    backdrop-filter: blur(8px);
+    backdrop-filter: blur(12px);
     transition: transform 200ms ease, background-color 200ms ease;
     pointer-events: auto;
 }
 
-.lattice-root.is-daylight .lattice-back { background: rgb(0 0 0 / 5%); }
-.lattice-back:hover { transform: scale(1.05); }
+.lattice-back:hover { transform: scale(1.05); background: rgb(255 255 255 / 10%); }
 .lattice-back:active { transform: scale(0.95); }
 
 /* 隐藏式：出现 / 消失与播放页那颗相同（0.2s 淡入、略缩小并左移 6px）。隐藏时不接指针，热区判定在组件里。 */

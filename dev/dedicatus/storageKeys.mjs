@@ -325,6 +325,7 @@ export const STORAGE_KEYS = [
     'web:visualizer_smart_beat',
     'web:voice_input_pause_enabled',
     'web:wall_tools_queue_island_open',
+    'web:wall_tools_quick_order',
     'web:wallpaper_entry_confirmed',
     'web:wallpaper_mac_autohide_dock',
     'web:wallpaper_mode',

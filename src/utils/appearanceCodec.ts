@@ -642,6 +642,7 @@ export const compressConfig = (config: any): string => {
     if (config.stageTrackPillInObs !== undefined) minified.stpo = config.stageTrackPillInObs;
     if (config.stageTrackPillPosition !== undefined) minified.stpp = normalizeNowPlayingCardPosition(config.stageTrackPillPosition);
     if (config.libraryWallStackEdges !== undefined) minified.lwse = config.libraryWallStackEdges;
+    if (config.libraryWallTilt !== undefined) minified.lwlt = config.libraryWallTilt;
     if (config.libraryWallSeamClear !== undefined) minified.lwsc = config.libraryWallSeamClear;
     if (config.libraryWallSeamStyle !== undefined) minified.lwss = config.libraryWallSeamStyle;
     if (config.libraryWallBackdropLyrics !== undefined) minified.lwbl = config.libraryWallBackdropLyrics;
@@ -717,6 +718,7 @@ export const decompressConfig = (str: string): any => {
         || parsed.stpo !== undefined
         // The bravais wall's collection stack edges, info strip and backdrop, for the same reason.
         || parsed.lwse !== undefined
+        || parsed.lwlt !== undefined
         || parsed.lwsc !== undefined
         || parsed.lwss !== undefined
         || parsed.lwbl !== undefined
@@ -802,6 +804,7 @@ export const decompressConfig = (str: string): any => {
         if (parsed.stpo !== undefined) decompressed.stageTrackPillInObs = parsed.stpo;
         if (parsed.stpp !== undefined) decompressed.stageTrackPillPosition = normalizeNowPlayingCardPosition(parsed.stpp);
         if (parsed.lwse !== undefined) decompressed.libraryWallStackEdges = parsed.lwse;
+        if (parsed.lwlt !== undefined) decompressed.libraryWallTilt = parsed.lwlt;
         if (parsed.lwsc !== undefined) decompressed.libraryWallSeamClear = parsed.lwsc;
         if (parsed.lwss !== undefined) decompressed.libraryWallSeamStyle = parsed.lwss;
         if (parsed.lwbl !== undefined) decompressed.libraryWallBackdropLyrics = parsed.lwbl;
@@ -831,7 +834,7 @@ export const decompressConfig = (str: string): any => {
             'songThemeAutoSwitchEnabled', 'songThemeAutoGenerateEnabled', 'themeGenerationSource', 'followSystemTheme',
             'stageTrackPillMode', 'stageTrackPillTimeoutSec', 'stageTrackPillOnHome', 'stageTrackPillPosition',
             'stageTrackPillInObs',
-            'libraryWallStackEdges',
+            'libraryWallStackEdges', 'libraryWallTilt',
             'libraryWallSeamClear', 'libraryWallSeamStyle', 'libraryWallBackdropLyrics', 'libraryWallBackdropBlur',
             'libraryWallSeamDirection',
             'latticeBadgeCurrentOnly',
