@@ -133,6 +133,7 @@ exports[`store contract > keeps every localStorage key the stores read or write 
   "pendolo_tuning",
   "playback_entry_view",
   "playback_entry_view_chosen",
+  "player_auto_daylight",
   "player_bottom_bar_glass",
   "player_bottom_bar_glass_blur",
   "player_bottom_bar_glass_brightness",

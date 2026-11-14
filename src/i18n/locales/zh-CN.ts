@@ -2393,6 +2393,7 @@ export default {
     "settingsSaving": "正在保存...",
     "daylightModeLight": "浅色",
     "daylightModeDark": "深色",
+    "daylightModeAuto": "自动（按画面深浅）",
     "daylightModeSystem": "跟随系统",
     "stageTrackPillReposition": "调整卡片位置",
     "stageTrackPillRepositionUnavailable": "先播放一首歌 —— 卡片要在屏幕上才能拖动",

@@ -100,7 +100,8 @@ export type PlayerPanelDeps = {
     accountController: UnifiedPanelProps['account']['accountController'];
     handleSyncData: UnifiedPanelProps['account']['onSyncData'];
     isSyncing: UnifiedPanelProps['account']['isSyncing'];
-    handleToggleDaylight: () => void;
+    playerDaylightAuto: boolean;
+    onSelectDaylightMode: (mode: 'light' | 'dark' | 'auto') => void;
 };
 
 type BuildPlayerPanelModelParams = PlayerPanelAmbient & PlayerPanelDeps;
@@ -183,7 +184,8 @@ export const buildPlayerPanelModel = ({
     isSyncing,
     useCoverColorBg,
     isDaylight,
-    handleToggleDaylight,
+    playerDaylightAuto,
+    onSelectDaylightMode,
 }: BuildPlayerPanelModelParams): PlayerPanelViewModel => ({
     panelProps: {
         playback: {
@@ -279,7 +281,8 @@ export const buildPlayerPanelModel = ({
             useCoverColorBg,
             onToggleCoverColorBg: handleToggleCoverColorBg,
             isDaylight,
-            onToggleDaylight: handleToggleDaylight,
+            playerDaylightAuto,
+            onSelectDaylightMode,
         },
     },
 });

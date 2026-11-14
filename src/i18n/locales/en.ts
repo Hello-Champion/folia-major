@@ -2393,6 +2393,7 @@ export default {
     "settingsSaving": "Saving...",
     "daylightModeLight": "Light",
     "daylightModeDark": "Dark",
+    "daylightModeAuto": "Auto (from the picture)",
     "daylightModeSystem": "System",
     "stageTrackPillReposition": "Reposition song card",
     "stageTrackPillRepositionUnavailable": "Play something first — the song card has to be on screen to move it",

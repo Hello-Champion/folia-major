@@ -277,6 +277,8 @@ contextBridge.exposeInMainWorld('electron', {
         return () => ipcRenderer.removeListener('global-shortcut-triggered', listener);
     },
     updateTaskbarControls: (state) => ipcRenderer.invoke('thumbar-update-buttons', state),
+    // 当前窗口截图的平均亮度（播放页「自动」明暗用）。
+    sampleWindowTone: () => ipcRenderer.invoke('sample-window-tone'),
     onTaskbarControl: (callback) => {
         const listener = (_event, action) => callback(action);
         ipcRenderer.on('thumbar-action', listener);

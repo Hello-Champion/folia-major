@@ -1073,6 +1073,8 @@ declare global {
       setGlobalShortcuts: (accelerators: string[]) => Promise<{ backend: 'native' | 'portal'; results: Array<{ accelerator: string; registered: boolean }> }>;
       onGlobalShortcut: (callback: (accelerator: string) => void) => () => void;
       updateTaskbarControls: (state: ElectronTaskbarControlState) => Promise<boolean>;
+      /** 当前窗口截图的平均相对亮度（0 黑 … 1 白）；非桌面版没有这个方法。 */
+      sampleWindowTone: () => Promise<number | null>;
       onTaskbarControl: (callback: (action: ElectronTaskbarControlAction) => void) => () => void;
       openRemoteControl: () => Promise<boolean>;
       toggleRemoteControl: () => Promise<boolean>;

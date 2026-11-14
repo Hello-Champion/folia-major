@@ -7877,6 +7877,41 @@ ipcMain.handle('thumbar-update-buttons', (event, state) => {
   return windowsThumbar.setState(state);
 });
 
+// 播放页「自动」明暗要的是画面真实的底色：可视化是 WebGL 画布（preserveDrawingBuffer 关闭，读不到像素），
+// 只能在主进程截一张当前窗口、缩到 48×48 求平均相对亮度（0 黑 … 1 白）。
+ipcMain.handle('sample-window-tone', async (event) => {
+  if (!isTrustedMainWindowContents(event.sender)) {
+    throw new Error('Untrusted renderer attempted to sample the window.');
+  }
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (!win || win.isDestroyed() || !win.isVisible() || win.isMinimized()) return null;
+  // 取画面中部一大块（避开右下角面板、底部的控制条与歌词压暗层）。取亮度分位数而不是平均值：
+  // 背景占多数，少量深色文字/控件不该把整张画面拉成「深色」。
+  const [width, height] = win.getContentSize();
+  const rect = {
+    x: Math.round(width * 0.25),
+    y: Math.round(height * 0.35),
+    width: Math.max(48, Math.round(width * 0.45)),
+    height: Math.max(48, Math.round(height * 0.35)),
+  };
+  const image = await win.webContents.capturePage(rect);
+  if (image.isEmpty()) return null;
+  const small = image.resize({ width: 32, height: 32, quality: 'good' });
+  const bitmap = small.toBitmap();
+  const linear = (channel) => {
+    const value = channel / 255;
+    return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+  };
+  const luminances = [];
+  for (let i = 0; i + 3 < bitmap.length; i += 4) {
+    if (bitmap[i + 3] < 8) continue;
+    luminances.push(0.2126 * linear(bitmap[i + 2]) + 0.7152 * linear(bitmap[i + 1]) + 0.0722 * linear(bitmap[i]));
+  }
+  if (luminances.length === 0) return null;
+  luminances.sort((a, b) => a - b);
+  return luminances[Math.min(luminances.length - 1, Math.floor(luminances.length * 0.7))];
+});
+
 ipcMain.handle('remote-control-open', (event) => {
   if (!isTrustedMainWindowContents(event.sender)) {
     throw new Error('Untrusted renderer attempted to open the remote control window.');

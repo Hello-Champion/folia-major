@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowUpDown, Check, Moon, RefreshCw, Sparkle, Sparkles, Sun } from 'lucide-react';
+import { ArrowUpDown, Check, Moon, RefreshCw, Sparkle, Sparkles, Sun, SunMoon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { Theme } from '../../../types';
 import type { ThemeSourceModel } from '../../../hooks/themeControllerState';
@@ -22,7 +22,8 @@ interface ThemeNameRowProps {
     isGeneratingTheme: boolean;
     canGenerateAITheme: boolean;
     isDaylight: boolean;
-    onToggleDaylight: () => void;
+    playerDaylightAuto: boolean;
+    onSelectDaylightMode: (mode: 'light' | 'dark' | 'auto') => void;
 }
 
 const ThemeNameRow: React.FC<ThemeNameRowProps> = ({
@@ -34,7 +35,8 @@ const ThemeNameRow: React.FC<ThemeNameRowProps> = ({
     isGeneratingTheme,
     canGenerateAITheme,
     isDaylight,
-    onToggleDaylight,
+    playerDaylightAuto,
+    onSelectDaylightMode,
 }) => {
     const { t } = useTranslation();
     const { themeSyncState, runThemeSync } = useThemeSyncAction();
@@ -58,11 +60,12 @@ const ThemeNameRow: React.FC<ThemeNameRowProps> = ({
             <span className="ml-auto flex max-w-full items-center gap-1.5">
                 <Segments
                     size="m"
-                    value={isDaylight ? 'light' : 'dark'}
-                    onChange={() => onToggleDaylight()}
+                    value={playerDaylightAuto ? 'auto' : (isDaylight ? 'light' : 'dark')}
+                    onChange={mode => onSelectDaylightMode(mode as 'light' | 'dark' | 'auto')}
                     options={[
                         { value: 'light', label: t('options.daylightModeLight'), icon: <Sun size={15} />, iconOnly: true },
                         { value: 'dark', label: t('options.daylightModeDark'), icon: <Moon size={15} />, iconOnly: true },
+                        { value: 'auto', label: t('options.daylightModeAuto'), icon: <SunMoon size={15} />, iconOnly: true },
                     ]}
                 />
                 <Button

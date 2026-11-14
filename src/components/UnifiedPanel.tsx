@@ -125,7 +125,8 @@ type UnifiedPanelAccountProps = {
     useCoverColorBg: boolean;
     onToggleCoverColorBg: (enable: boolean) => void;
     isDaylight: boolean;
-    onToggleDaylight: () => void;
+    playerDaylightAuto: boolean;
+    onSelectDaylightMode: (mode: 'light' | 'dark' | 'auto') => void;
 };
 
 type UnifiedPanelLibraryProps = {
@@ -235,7 +236,8 @@ const UnifiedPanel: React.FC<UnifiedPanelProps> = ({
         useCoverColorBg,
         onToggleCoverColorBg,
         isDaylight,
-        onToggleDaylight,
+        playerDaylightAuto,
+        onSelectDaylightMode,
     } = account;
 
     const isStage = isStageContext || Boolean(currentSong && (currentSong as any).isStage === true);
@@ -392,7 +394,8 @@ const UnifiedPanel: React.FC<UnifiedPanelProps> = ({
                     transparentPlayerBackground={transparentPlayerBackground}
                     onToggleTransparentPlayerBackground={onToggleTransparentPlayerBackground}
                     isDaylight={isDaylight}
-                    onToggleDaylight={onToggleDaylight}
+                    playerDaylightAuto={playerDaylightAuto}
+                    onSelectDaylightMode={onSelectDaylightMode}
                     volume={volume}
                     isMuted={isMuted}
                     onVolumePreview={onVolumePreview}

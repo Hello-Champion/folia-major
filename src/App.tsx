@@ -44,6 +44,8 @@ import { createPanelNavigation } from './components/app/navigation/createPanelNa
 import { usePlayingSongLocatorStore } from './stores/usePlayingSongLocatorStore';
 import { createOnlineGridViewCollection, type GridViewCollectionDescriptor } from './components/app/home/gridViewCollectionAdapters';
 import { buildAppStyle } from './components/app/presentation/buildAppStyle';
+import { useSampledBackgroundTone } from './hooks/useSampledBackgroundTone';
+import { useSceneSettingsStore } from './components/scenes/settings/useSceneSettingsStore';
 import { buildDebugSnapshot } from './components/app/presentation/buildDebugSnapshot';
 import { buildHomeSurfacePresentation } from './components/app/presentation/buildHomeSurfacePresentation';
 import { shouldMountPlayerVisualizer } from './components/app/presentation/playerVisualizerMount';
@@ -463,6 +465,20 @@ export default function App() {
     const setPageDaylight = useThemeSettingsStore(state => state.setPageDaylight);
     const scratchpadEnabled = useScratchpadSettingsStore(state => state.enabled);
     const syncDaylightToPage = useThemeSettingsStore(state => state.syncDaylightToPage);
+    // 明暗切换的渐变：先挂上 html.theme-fading（让每个换颜色的元素带着 transition），下一帧再真的切，
+    // 半秒后摘掉。平时不挂，悬停等交互不受影响。
+    const updateDaylightWithFade = useCallback((apply: () => void) => {
+        const root = document.documentElement;
+        root.classList.add('theme-fading');
+        window.requestAnimationFrame(() => {
+            apply();
+            window.setTimeout(() => root.classList.remove('theme-fading'), 480);
+        });
+    }, []);
+
+    const playerDaylightAuto = useThemeSettingsStore(state => state.playerDaylightAuto);
+    const setPlayerDaylightAuto = useThemeSettingsStore(state => state.setPlayerDaylightAuto);
+    const followSystemTheme = useThemeSettingsStore(state => state.followSystemTheme);
     const {
         hidePlayerProgressBar,
         playerBottomBarOffset,
@@ -504,6 +520,7 @@ export default function App() {
     } = useLyricSettingsStore(useShallow(selectLyricSettingsSnapshot));
     const {
         visualizerMode,
+        visualizerBackgroundMode,
         randomVisualizerModePerSong,
         randomVisualizerModes,
         handleSetVisualizerMode,
@@ -747,8 +764,9 @@ export default function App() {
 
     // 首页与播放页各记一份明暗：切到哪一页就把主题换成那一页的（跟随系统时不动）。
     useEffect(() => {
-        syncDaylightToPage(currentView === 'player' ? 'player' : 'home');
-    }, [currentView, syncDaylightToPage]);
+        // 首页 ↔ 播放页各有一份明暗：切页时也走同一条渐变（先挂过渡类再切）。
+        updateDaylightWithFade(() => syncDaylightToPage(currentView === 'player' ? 'player' : 'home'));
+    }, [currentView, syncDaylightToPage, updateDaylightWithFade]);
 
     usePlayerBottomBarOffset(playerBottomBarOffset);
     usePlayerBottomBarPositioningEntry(navigateToPlayer);
@@ -1582,6 +1600,30 @@ export default function App() {
         defaultTheme: DEFAULT_THEME,
         transparentBackground: shouldUseTransparentAppBackground,
     }), [bgMode, isDaylight, shouldUseTransparentAppBackground, theme]);
+
+    // 播放页「自动」：只看当前窗口截图的平均亮度（画面真实颜色，可视化画布读不到像素）。
+    // 没有截图（浏览器版、窗口不可截）就不动——不再用主题底色兜底：底色本身随深浅模式变，会互相触发来回切，
+    // 把 Bravais 的显示提交拖进无限更新。
+    // 一次取样最多切一次（autoDaylightAppliedRef）：滞回 ≥0.5 判浅、≤0.35 判深，中间保持。
+    const chosenSceneId = useSceneSettingsStore(state => state.sceneId);
+    const backgroundSampleKey = `${visualizerMode}|${visualizerBackgroundMode ?? ''}|${bgMode}|${chosenSceneId ?? 'none'}`;
+    const sampledBackgroundTone = useSampledBackgroundTone(playerDaylightAuto && currentView === 'player', backgroundSampleKey);
+
+    const autoDaylightAppliedRef = useRef<number | null>(null);
+    // 离开播放页、关掉自动或换了取样来源：下一次取样重新判断一次。
+    useEffect(() => {
+        autoDaylightAppliedRef.current = null;
+    }, [currentView, playerDaylightAuto, backgroundSampleKey]);
+    useEffect(() => {
+        if (!playerDaylightAuto || currentView !== 'player' || followSystemTheme || sampledBackgroundTone === null) return;
+        // 分位数取到的亮度更接近「看着多亮」：≥0.5 判浅、≤0.35 判深，中间保持。
+        const target = sampledBackgroundTone >= 0.5 ? 1 : sampledBackgroundTone <= 0.35 ? 0 : null;
+        if (target === null || autoDaylightAppliedRef.current === target) return;
+        autoDaylightAppliedRef.current = target;
+        if (isDaylight !== Boolean(target)) {
+            updateDaylightWithFade(() => setPageDaylight('player', Boolean(target)));
+        }
+    }, [currentView, followSystemTheme, isDaylight, playerDaylightAuto, sampledBackgroundTone, setPageDaylight, updateDaylightWithFade]);
     const { visualizerTheme, visualizerSubtitleTheme, visualizerGeometrySeed } = useMemo(() => buildVisualizerTheme({
         appStyle,
         theme,
@@ -1699,10 +1741,22 @@ export default function App() {
     const generateCurrentSongTheme = useCallback(() => {
         void generateAITheme(lyrics, currentSong);
     }, [currentSong, generateAITheme, lyrics]);
+    // 命令面板里的「切换明暗」按当前页切换：播放页写播放页那份并关掉自动，首页写首页那份。
     const toggleDaylightMode = useCallback(() => {
-        // 播放页面板里的明暗切换只改播放页的偏好，首页另有自己的一份。
-        setPageDaylight('player', !isDaylight);
-    }, [isDaylight, setPageDaylight]);
+        const page = currentView === 'player' ? 'player' : 'home';
+        if (page === 'player') setPlayerDaylightAuto(false);
+        updateDaylightWithFade(() => setPageDaylight(page, !isDaylight));
+    }, [currentView, isDaylight, setPageDaylight, setPlayerDaylightAuto, updateDaylightWithFade]);
+
+    // 播放页面板里的明暗选择：浅色 / 深色 / 自动（按画面深浅）。只影响播放页这一份偏好。
+    const selectPlayerDaylightMode = useCallback((mode: 'light' | 'dark' | 'auto') => {
+        if (mode === 'auto') {
+            setPlayerDaylightAuto(true);
+            return;
+        }
+        setPlayerDaylightAuto(false);
+        updateDaylightWithFade(() => setPageDaylight('player', mode === 'light'));
+    }, [setPageDaylight, setPlayerDaylightAuto, updateDaylightWithFade]);
     const currentSearchSourceTabInPalette = useMemo(() => resolveCommandPaletteSearchSource(
         currentSong,
         searchSourceTab,
@@ -2318,7 +2372,8 @@ export default function App() {
         accountController,
         handleSyncData: handleActiveProviderSyncData,
         isSyncing: isProviderSyncing,
-        handleToggleDaylight: toggleDaylightMode,
+        playerDaylightAuto,
+        onSelectDaylightMode: selectPlayerDaylightMode,
         // Derived inside the hook, but these are the sources only App.tsx holds.
         isLocalSongLiked,
         shouldHidePlayerRightPanelButton,

@@ -92,6 +92,7 @@ export const APPEARANCE_DESTINATIONS = {
     // src/stores/useThemeSettingsStore.ts
     'default_theme_daylight': { config: null, why: '明暗模式，OBS 链接另有参数（isDaylight）（用户 2026-11-08 定：配置码也用于 web 版 OBS 链接，只加 OBS 页面看得到的）' },
     'home_theme_daylight': { config: null, why: '首页自己的明暗模式，OBS 链接另有参数（isDaylight），且 OBS 页面没有首页' },
+    'player_auto_daylight': { config: null, why: '播放页按封面深浅自动选明暗的开关，属于行为而不是外观细节；配置码另用 isDaylight 参数' },
     'player_theme_daylight': { config: null, why: '播放页自己的明暗模式，OBS 链接另有参数（isDaylight），且 OBS 页面没有播放页' },
     'disable_home_dynamic_background': { config: null, why: '首页动态背景，OBS 页面没有首页（用户 2026-11-08 定：配置码也用于 web 版 OBS 链接，只加 OBS 页面看得到的）' },
     'enable_home_dynamic_background': { config: null, why: '旧键：只在迁移成 disable_home_dynamic_background 时读一次（用户 2026-11-08 定：配置码也用于 web 版 OBS 链接，只加 OBS 页面看得到的）' },

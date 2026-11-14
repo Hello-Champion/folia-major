@@ -2393,6 +2393,7 @@ export default {
     "settingsSaving": "Đang lưu...",
     "daylightModeLight": "Sáng",
     "daylightModeDark": "Tối",
+    "daylightModeAuto": "Tự động (theo hình ảnh)",
     "daylightModeSystem": "Theo hệ thống",
     "stageTrackPillReposition": "Đổi vị trí thẻ bài hát",
     "stageTrackPillRepositionUnavailable": "Hãy phát một bài trước — thẻ bài hát phải hiện trên màn hình mới di chuyển được",

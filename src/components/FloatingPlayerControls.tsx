@@ -1061,6 +1061,7 @@ const ExpandedView: React.FC<ExpandedViewProps> = ({
 
             {/* Row 3: Loop Button, Play Button, Lyrics Button */}
             <button
+                data-theme-instant=""
                 onClick={(e) => {
                     e.stopPropagation();
                     onTogglePlay();

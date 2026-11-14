@@ -102,6 +102,7 @@ export const IPC_CHANNELS = {
     'set-app-locale': { level: 'first-party', why: '写界面语言（firstParty）' },
     'spotify-api-request': { level: 'first-party', why: '现状：有来源校验' },
     'stage-clear-state': { level: 'first-party', why: '清舞台状态（firstParty）' },
+    'sample-window-tone': { level: 'first-party', why: '读取当前窗口截图的平均亮度，有来源校验' },
     'stage-complete-external-play': { level: 'first-party', why: '现状：有来源校验' },
     'stage-complete-player-control': { level: 'first-party', why: '现状：有来源校验' },
     'stage-complete-player-queue': { level: 'first-party', why: '现状：有来源校验' },

@@ -34,6 +34,7 @@ const initialDaylight = initialFollowSystemTheme
 // 首页（资料库墙）与播放页各记一份明暗偏好；旧键 default_theme_daylight 保持在两者之间同步写入，
 // 老版本、设置页与命令面板改它时两边一起变。
 const HOME_DAYLIGHT_KEY = 'home_theme_daylight';
+const PLAYER_AUTO_DAYLIGHT_KEY = 'player_auto_daylight';
 const PLAYER_DAYLIGHT_KEY = 'player_theme_daylight';
 const initialHomeDaylight = getStoredBoolean(HOME_DAYLIGHT_KEY, initialStoredDaylight);
 const initialPlayerDaylight = getStoredBoolean(PLAYER_DAYLIGHT_KEY, initialStoredDaylight);
@@ -66,6 +67,8 @@ export type ThemeSettingsState = {
     homeDaylight: boolean;
     /** 播放页自己的明暗偏好：切到播放页时主题换成它。 */
     playerDaylight: boolean;
+    /** 播放页「自动」：按当前封面的深浅决定明暗（system-follow 优先）。 */
+    playerDaylightAuto: boolean;
     followSystemTheme: boolean;
     handleToggleCoverColorBg: (enable: boolean) => void;
     handleToggleStaticMode: (enable: boolean) => void;
@@ -73,6 +76,7 @@ export type ThemeSettingsState = {
     setDaylightPreference: (isDaylight: boolean) => void;
     /** 某一页上手动切换明暗：只改那一页的偏好（跟随系统会因此关掉）。 */
     setPageDaylight: (page: 'home' | 'player', isDaylight: boolean) => void;
+    setPlayerDaylightAuto: (enabled: boolean) => void;
     /** 切页时把主题换成那一页的偏好（跟随系统时不动）。 */
     syncDaylightToPage: (page: 'home' | 'player') => void;
     setDaylightPreferenceFromSystem: (isDaylight: boolean) => void;
@@ -87,6 +91,7 @@ export const useThemeSettingsStore = create<ThemeSettingsState>((set, get) => ({
     isDaylight: initialDaylight,
     homeDaylight: initialHomeDaylight,
     playerDaylight: initialPlayerDaylight,
+    playerDaylightAuto: getStoredBoolean(PLAYER_AUTO_DAYLIGHT_KEY, false),
     handleToggleCoverColorBg: (enable) => {
         setStoredBoolean('use_cover_color_bg', enable);
         set({ useCoverColorBg: enable });
@@ -147,10 +152,12 @@ export const useThemeSettingsStore = create<ThemeSettingsState>((set, get) => ({
         setStoredBoolean('default_theme_daylight', enabled);
         setStoredBoolean(HOME_DAYLIGHT_KEY, enabled);
         setStoredBoolean(PLAYER_DAYLIGHT_KEY, enabled);
+        setStoredBoolean(PLAYER_AUTO_DAYLIGHT_KEY, false);
         set({
             isDaylight: enabled,
             homeDaylight: enabled,
             playerDaylight: enabled,
+            playerDaylightAuto: false,
             ...(wasFollowingSystem ? { followSystemTheme: false } : {}),
         });
         if (typeof window !== 'undefined' && window.electron?.setNativeTheme) {
@@ -172,6 +179,10 @@ export const useThemeSettingsStore = create<ThemeSettingsState>((set, get) => ({
         if (typeof window !== 'undefined' && window.electron?.setNativeTheme) {
             void window.electron.setNativeTheme(enabled ? 'light' : 'dark');
         }
+    },
+    setPlayerDaylightAuto: (enabled) => {
+        setStoredBoolean(PLAYER_AUTO_DAYLIGHT_KEY, enabled);
+        set({ playerDaylightAuto: enabled });
     },
     syncDaylightToPage: (page) => {
         if (get().followSystemTheme) return;

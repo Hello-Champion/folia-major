@@ -75,6 +75,20 @@ body:lang(vi) {
   animation: visualizer-comes-up 350ms ease-in-out;
 }
 
+/* 明暗切换：所有会随主题换颜色的元素（背景、文字、描边、阴影、图标 fill/stroke）都走 400ms 过渡，
+   不再只挑几个大盒子。只在切换后的半秒挂上 html.theme-fading，平时悬停等交互不受影响。 */
+html.theme-fading * {
+  transition-property: background-color, color, border-color, box-shadow, fill, stroke;
+  transition-duration: 400ms;
+  transition-timing-function: ease;
+}
+
+/* 例外：播放页底部控制条左边的播放键不参与切换渐变，直接换成新颜色。 */
+html.theme-fading [data-theme-instant],
+html.theme-fading [data-theme-instant] * {
+  transition: none;
+}
+
 @keyframes visualizer-comes-up {
   from { opacity: 0; }
 }

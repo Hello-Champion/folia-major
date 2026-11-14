@@ -92,6 +92,7 @@ const CompactCapsuleContent: React.FC<CompactCapsuleContentProps> = ({
     // 收起和展开各画一颗播放键，但大小、位置完全一样（都在最下一行的右端），换形态时看不出换过，不滑也不闪。
     const playButton = (size: 'sm' | 'lg') => (
         <button
+            data-theme-instant=""
             type="button"
             onClick={(e) => {
                 e.stopPropagation();

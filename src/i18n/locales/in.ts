@@ -2393,6 +2393,7 @@ export default {
     "settingsSaving": "Menyimpan...",
     "daylightModeLight": "Terang",
     "daylightModeDark": "Gelap",
+    "daylightModeAuto": "Otomatis (dari gambar)",
     "daylightModeSystem": "Sistem",
     "stageTrackPillReposition": "Atur posisi kartu lagu",
     "stageTrackPillRepositionUnavailable": "Putar lagu dulu — kartu lagu harus tampil untuk bisa dipindahkan",

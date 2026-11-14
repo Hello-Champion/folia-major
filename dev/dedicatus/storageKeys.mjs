@@ -109,6 +109,7 @@ export const STORAGE_KEYS = [
     'web:default_audio_quality',
     'web:default_theme_daylight',
     'web:home_theme_daylight',
+    'web:player_auto_daylight',
     'web:player_theme_daylight',
     'web:disable_home_dynamic_background',
     'web:disable_visualizer_geometric_background',

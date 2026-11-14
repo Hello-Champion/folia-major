@@ -32,7 +32,8 @@ interface ControlsTabProps {
     transparentPlayerBackground: boolean;
     onToggleTransparentPlayerBackground: (enable: boolean) => void;
     isDaylight: boolean;
-    onToggleDaylight: () => void;
+    playerDaylightAuto: boolean;
+    onSelectDaylightMode: (mode: 'light' | 'dark' | 'auto') => void;
     volume: number;
     isMuted: boolean;
     onVolumePreview: (val: number) => void;
@@ -62,7 +63,8 @@ const ControlsTab: React.FC<ControlsTabProps> = ({
     transparentPlayerBackground,
     onToggleTransparentPlayerBackground,
     isDaylight,
-    onToggleDaylight,
+    playerDaylightAuto,
+    onSelectDaylightMode,
     volume,
     isMuted,
     onVolumePreview,
@@ -119,7 +121,8 @@ const ControlsTab: React.FC<ControlsTabProps> = ({
             isGeneratingTheme={isGeneratingTheme}
             canGenerateAITheme={canGenerateAITheme}
             isDaylight={isDaylight}
-            onToggleDaylight={onToggleDaylight}
+            playerDaylightAuto={playerDaylightAuto}
+            onSelectDaylightMode={onSelectDaylightMode}
         />
 
         <AudioEqualizerDialog isDaylight={isDaylight} />
