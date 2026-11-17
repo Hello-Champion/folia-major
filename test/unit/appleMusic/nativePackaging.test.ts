@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
@@ -48,16 +49,14 @@ describe('Apple Music native delivery', () => {
         expect(run).not.toHaveBeenCalled();
         await expect(verifyMacCompanion(path.join(root, 'missing-resources'))).rejects.toThrow();
     });
-    it('keeps the build hook, packaged resource and launch path aligned', () => {
+    it('ships no native companion: packaging needs no native toolchain', () => {
+        // 本分支去掉了 Apple Music 伴生宿主：Windows 要 VS 的 .NET 桌面工作负载、macOS 要原生工具链，
+        // 都不再是打包前置条件。构建钩子与 extraResources 里不该再有它。
         const config = require('../../../package.json').build;
-        expect(config.mac.extraResources).toContainEqual({
-            from: 'build/apple-music-native/darwin-${arch}/FoliaAppleMusicCompanion.app',
-            to: 'apple-music/FoliaAppleMusicCompanion.app',
-        });
-        expect(config.win.extraResources).toContainEqual({
-            from: 'build/apple-music-native/windows',
-            to: 'apple-music/windows',
-            filter: WINDOWS_COMPANION_FILES,
-        });
+        expect(JSON.stringify(config.mac.extraResources)).not.toContain('apple-music-native');
+        expect(JSON.stringify(config.win.extraResources)).not.toContain('apple-music-native');
+        const beforePack = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../../build/beforePack.cjs'), 'utf8');
+        expect(beforePack).not.toContain('prepareWindowsCompanion');
+        expect(beforePack).not.toContain('prepareMacCompanion');
     });
 });

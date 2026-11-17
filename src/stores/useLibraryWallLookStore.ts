@@ -11,6 +11,7 @@ import { normalizeLibraryWallSeamDirection, type LibraryWallSeamDirection } from
 // src/stores/useLibraryWallLookStore.ts
 // bravais 资料库界面的墙面偏好：「透光」档位 look（实色 / 部分透明 / 全透明，默认实色）与部分透明时每块的窗数
 // windowsPerBlock（1–6，默认 3）；集合磁贴的叠页边开关 collectionStackEdges（默认开，设计稿 §7.7）；
+// 集合页张开竖的信息条时整层倾不倾斜 collectionTilt（默认开；关掉就是集合页的倾斜角取 0，见 bravaisTilt）；
 // 信息条（缝）的材质：始终透明 seamClear（默认开，用户定 2026-10-09）与实色模式的预设 seamStyle（默认主题纸色，透明开着时不生效）；
 // 透出的播放页画面（backdrop）要不要画歌词文字 backdropLyrics、要不要模糊 backdropBlur（都默认关，§11「墙后的画面」）；
 // 信息条的方向 seamDirection：竖向 / 横向（从块的横向缝隙裂开成横条）/ 自动（按视口宽高比，默认）/ 自动（反向），见 utils/libraryWallSeamDirection。
@@ -26,6 +27,8 @@ import { normalizeLibraryWallSeamDirection, type LibraryWallSeamDirection } from
 // （libraryWallSeamClear / libraryWallSeamStyle / libraryWallBackdropLyrics / libraryWallBackdropBlur / libraryWallSeamDirection，
 // 短码 lwsc / lwss / lwbl / lwbb / lwsd），同样不进同步快照。
 // tiltDeg（整层倾斜角度）没有用户例外，按规则进外观配置导入导出（短码 lwlt），不进同步快照。
+// collectionTilt 按用户 2026-11-08 的决定不进外观配置导入导出：配置码也用于 web 版 OBS 链接，只加 OBS 页面看得到的，
+// OBS 页面没有资料库墙（dev/dedicatus/appearanceDestinations.mjs 记着原因）。
 //
 // 存储读写都包 try/catch：存储不可用（隐私模式、配额满）时本次会话照常用内存里的值。
 // 读到非法档位回默认档，读到越界或非数字的窗数钳制 / 回默认（规则在 utils/libraryWallLook）。
@@ -39,6 +42,7 @@ const LIBRARY_WALL_BACKDROP_LYRICS_KEY = 'library_wall_backdrop_lyrics';
 const LIBRARY_WALL_BACKDROP_BLUR_KEY = 'library_wall_backdrop_blur';
 const LIBRARY_WALL_SEAM_DIRECTION_KEY = 'library_wall_seam_direction';
 const LIBRARY_WALL_TILT_KEY = 'library_wall_tilt';
+const LIBRARY_WALL_COLLECTION_TILT_KEY = 'library_wall_collection_tilt';
 
 const readStored = (key: string): string | null => {
     if (typeof window === 'undefined') return null;
@@ -78,6 +82,8 @@ const readAll = () => ({
     backdropBlur: readStoredFlag(LIBRARY_WALL_BACKDROP_BLUR_KEY),
     seamDirection: normalizeLibraryWallSeamDirection(readStored(LIBRARY_WALL_SEAM_DIRECTION_KEY)),
     tiltDeg: clampLibraryWallTiltDeg(readStored(LIBRARY_WALL_TILT_KEY)),
+    /** 默认开；只认 'false' 为关。 */
+    collectionTilt: readStored(LIBRARY_WALL_COLLECTION_TILT_KEY) !== 'false',
 });
 
 export type LibraryWallLookState = {
@@ -107,6 +113,8 @@ export type LibraryWallLookState = {
      * 集合页不要默认往左斜）。
      */
     tiltDeg: number;
+    /** 集合页（歌单、专辑与不画海报的歌手页）张开竖的信息条时整层倾斜；关掉时集合页端正（海报页照旧倾斜）。 */
+    collectionTilt: boolean;
     /** 非法值回默认档后再写入。 */
     setLook: (look: LibraryWallLook) => void;
     /** 先钳到 1–6 再写入。 */
@@ -121,6 +129,7 @@ export type LibraryWallLookState = {
     setSeamDirection: (direction: LibraryWallSeamDirection) => void;
     /** 先钳到 0–12 再写入。 */
     setTiltDeg: (deg: number) => void;
+    setCollectionTilt: (enabled: boolean) => void;
     /** 从存储重新读一遍（存储被别处改写、或测试模拟重启时用）。 */
     hydrate: () => void;
 };
@@ -166,5 +175,6 @@ export const useLibraryWallLookStore = create<LibraryWallLookState>(set => ({
         writeStored(LIBRARY_WALL_TILT_KEY, String(normalized));
         set({ tiltDeg: normalized });
     },
+    setCollectionTilt: enabled => set({ collectionTilt: writeFlag(LIBRARY_WALL_COLLECTION_TILT_KEY, enabled) }),
     hydrate: () => set(readAll()),
 }));

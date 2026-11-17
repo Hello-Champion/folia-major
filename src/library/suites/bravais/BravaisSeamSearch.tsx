@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, type FormEvent, type KeyboardEvent } from 'react';
-import { Search, Trash2, X } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+import { Search, X } from 'lucide-react';
+import { useShallow } from 'zustand/react/shallow';
 import type { BravaisLayer } from './bravaisLayer';
 import { setBravaisSearchOpen } from './bravaisHomeUiStore';
-import { addBravaisSearchHistory, clearBravaisSearchHistory, useBravaisSearchHistoryStore } from './bravaisSearchHistoryStore';
 import BravaisSeamCrumbs from './BravaisSeamCrumbs';
+import BravaisSeamSearchHistory from './BravaisSeamSearchHistory';
+import { useSearchNavigationStore } from '../../../stores/useSearchNavigationStore';
 
 // src/library/suites/bravais/BravaisSeamSearch.tsx
 // 首页缝里的全局搜索框（设计稿 §10.5「全局搜索的过渡方案」）：⌕ 或 `/` 把首页窄缝临时展开成完整宽度，输入框拿焦点。
@@ -14,26 +15,33 @@ import BravaisSeamCrumbs from './BravaisSeamCrumbs';
 // 占整条缝（面包屑「书库 › 搜索」），提交才发 provider 请求、换到搜索结果；过滤是漏斗 + 下划线，只收窄当前墙、不发请求。
 
 const BravaisSeamSearch: React.FC<{ layer: BravaisLayer }> = ({ layer }) => {
-    const { t } = useTranslation();
     const inputRef = useRef<HTMLInputElement>(null);
-    const history = useBravaisSearchHistoryStore(state => state.history);
     const search = layer.seam.home?.search;
+    // 历史是全局那一份（useSearchNavigationStore，由 submitSearch 记）：这里只读、删一条、清空。
+    const { searchHistory, forgetSearchHistoryQuery, clearSearchHistory } = useSearchNavigationStore(useShallow(state => ({
+        searchHistory: state.searchHistory,
+        forgetSearchHistoryQuery: state.forgetSearchHistoryQuery,
+        clearSearchHistory: state.clearSearchHistory,
+    })));
     useEffect(() => {
         inputRef.current?.focus({ preventScroll: true });
     }, []);
     if (!search) return null;
     const close = () => setBravaisSearchOpen(false);
-    // 提交与点历史走同一条路：记进历史（已有的词提到最前）后交给宿主搜索并关上搜索框。
-    const runSearch = (value: string) => {
-        const query = value.trim();
-        if (!query) return;
-        addBravaisSearchHistory(query);
-        search.onSubmit(query);
+    // 一个词从输入框或历史标签来都一样：交给 surface（它的 submitSearch 顺带记历史）、关框。
+    const runSearch = (query: string) => {
+        const trimmed = query.trim();
+        if (!trimmed) return;
+        search.onSubmit(trimmed);
         close();
     };
     const submit = (event: FormEvent) => {
         event.preventDefault();
         runSearch(inputRef.current?.value ?? '');
+    };
+    const pickHistory = (query: string) => {
+        if (inputRef.current) inputRef.current.value = query;
+        runSearch(query);
     };
     const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
         if (event.key !== 'Escape' || event.nativeEvent.isComposing) return;
@@ -72,30 +80,12 @@ const BravaisSeamSearch: React.FC<{ layer: BravaisLayer }> = ({ layer }) => {
                     <Search aria-hidden />{search.submitLabel}
                 </button>
             </span>
-            {history.length > 0 && (
-                <div className="bravais-search-history" data-bravais-search-history>
-                    <div className="bravais-search-history-head">
-                        <span>{t('libraryBravaisHome.searchHistory')}</span>
-                        <button
-                            type="button"
-                            className="bravais-search-history-clear"
-                            data-bravais-seam-action="clear-search-history"
-                            aria-label={t('libraryBravaisHome.searchHistoryClear')}
-                            title={t('libraryBravaisHome.searchHistoryClear')}
-                            onClick={clearBravaisSearchHistory}
-                        >
-                            <Trash2 aria-hidden />
-                        </button>
-                    </div>
-                    <ul>
-                        {history.map(entry => (
-                            <li key={entry}>
-                                <button type="button" title={entry} onClick={() => runSearch(entry)}>{entry}</button>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            )}
+            <BravaisSeamSearchHistory
+                items={searchHistory}
+                onPick={pickHistory}
+                onRemove={forgetSearchHistoryQuery}
+                onClear={clearSearchHistory}
+            />
         </div>
     );
 };
