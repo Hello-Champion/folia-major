@@ -342,7 +342,9 @@ export default async function viteConfig(_config: ConfigEnv): Promise<UserConfig
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
-      }
+      },
+      // One React instance for the whole bundle. Two copies would each have their own hooks dispatcher.
+      dedupe: ['react', 'react-dom', 'scheduler'],
     }
   };
 }
