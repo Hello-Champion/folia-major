@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import {
-    clampLibraryWallTiltDeg,
     clampLibraryWallWindowsPerBlock,
     normalizeLibraryWallLook,
     type LibraryWallLook,
@@ -26,7 +25,6 @@ import { normalizeLibraryWallSeamDirection, type LibraryWallSeamDirection } from
 // seamClear / seamStyle / backdropLyrics / backdropBlur / seamDirection 同样没有用户例外，按规则进外观配置导入导出
 // （libraryWallSeamClear / libraryWallSeamStyle / libraryWallBackdropLyrics / libraryWallBackdropBlur / libraryWallSeamDirection，
 // 短码 lwsc / lwss / lwbl / lwbb / lwsd），同样不进同步快照。
-// tiltDeg（整层倾斜角度）没有用户例外，按规则进外观配置导入导出（短码 lwlt），不进同步快照。
 // collectionTilt 按用户 2026-11-08 的决定不进外观配置导入导出：配置码也用于 web 版 OBS 链接，只加 OBS 页面看得到的，
 // OBS 页面没有资料库墙（dev/dedicatus/appearanceDestinations.mjs 记着原因）。
 //
@@ -41,7 +39,6 @@ const LIBRARY_WALL_SEAM_STYLE_KEY = 'library_wall_seam_style';
 const LIBRARY_WALL_BACKDROP_LYRICS_KEY = 'library_wall_backdrop_lyrics';
 const LIBRARY_WALL_BACKDROP_BLUR_KEY = 'library_wall_backdrop_blur';
 const LIBRARY_WALL_SEAM_DIRECTION_KEY = 'library_wall_seam_direction';
-const LIBRARY_WALL_TILT_KEY = 'library_wall_tilt';
 const LIBRARY_WALL_COLLECTION_TILT_KEY = 'library_wall_collection_tilt';
 
 const readStored = (key: string): string | null => {
@@ -81,7 +78,6 @@ const readAll = () => ({
     backdropLyrics: readStoredFlag(LIBRARY_WALL_BACKDROP_LYRICS_KEY),
     backdropBlur: readStoredFlag(LIBRARY_WALL_BACKDROP_BLUR_KEY),
     seamDirection: normalizeLibraryWallSeamDirection(readStored(LIBRARY_WALL_SEAM_DIRECTION_KEY)),
-    tiltDeg: clampLibraryWallTiltDeg(readStored(LIBRARY_WALL_TILT_KEY)),
     /** 默认开；只认 'false' 为关。 */
     collectionTilt: readStored(LIBRARY_WALL_COLLECTION_TILT_KEY) !== 'false',
 });
@@ -108,11 +104,6 @@ export type LibraryWallLookState = {
      * 歌手 / 专辑海报仍是竖的开口）；自动时竖着的屏幕用横向。
      */
     seamDirection: LibraryWallSeamDirection;
-    /**
-     * 整层倾斜的角度（度，0 = 不倾；集合页与歌手 / 专辑海报共用这一个值，首页不动）。默认 0（用户 2026-11-14 定：
-     * 集合页不要默认往左斜）。
-     */
-    tiltDeg: number;
     /** 集合页（歌单、专辑与不画海报的歌手页）张开竖的信息条时整层倾斜；关掉时集合页端正（海报页照旧倾斜）。 */
     collectionTilt: boolean;
     /** 非法值回默认档后再写入。 */
@@ -127,8 +118,6 @@ export type LibraryWallLookState = {
     setBackdropBlur: (enabled: boolean) => void;
     /** 非法值回默认（自动）后再写入。 */
     setSeamDirection: (direction: LibraryWallSeamDirection) => void;
-    /** 先钳到 0–12 再写入。 */
-    setTiltDeg: (deg: number) => void;
     setCollectionTilt: (enabled: boolean) => void;
     /** 从存储重新读一遍（存储被别处改写、或测试模拟重启时用）。 */
     hydrate: () => void;
@@ -169,11 +158,6 @@ export const useLibraryWallLookStore = create<LibraryWallLookState>(set => ({
         const normalized = normalizeLibraryWallSeamDirection(direction);
         writeStored(LIBRARY_WALL_SEAM_DIRECTION_KEY, normalized);
         set({ seamDirection: normalized });
-    },
-    setTiltDeg: (deg) => {
-        const normalized = clampLibraryWallTiltDeg(deg);
-        writeStored(LIBRARY_WALL_TILT_KEY, String(normalized));
-        set({ tiltDeg: normalized });
     },
     setCollectionTilt: enabled => set({ collectionTilt: writeFlag(LIBRARY_WALL_COLLECTION_TILT_KEY, enabled) }),
     hydrate: () => set(readAll()),

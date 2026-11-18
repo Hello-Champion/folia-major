@@ -225,13 +225,6 @@ const BravaisStage: React.FC<LibrarySuiteStageProps> = ({
     // 这一层的缝落定时整层倾斜多少度（与下面交给 useBravaisTilt 的同一张表、同一套条件；排开口时据此离视口边多留一段）。
     const reducedMotionRef = useRef(reducedMotion);
     reducedMotionRef.current = reducedMotion;
-    // 倾斜角度由设置给（useLibraryWallLookStore.tiltDeg，0 = 不倾）：集合页与海报页共用，首页不动；
-    // collectionTilt 是收藏页那一层的开关，关掉时集合页按 0 度算。
-    const wallTiltDeg = useLibraryWallLookStore(state => state.tiltDeg);
-    const tiltTable = useMemo(
-        () => ({ home: 0, collection: -wallTiltDeg, poster: -wallTiltDeg }),
-        [wallTiltDeg],
-    );
     const collectionTiltRef = useRef(collectionTilt);
     collectionTiltRef.current = collectionTilt;
     const tiltFor = useCallback((target: BravaisLayer) => {
@@ -245,8 +238,8 @@ const BravaisStage: React.FC<LibrarySuiteStageProps> = ({
             finite: target.mode === 'finite',
             reducedMotion: reducedMotionRef.current,
             collectionTilt: collectionTiltRef.current,
-        }, tiltTable);
-    }, [seamInputFor, tiltTable]);
+        });
+    }, [seamInputFor]);
 
     const camera = useBravaisCamera({ frameRef, renderFrame, fieldRef, reducedMotion });
     // 墙此刻的显示（useBravaisDisplay 提交时就写进它）：形状从它读，换形状的同一次提交里各处就按新形状找 slot。
@@ -288,7 +281,7 @@ const BravaisStage: React.FC<LibrarySuiteStageProps> = ({
             finite: layer?.mode === 'finite',
             reducedMotion,
             collectionTilt,
-        }, tiltTable),
+        }),
         seamFollowsTilt: renderedTiltPage !== null && renderedTiltPage !== 'poster',
         // 翻牌交接：缝一合上就量磁贴的位置，回正要赶上（useBravaisWallHandoff）。
         quickOut: handoff.seamClosed,

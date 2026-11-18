@@ -37,7 +37,7 @@ export const BRAVAIS_SEAM_POSTER_VIEWPORT_RATIO = 0.46;
  * 倾斜、裁剪、缝的出血与内容缩进、排开口时离视口边多留的那一段、聚焦卡让位、换锚点时墙不跳，都按这张表的角度走。
  * 还没管的两处，改 home 之前要看：空墙说明（BravaisWallHint，只在首页）不跟着转；信息条设成横向时不倾斜。
  */
-export const BRAVAIS_TILT_DEG: Record<'home' | 'collection' | 'poster', number> = { home: 0, collection: 0, poster: -10 };
+export const BRAVAIS_TILT_DEG: Record<'home' | 'collection' | 'poster', number> = { home: 0, collection: -4, poster: -10 };
 /**
  * 倾斜的补间：张开时等裂缝先走一小段（DELAY）再转，转得比开口与相机慢一点，三者一起落定；回正跟着缝合上走。
  * 缓动两头都平（ease-in-out），不是一下子甩过去。

@@ -94,7 +94,6 @@ export const STORAGE_KEYS = [
     'web:auto_use_best_lyric',
     'web:background_opacity',
     'web:background_throttling',
-    'web:bravais_search_history',
     'web:close_to_tray',
     'web:command_palette_frequency_v1',
     'web:command_palette_pinned_commands_v1',

@@ -343,9 +343,6 @@ export const applyImportedConfig = (config: any, keys: string[], theme: ConfigTh
     // the wall, through the setters the Bravais group on the 主页与歌单 page uses. The seam style
     // is taken only when it is a known preset, as the import plan's guard does.
     const storeLibraryWall = useLibraryWallLookStore.getState();
-    if (has('libraryWallTilt')) {
-        storeLibraryWall.setTiltDeg(Number(config.libraryWallTilt));
-    }
     if (has('libraryWallStackEdges')) {
         storeLibraryWall.setCollectionStackEdges(Boolean(config.libraryWallStackEdges));
     }

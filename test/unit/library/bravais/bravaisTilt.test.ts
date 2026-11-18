@@ -50,11 +50,11 @@ describe('resolveBravaisTiltDeg', () => {
     });
 
     it('reads the shipped table by default: the home stays upright, playlists lean a little, the poster the most', () => {
-        expect(BRAVAIS_TILT_DEG).toEqual({ home: 0, collection: 0, poster: -10 });
+        expect(BRAVAIS_TILT_DEG).toEqual({ home: 0, collection: -4, poster: -10 });
         expect(resolveBravaisTiltDeg(input({ variant: 'poster' }))).toBe(-10);
         expect(resolveBravaisTiltDeg(input({ variant: 'home' }))).toBe(0);
-        expect(resolveBravaisTiltDeg(input({ variant: 'full' }))).toBe(0);
-        expect(resolveBravaisTiltDeg(input({ variant: 'spine' }))).toBe(0);
+        expect(resolveBravaisTiltDeg(input({ variant: 'full' }))).toBe(-4);
+        expect(resolveBravaisTiltDeg(input({ variant: 'spine' }))).toBe(-4);
     });
 
     // 下面每一条只动一个条件，其余都是「会倾斜」的样子（集合页的信息条，表里 −6）。
