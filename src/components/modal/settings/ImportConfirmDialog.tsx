@@ -99,6 +99,7 @@ const FIELD_LABEL_KEYS: Record<string, string> = {
     stageTrackPillPosition: 'options.stageTrackPillPosition',
     stageTrackPillInObs: 'options.stageTrackPillInObs',
     libraryWallStackEdges: 'options.bravaisStackEdges',
+    libraryWallTilt: 'options.bravaisTilt',
     libraryWallSeamClear: 'options.bravaisSeamClear',
     libraryWallSeamStyle: 'options.bravaisSeamStyle',
     libraryWallBackdropLyrics: 'options.bravaisBackdropLyrics',

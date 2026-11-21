@@ -54,6 +54,8 @@ const O = {
     barOffset: option(BAR, 'playerBottomBarOffset', 'options.playerBottomBarOffset'),
     barReposition: option(BAR, 'playerBottomBarReposition', 'options.playerBottomBarReposition'),
     controlSlots: option(BAR, 'playerControlSlots', 'options.playerControlSlots'),
+    volumeSlider: option(BAR, 'playerVolumeSlider', 'options.playerVolumeSlider'),
+    volumeLayout: option(BAR, 'playerVolumeButtonLayout', 'options.playerVolumeButtonLayout'),
     bottomBarGlass: option(BOTTOM_GLASS, 'bottomBarGlass', 'options.playerBottomBarGlass'),
     cardMode: option(CARD, 'stageTrackPillMode', 'options.stageTrackPillMode'),
     cardTimeout: option(CARD, 'stageTrackPillTimeout', 'options.stageTrackPillTimeout'),
@@ -112,6 +114,8 @@ const PlayerPage: React.FC = () => {
         slotPrimary: state.playerControlSlotPrimary,
         slotSecondary: state.playerControlSlotSecondary,
         hideProgressBar: state.hidePlayerProgressBar,
+        volumeSlider: state.showPlayerVolumeSlider,
+        volumeLayout: state.volumeButtonLayout,
         hidePanelButton: state.hidePlayerRightPanelButton,
         alwaysBackButton: state.alwaysShowPlayerBackButton,
         alwaysTrackSwitch: state.alwaysShowTrackSwitchButtons,
@@ -123,6 +127,8 @@ const PlayerPage: React.FC = () => {
         setBarOffset: state.handleSetPlayerBottomBarOffset,
         setSlot: state.handleSetPlayerControlSlot,
         setHideProgressBar: state.handleToggleHidePlayerProgressBar,
+        setVolumeSlider: state.handleTogglePlayerVolumeSlider,
+        setVolumeLayout: state.handleSetVolumeButtonLayout,
         setHidePanelButton: state.handleToggleHidePlayerRightPanelButton,
         setAlwaysBackButton: state.handleToggleAlwaysShowPlayerBackButton,
         setAlwaysTrackSwitch: state.handleToggleAlwaysShowTrackSwitchButtons,
@@ -323,6 +329,21 @@ const PlayerPage: React.FC = () => {
                         onChange={next => chrome.setSlot('secondary', next)}
                     />
                 </Row>
+                <Row option={O.volumeSlider} note={t('options.playerVolumeSliderDesc')}>
+                    <Toggle checked={chrome.volumeSlider} onChange={chrome.setVolumeSlider} />
+                </Row>
+                <Reveal when={chrome.volumeSlider}>
+                    <Row sub option={O.volumeLayout} note={t('options.playerVolumeButtonLayoutDesc')}>
+                        <Segmented
+                            value={chrome.volumeLayout}
+                            options={[
+                                { value: 'row', label: t('options.playerVolumeButtonLayoutRow') },
+                                { value: 'corner', label: t('options.playerVolumeButtonLayoutCorner') },
+                            ]}
+                            onChange={chrome.setVolumeLayout}
+                        />
+                    </Row>
+                </Reveal>
             </Group>
 
             {/* 底部控制条玻璃：独立于全局玻璃的开关 + 展开的调节区（磨砂/透明度/高亮/饱和/描边）。 */}

@@ -148,6 +148,7 @@ const FIELD_GROUPS: Record<string, ImportGroup> = {
     // The bravais wall's collection stack edges. Its own group: it styles the library wall, not the
     // picture or the card, and someone taking a look for its colours has a reason to leave it alone.
     libraryWallStackEdges: 'libraryWall',
+    libraryWallTilt: 'libraryWall',
     // The info strip's material and the picture behind the wall: same group, same reason.
     libraryWallSeamClear: 'libraryWall',
     libraryWallSeamStyle: 'libraryWall',
