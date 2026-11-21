@@ -90,10 +90,10 @@ html.theme-fading [data-theme-instant] * {
 }
 
 /* 全局玻璃：kit 画的工作窗口与弹层（设置、歌词样式、主题工坊、场景、各种对话框与菜单）统一换玻璃底。
-   各自的底色仍是主题给的 --st-win / --st-menu，按全局玻璃的透明度混成半透明，再加同一个磨砂配方与内发光。
+   不只是窗口本身：内部卡片、侧栏、预览框、菜单的底色也按同一个透明度混成半透明，否则玻璃窗口里
+   还是一块块实色（浅色主题下就是一片白）。各色的原值在 --st-*-base 里，由 settingsTokens 写入。
    内联组件（播放页按钮、面板、搜索页、toast）走 useGlobalGlassStyle，不在这里。 */
 html.global-glass .st-window {
-  background-color: color-mix(in srgb, var(--st-win) calc(var(--glass-alpha, 0.85) * 100%), transparent);
   -webkit-backdrop-filter: var(--glass-backdrop);
   backdrop-filter: var(--glass-backdrop);
   box-shadow:
@@ -104,7 +104,7 @@ html.global-glass .st-window {
 }
 
 html.global-glass .st-pop {
-  background-color: color-mix(in srgb, var(--st-menu) calc(var(--glass-alpha, 0.85) * 100%), transparent);
+  --st-menu: color-mix(in srgb, var(--st-menu-base) calc(var(--glass-alpha, 0.85) * 100%), transparent);
   -webkit-backdrop-filter: var(--glass-backdrop);
   backdrop-filter: var(--glass-backdrop);
   box-shadow:

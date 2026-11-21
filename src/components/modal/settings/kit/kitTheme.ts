@@ -1,5 +1,6 @@
 import { createContext, useContext, type CSSProperties } from 'react';
 import type { Theme } from '../../../../types';
+import { usePlayerChromeSettingsStore } from '../../../../stores/usePlayerChromeSettingsStore';
 import { getContrastRatio } from '../../../../utils/themeColorMath';
 import './kit.css';
 
@@ -20,17 +21,40 @@ export const onAccentColor = (accent: string): string => (
 /** Stand-in album covers, for a picture or a preview a page draws. */
 export const SAMPLE_COVERS = ['#6d5a8c', '#3f6f7a', '#a8664b', '#56745a', '#8a4f5d', '#4d5f8f', '#8c7a45', '#5d5d66'] as const;
 
+/**
+ * 全局玻璃开着时，把 kit 的实色表面按设置里的不透明度混成半透明。内联自定义属性优先于样式表，
+ * 所以这一步只能在写令牌的时候算，CSS 覆盖不了。
+ */
+const glassSurface = (color: string): string => {
+    const store = usePlayerChromeSettingsStore.getState();
+    if (!store.globalGlassEnabled) return color;
+    const percent = Math.max(0, Math.min(100, store.globalGlassOpacity));
+    return `color-mix(in srgb, ${color} ${percent}%, transparent)`;
+};
+
 /** The variables, for the `style` of the settings window. */
 export const settingsTokens = (isDaylight: boolean, theme?: Theme): CSSProperties => {
     const accent = theme?.accentColor || (isDaylight ? '#18181b' : '#f4f4f5');
+    const winColor = isDaylight ? '#f3f3f4' : '#1a1a1d';
+    const sideColor = isDaylight ? '#e9e9eb' : '#141416';
+    const cardColor = isDaylight ? '#ffffff' : '#232327';
+    const menuColor = isDaylight ? '#ffffff' : '#2b2b30';
+    const raiseColor = isDaylight ? '#ffffff' : '#45454c';
+    const previewColor = isDaylight ? '#ececef' : '#151517';
     return {
-        '--st-win': isDaylight ? '#f3f3f4' : '#1a1a1d',
-        '--st-side': isDaylight ? '#e9e9eb' : '#141416',
-        '--st-card': isDaylight ? '#ffffff' : '#232327',
-        '--st-menu': isDaylight ? '#ffffff' : '#2b2b30',
-        '--st-raise': isDaylight ? '#ffffff' : '#45454c',
+        '--st-win-base': winColor,
+        '--st-win': glassSurface(winColor),
+        '--st-side-base': sideColor,
+        '--st-side': glassSurface(sideColor),
+        '--st-card-base': cardColor,
+        '--st-card': glassSurface(cardColor),
+        '--st-menu-base': menuColor,
+        '--st-menu': glassSurface(menuColor),
+        '--st-raise-base': raiseColor,
+        '--st-raise': glassSurface(raiseColor),
         '--st-knob': isDaylight ? '#ffffff' : '#ececee',
-        '--st-pv': isDaylight ? '#ececef' : '#151517',
+        '--st-pv-base': previewColor,
+        '--st-pv': glassSurface(previewColor),
         '--st-ok': isDaylight ? '#1e9a5c' : '#56c98d',
         '--st-warn': isDaylight ? '#b97a10' : '#e3a949',
         '--st-err': isDaylight ? '#d04444' : '#ef6f6f',
