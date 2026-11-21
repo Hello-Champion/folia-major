@@ -73,12 +73,14 @@ describe('library wall look rules', () => {
         expect(DEFAULT_LIBRARY_WALL_WINDOWS_PER_BLOCK).toBe(3);
     });
 
-    it('clamps the wall tilt to 0–12 degrees and falls back to 0 for non-numbers', () => {
+    it('clamps the wall tilt to -25–25 degrees and falls back to 0 for non-numbers', () => {
         expect(clampLibraryWallTiltDeg(0)).toBe(0);
         expect(clampLibraryWallTiltDeg(7)).toBe(7);
         expect(clampLibraryWallTiltDeg('9')).toBe(9);
-        expect(clampLibraryWallTiltDeg(20)).toBe(12);
-        expect(clampLibraryWallTiltDeg(-4)).toBe(0);
+        expect(clampLibraryWallTiltDeg(20)).toBe(20);
+        expect(clampLibraryWallTiltDeg(30)).toBe(25);
+        expect(clampLibraryWallTiltDeg(-4)).toBe(-4);
+        expect(clampLibraryWallTiltDeg(-30)).toBe(-25);
         expect(clampLibraryWallTiltDeg(3.6)).toBe(4);
         expect(clampLibraryWallTiltDeg(Number.NaN)).toBe(0);
         expect(clampLibraryWallTiltDeg('abc')).toBe(0);

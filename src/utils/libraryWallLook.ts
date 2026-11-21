@@ -52,12 +52,12 @@ export const libraryWallWindowSharePercent = (windowsPerBlock: number): number =
     Math.round((clampLibraryWallWindowsPerBlock(windowsPerBlock) / LIBRARY_WALL_SLOTS_PER_BLOCK) * 100)
 );
 
-/** 整层倾斜的角度（度，0 = 不倾；数字越大越往左斜）：集合页与海报页共用这一个值。 */
-export const MIN_LIBRARY_WALL_TILT_DEG = 0;
-export const MAX_LIBRARY_WALL_TILT_DEG = 12;
+/** 整层倾斜的角度（度，0 = 不倾；正数往左斜，负数往右斜）：集合页与海报页共用这一个值。 */
+export const MIN_LIBRARY_WALL_TILT_DEG = -25;
+export const MAX_LIBRARY_WALL_TILT_DEG = 25;
 export const DEFAULT_LIBRARY_WALL_TILT_DEG = 0;
 
-/** 存储或外部传入的角度：越界的钳到 0–12，非数字回默认（0）。 */
+/** 存储或外部传入的角度：越界的钳到 -25–25，非数字回默认（0）。 */
 export const clampLibraryWallTiltDeg = (value: unknown): number => {
     const numeric = typeof value === 'number'
         ? value

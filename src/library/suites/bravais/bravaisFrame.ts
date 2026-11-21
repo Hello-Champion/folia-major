@@ -47,8 +47,11 @@ export type BravaisFrame = {
     contentOpacity: number;
     /** 边缘标签：自动出屏收起（collapsed）或手动折叠（hidden）时出现。 */
     tab: { visible: boolean; side: 'left' | 'right' };
-    /** 两个世界层与缝共同的倾斜（屏幕坐标里绕 pivot 转）；deg 为 0 时不转。 */
-    tilt: { deg: number; pivotX: number; pivotY: number };
+    /**
+     * 两个世界层与缝共同的倾斜；deg 为 0 时不转。axis 'x'（竖缝）：屏幕平面里绕缝的右缘 rotate；
+     * axis 'y'（横缝）：绕缝的下缘做 rotateX（带透视），墙向里/向外倒。
+     */
+    tilt: { deg: number; pivotX: number; pivotY: number; axis?: SeamAxis };
 };
 
 /** 内容透明度：原型的 (开口 / 排版宽度 − .35) / .65，开到三成五以下就看不见。 */
@@ -68,7 +71,7 @@ export const computeBravaisFrame = ({ center, view, anchorX, anchorY = null, ope
             seam: { axis: 'y', x: view.width / 2, y: geometry.screenY, width: geometry.width, visible: geometry.width >= 1 },
             contentOpacity: contentOpacityFor(geometry.width, Math.max(contentWidth, 1)),
             tab: { visible: hidden || geometry.collapsed, side: 'left' },
-            tilt: { deg: 0, pivotX: 0, pivotY: 0 },
+            tilt: { deg: tiltDeg, pivotX: view.width / 2, pivotY: geometry.screenY + geometry.width / 2, axis: 'y' },
         };
     }
     if (anchorX === null) {
@@ -79,7 +82,7 @@ export const computeBravaisFrame = ({ center, view, anchorX, anchorY = null, ope
             seam: { axis: 'x', x: view.width / 2, y: view.height / 2, width: 0, visible: false },
             contentOpacity: 0,
             tab: { visible: false, side: 'left' },
-            tilt: { deg: 0, pivotX: 0, pivotY: 0 },
+            tilt: { deg: 0, pivotX: 0, pivotY: 0, axis: 'x' },
         };
     }
     const geometry = getSeamGeometry({ anchorX, cameraX: center.x, openWidth, view, edge: seamEdgeFor(poster) });
@@ -94,7 +97,7 @@ export const computeBravaisFrame = ({ center, view, anchorX, anchorY = null, ope
         contentOpacity: contentOpacityFor(geometry.width, layoutWidth),
         tab: { visible: hidden || geometry.collapsed, side: geometry.side },
         // 倾斜绕缝的右缘、视口半高转：两半墙与缝一起转，是同一张纸。
-        tilt: { deg: tiltDeg, pivotX: geometry.screenX + geometry.width / 2, pivotY: view.height / 2 },
+        tilt: { deg: tiltDeg, pivotX: geometry.screenX + geometry.width / 2, pivotY: view.height / 2, axis: 'x' },
     };
 };
 
@@ -282,12 +285,19 @@ export const getTiltReach = (view: { width: number; height: number }, tilt: Brav
     };
 };
 
-/** 世界层的 transform 前面加上绕屏幕点的倾斜（世界层的 transform-origin 是 0 0，与屏幕原点重合）。 */
-export const withTilt = (transform: string, tilt: BravaisFrame['tilt']) => (
-    Math.abs(tilt.deg) < 0.001
-        ? transform
-        : `translate(${tilt.pivotX}px, ${tilt.pivotY}px) rotate(${tilt.deg}deg) translate(${-tilt.pivotX}px, ${-tilt.pivotY}px) ${transform}`
-);
+/**
+ * 世界层的 transform 前面加上倾斜（世界层的 transform-origin 是 0 0，与屏幕原点重合）：竖缝绕右缘在屏幕平面里 rotate；
+ * 横缝绕下缘 rotateX，带一段透视，纸才像往屏幕里倒而不是被压扁。
+ */
+export const withTilt = (transform: string, tilt: BravaisFrame['tilt']) => {
+    if (Math.abs(tilt.deg) < 0.001) return transform;
+    const pivot = `translate(${tilt.pivotX}px, ${tilt.pivotY}px)`;
+    const back = `translate(${-tilt.pivotX}px, ${-tilt.pivotY}px)`;
+    const turn = tilt.axis === 'y'
+        ? `perspective(1400px) rotateX(${tilt.deg}deg)`
+        : `rotate(${tilt.deg}deg)`;
+    return `${pivot} ${turn} ${back} ${transform}`;
+};
 
 /**
  * 缝的两层 transform：外面的轨道（.bravais-seam-track）只平移、自己成合成层，缝本身只在倾斜落定后带一段 2D 旋转。
@@ -300,7 +310,8 @@ export const withTilt = (transform: string, tilt: BravaisFrame['tilt']) => (
  */
 export const seamTransforms = (frame: BravaisFrame, { tiltSettled, devicePixelRatio }: { tiltSettled: boolean; devicePixelRatio: number }) => {
     const { seam, tilt } = frame;
-    if (seam.axis === 'y') return { track: `translate3d(0, ${seam.y - seam.width / 2}px, 0)`, seam: '' };
+    // 横缝的轨道只有竖直平移：倾斜整段交给合成器转（rotateX，落定后也不拆开——拆开要另算旋转原点）。
+    if (seam.axis === 'y') return { track: withTilt(`translate3d(0, ${seam.y - seam.width / 2}px, 0)`, tilt), seam: '' };
     const left = seam.x - seam.width / 2;
     if (Math.abs(tilt.deg) < 0.001) return { track: `translate3d(${left}px, 0, 0)`, seam: '' };
     if (!tiltSettled) return { track: withTilt(`translate3d(${left}px, 0, 0)`, tilt), seam: '' };

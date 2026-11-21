@@ -78,7 +78,10 @@ describe('resolveBravaisTiltDeg', () => {
         expect(tilt({ variant: 'home', finite: true })).toBe(0);
     });
 
-    it('does not tilt a seam that is going to run across, even before the upright one has left', () => {
+    it('tilts a seam that runs across too, once its direction is settled', () => {
+        expect(tilt({ variant: 'full', targetAxis: 'y', renderedAxis: null })).toBe(-6);
+        expect(tilt({ variant: 'full', targetAxis: 'y', renderedAxis: 'y' })).toBe(-6);
+        // 换方向的那一帧不转，等新方向的内容画上来。
         expect(tilt({ variant: 'full', targetAxis: 'y', renderedAxis: 'x' })).toBe(0);
         expect(tilt({ variant: 'full', targetAxis: null, renderedAxis: 'x' })).toBe(0);
     });
