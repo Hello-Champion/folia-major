@@ -125,9 +125,8 @@ export const usePlayerChrome = (props: PlayerChromeProps | undefined, enabled = 
 
     const pointer: PlayerChromePointer = {
         move: (event) => {
-            // Back button is intentionally hidden most of the time.
-            // Only reveal it near the top-left hot area so it does not pollute the visual field.
-            updateBackVisibility(event.clientX <= PLAYER_CHROME_HOTSPOT_SIZE && event.clientY <= PLAYER_CHROME_HOTSPOT_SIZE);
+            // 鼠标一动就显示返回键（离开播放页盒子再收起）；不再只在左上角热区里露出来。
+            updateBackVisibility(true);
 
             updatePlayerPanelGuideHotspot(!isPanelOpen && isNearPlayerPanelHotspot(event.clientX, event.clientY));
         },
