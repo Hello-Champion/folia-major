@@ -38,8 +38,16 @@ const buildVisualizerRegistry = (modules: Record<string, VisualizerEntryModule>)
     };
 };
 
-const { entries: VISUALIZER_REGISTRY, byMode: VISUALIZER_REGISTRY_BY_MODE } =
-    buildVisualizerRegistry(visualizerEntryModules);
+// The registry is a runtime singleton: mod clients append to it and the pickers read it. The bundler
+// can copy this module into more than one chunk (it is reached from both the main graph and lazy
+// pages), and then registrations land in a copy nobody reads. The state lives on globalThis so every
+// copy shares one list.
+const REGISTRY_STATE_KEY = Symbol.for('folia.visualizerRegistryState');
+type RegistryState = ReturnType<typeof buildVisualizerRegistry>;
+const registryHolder = globalThis as typeof globalThis & { [REGISTRY_STATE_KEY]?: RegistryState };
+const registryState: RegistryState = registryHolder[REGISTRY_STATE_KEY]
+    ?? (registryHolder[REGISTRY_STATE_KEY] = buildVisualizerRegistry(visualizerEntryModules));
+const { entries: VISUALIZER_REGISTRY, byMode: VISUALIZER_REGISTRY_BY_MODE } = registryState;
 
 export { VISUALIZER_REGISTRY };
 
