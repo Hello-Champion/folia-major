@@ -221,6 +221,7 @@ export const APPEARANCE_SHORT_KEYS = [
     'config.libraryWallSeamStyle=lwss',
     'config.libraryWallStackEdges=lwse',
     'config.libraryWallTilt=lwlt',
+    'config.libraryWallTiltFront=lwtf',
     'config.lumiereTuning=lmt',
     'config.lyricRenderQuality=lrq',
     'config.lyricsCustomFontFamily=lcf',

@@ -26,6 +26,7 @@ export const useBravaisTilt = ({
     renderFrame,
     checkCull,
     deg,
+    frontDeg,
     seamFollowsTilt,
     quickOut = false,
     reducedMotion,
@@ -35,6 +36,8 @@ export const useBravaisTilt = ({
     checkCull: (force?: boolean) => void;
     /** 整层该转到的角度（度；0 = 回正）。 */
     deg: number;
+    /** 前后倾斜角（度，rotateX）。不补间：改的是设置里的滑块，松手时直接到位。 */
+    frontDeg?: number;
     /** 缝里此刻画着的是会跟着整层倾斜的内容（信息条、书脊、首页窄缝）：内容随角度缩进（useBravaisFrame）。 */
     seamFollowsTilt: boolean;
     /** 回正要赶上缝合上（翻牌交接：缝一合上就量磁贴的位置，那时墙得已经回正）：回正的时长换成开口补间的时长。 */
@@ -52,6 +55,8 @@ export const useBravaisTilt = ({
         const from = frameRef.current.tiltDeg;
         animationRef.current?.stop();
         animationRef.current = null;
+        // shortcut: 前后角不进补间（和左右角分开动画要两套进度），滑块改完立刻生效。
+        frameRef.current.tiltFrontDeg = frontDeg ?? 0;
         frameRef.current.tiltTargetDeg = to;
         // 补间中缝整块交给合成器转，落定后旋转才画进轨道那一层（字清楚，见 bravaisFrame 的 seamTransforms）。
         const settle = () => {
@@ -87,6 +92,6 @@ export const useBravaisTilt = ({
                 checkCull(true);
             },
         });
-    }, [checkCull, deg, frameRef, quickOut, reducedMotion, renderFrame]);
+    }, [checkCull, deg, frameRef, frontDeg, quickOut, reducedMotion, renderFrame]);
     useEffect(() => () => animationRef.current?.stop(), []);
 };

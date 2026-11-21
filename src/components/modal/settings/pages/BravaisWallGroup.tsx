@@ -40,6 +40,7 @@ const O = {
     collectionTilt: option(BRAVAIS_WALL, 'bravaisCollectionTilt', 'options.bravaisCollectionTilt'),
     seamDirection: option(BRAVAIS_WALL, 'bravaisSeamDirection', 'options.bravaisSeamDirection'),
     tilt: option(BRAVAIS_WALL, 'libraryWallTilt', 'options.bravaisTilt'),
+    tiltFront: option(BRAVAIS_WALL, 'libraryWallTiltFront', 'options.bravaisTiltFront'),
     seamClear: option(BRAVAIS_WALL, 'bravaisSeamClear', 'options.bravaisSeamClear'),
     seamStyle: option(BRAVAIS_WALL, 'bravaisSeamStyle', 'options.bravaisSeamStyle'),
     backdropLyrics: option(BRAVAIS_WALL, 'bravaisBackdropLyrics', 'options.bravaisBackdropLyrics'),
@@ -81,6 +82,7 @@ export const BravaisWallGroup: React.FC = () => {
         backdropBlur: state.backdropBlur,
         seamDirection: state.seamDirection,
         tiltDeg: state.tiltDeg,
+        tiltFrontDeg: state.tiltFrontDeg,
         setLook: state.setLook,
         setWindowsPerBlock: state.setWindowsPerBlock,
         setStackEdges: state.setCollectionStackEdges,
@@ -91,6 +93,7 @@ export const BravaisWallGroup: React.FC = () => {
         setBackdropBlur: state.setBackdropBlur,
         setSeamDirection: state.setSeamDirection,
         setTiltDeg: state.setTiltDeg,
+        setTiltFrontDeg: state.setTiltFrontDeg,
     })));
 
     if (!isBravaisActive) return null;
@@ -141,6 +144,16 @@ export const BravaisWallGroup: React.FC = () => {
                     max={MAX_LIBRARY_WALL_TILT_DEG}
                     step={1}
                     onChange={wall.setTiltDeg}
+                    format={value => `${value}°`}
+                />
+            </Row>
+            <Row option={O.tiltFront} hint={t('options.bravaisTiltFrontHint', { deg: wall.tiltFrontDeg })} note={t('options.bravaisTiltFrontDesc')}>
+                <Slider
+                    value={wall.tiltFrontDeg}
+                    min={MIN_LIBRARY_WALL_TILT_DEG}
+                    max={MAX_LIBRARY_WALL_TILT_DEG}
+                    step={1}
+                    onChange={wall.setTiltFrontDeg}
                     format={value => `${value}°`}
                 />
             </Row>

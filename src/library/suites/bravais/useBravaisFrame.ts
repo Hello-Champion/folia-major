@@ -29,6 +29,8 @@ export type BravaisFrameState = {
     poster: boolean;
     /** 整层此刻的倾斜角（度；补间中逐帧变）。 */
     tiltDeg: number;
+    /** 前后倾斜角（rotateX，度）。 */
+    tiltFrontDeg?: number;
     /** 倾斜正在补间去的角度（不补间时等于 tiltDeg）：聚焦卡的相机让位按转到位之后的样子算（useBravaisFocus）。 */
     tiltTargetDeg: number;
     /** 缝里此刻画着的是会跟着整层倾斜的内容（信息条、书脊、首页窄缝；不是面板、表单、搜索框、海报）：内容随角度缩进。 */
@@ -63,6 +65,7 @@ export const useBravaisFrame = (refs: BravaisFrameRefs) => {
         hidden: false,
         poster: false,
         tiltDeg: 0,
+        tiltFrontDeg: 0,
         tiltTargetDeg: 0,
         seamFollowsTilt: false,
         tiltSettled: true,
@@ -86,6 +89,7 @@ export const useBravaisFrame = (refs: BravaisFrameRefs) => {
             hidden: state.hidden,
             poster: state.poster,
             tiltDeg: state.tiltDeg,
+            tiltFrontDeg: state.tiltFrontDeg ?? 0,
             liftY: state.tiltLiftY,
         });
         const { left, right, seam, seamTrack, seamContent, tab, hint } = refs;

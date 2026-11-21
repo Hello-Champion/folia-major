@@ -149,6 +149,7 @@ const FIELD_GROUPS: Record<string, ImportGroup> = {
     // picture or the card, and someone taking a look for its colours has a reason to leave it alone.
     libraryWallStackEdges: 'libraryWall',
     libraryWallTilt: 'libraryWall',
+    libraryWallTiltFront: 'libraryWall',
     // The info strip's material and the picture behind the wall: same group, same reason.
     libraryWallSeamClear: 'libraryWall',
     libraryWallSeamStyle: 'libraryWall',

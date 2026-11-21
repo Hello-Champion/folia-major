@@ -346,6 +346,9 @@ export const applyImportedConfig = (config: any, keys: string[], theme: ConfigTh
     if (has('libraryWallTilt')) {
         storeLibraryWall.setTiltDeg(Number(config.libraryWallTilt));
     }
+    if (has('libraryWallTiltFront')) {
+        storeLibraryWall.setTiltFrontDeg(Number(config.libraryWallTiltFront));
+    }
     if (has('libraryWallStackEdges')) {
         storeLibraryWall.setCollectionStackEdges(Boolean(config.libraryWallStackEdges));
     }

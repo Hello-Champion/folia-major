@@ -117,6 +117,7 @@ export function buildVisualSettingsConfig(): Record<string, unknown> {
     libraryWallStackEdges: useLibraryWallLookStore.getState().collectionStackEdges,
     // The wall's own tilt: a look of the library wall, so it travels with a shared look too.
     libraryWallTilt: useLibraryWallLookStore.getState().tiltDeg,
+    libraryWallTiltFront: useLibraryWallLookStore.getState().tiltFrontDeg,
     // The bravais info strip's material (always see-through, or the solid preset) and how the
     // visualizer behind the wall is drawn (lyrics, blur): visual settings with no user exception,
     // so they travel with a shared look as well.

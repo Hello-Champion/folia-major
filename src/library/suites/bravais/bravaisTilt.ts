@@ -55,3 +55,12 @@ export const resolveBravaisTiltDeg = (
     // 靠 overscan 兜底；角度开到很大且内容贴边时可能被裁一点，需要时再补一套按 rotateX 的余量。
     return table[page];
 };
+
+/**
+ * 同一条规则下的前后倾斜角（度）：竖缝、横缝都绕各自的支点做 rotateX，所以两种缝方向共用。
+ * 支点、折叠条件与 resolveBravaisTiltDeg 完全一致，只是查另一张表。
+ */
+export const resolveBravaisTiltFrontDeg = (
+    input: BravaisTiltInput,
+    table: Record<BravaisTiltPage, number> = BRAVAIS_TILT_DEG,
+): number => resolveBravaisTiltDeg(input, table);

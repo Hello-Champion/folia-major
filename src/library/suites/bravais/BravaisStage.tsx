@@ -32,7 +32,7 @@ import { useBravaisKeyboard } from './useBravaisKeyboard';
 import { useBravaisBlockPlates } from './useBravaisBlockPlates';
 import { useBravaisReflowDriver } from './useBravaisReflowDriver';
 import { useBravaisPlayerSafeArea } from './useBravaisPlayerSafeArea';
-import { resolveBravaisTiltDeg, resolveBravaisTiltPage } from './bravaisTilt';
+import { resolveBravaisTiltDeg, resolveBravaisTiltFrontDeg, resolveBravaisTiltPage } from './bravaisTilt';
 import { useBravaisTilt } from './useBravaisTilt';
 import { albumPaletteVars, posterPaletteVars, resolvePosterPaletteSources, useBravaisPosterPalette } from './bravaisPosterPalette';
 import { useBravaisSeam } from './useBravaisSeam';
@@ -228,9 +228,14 @@ const BravaisStage: React.FC<LibrarySuiteStageProps> = ({
     // 倾斜角度由设置给（useLibraryWallLookStore.tiltDeg，0 = 不倾）：集合页与海报页共用，首页不动；
     // collectionTilt 是收藏页那一层的开关，关掉时集合页按 0 度算。
     const wallTiltDeg = useLibraryWallLookStore(state => state.tiltDeg);
+    const wallTiltFrontDeg = useLibraryWallLookStore(state => state.tiltFrontDeg);
     const tiltTable = useMemo(
         () => ({ home: 0, collection: -wallTiltDeg, poster: -wallTiltDeg }),
         [wallTiltDeg],
+    );
+    const tiltFrontTable = useMemo(
+        () => ({ home: 0, collection: -wallTiltFrontDeg, poster: -wallTiltFrontDeg }),
+        [wallTiltFrontDeg],
     );
     const collectionTiltRef = useRef(collectionTilt);
     collectionTiltRef.current = collectionTilt;
@@ -289,6 +294,15 @@ const BravaisStage: React.FC<LibrarySuiteStageProps> = ({
             reducedMotion,
             collectionTilt,
         }, tiltTable),
+        frontDeg: resolveBravaisTiltFrontDeg({
+            variant: seamTarget.variant,
+            openWidth: seamTarget.width,
+            targetAxis: seamTarget.axis,
+            renderedAxis: seam.rendered.axis,
+            finite: layer?.mode === 'finite',
+            reducedMotion,
+            collectionTilt,
+        }, tiltFrontTable),
         seamFollowsTilt: renderedTiltPage !== null && renderedTiltPage !== 'poster',
         // 翻牌交接：缝一合上就量磁贴的位置，回正要赶上（useBravaisWallHandoff）。
         quickOut: handoff.seamClosed,

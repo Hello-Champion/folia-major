@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { BRAVAIS_TILT_DEG } from '@/library/suites/bravais/bravaisConstants';
 import { reanchorLift, rotateAround, seamPlanEdge, seamTiltInsets, tiltEdgeRoom, type BravaisFrameInput } from '@/library/suites/bravais/bravaisFrame';
 import { tiltedScreenBox } from '@/library/suites/bravais/bravaisTiltReveal';
-import { resolveBravaisTiltDeg, resolveBravaisTiltPage, type BravaisTiltInput } from '@/library/suites/bravais/bravaisTilt';
+import { resolveBravaisTiltDeg, resolveBravaisTiltFrontDeg, resolveBravaisTiltPage, type BravaisTiltInput } from '@/library/suites/bravais/bravaisTilt';
 
 // test/unit/library/bravais/bravaisTilt.test.ts
 // 整层的倾斜角：哪一套缝的内容算哪一种页面（首页 / 集合页 / 海报，各取 BRAVAIS_TILT_DEG 里的角度），什么时候不倾斜
@@ -90,6 +90,15 @@ describe('resolveBravaisTiltDeg', () => {
         expect(tilt({ variant: 'full', targetAxis: 'x', renderedAxis: 'y' })).toBe(0);
         expect(tilt({ variant: 'full', targetAxis: 'x', renderedAxis: null })).toBe(-6);
         expect(tilt({ variant: 'full', targetAxis: 'x', renderedAxis: 'x' })).toBe(-6);
+    });
+});
+
+describe('resolveBravaisTiltFrontDeg', () => {
+    it('uses its own table for both seam axes', () => {
+        const front = { home: 1, collection: -8, poster: -8 };
+        expect(resolveBravaisTiltFrontDeg(input({ variant: 'full', targetAxis: 'x' }), front)).toBe(-8);
+        expect(resolveBravaisTiltFrontDeg(input({ variant: 'full', targetAxis: 'y', renderedAxis: 'y' }), front)).toBe(-8);
+        expect(resolveBravaisTiltFrontDeg(input({ variant: 'home', targetAxis: 'y', renderedAxis: 'y' }), front)).toBe(1);
     });
 });
 

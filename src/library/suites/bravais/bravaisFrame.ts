@@ -30,6 +30,8 @@ export type BravaisFrameInput = {
     poster?: boolean;
     /** 整层（两半墙与缝）此刻的倾斜角（度；各种页面转多少见 BRAVAIS_TILT_DEG）。 */
     tiltDeg?: number;
+    /** 前后倾斜角（rotateX，度）；与 tiltDeg 同时生效。 */
+    tiltFrontDeg?: number;
     /**
      * 两半墙沿纸自己的竖向多挪的一段（屏幕 px，转之前的坐标；缝不跟着挪）：倾斜着换锚点时支点瞬间换了位置，墙会顺着纸的
      * 竖向跳一截，这一段把它垫回去、再补间到 0（reanchorLift、useBravaisSeam）。平常是 0。
@@ -51,7 +53,7 @@ export type BravaisFrame = {
      * 两个世界层与缝共同的倾斜；deg 为 0 时不转。axis 'x'（竖缝）：屏幕平面里绕缝的右缘 rotate；
      * axis 'y'（横缝）：绕缝的下缘做 rotateX（带透视），墙向里/向外倒。
      */
-    tilt: { deg: number; pivotX: number; pivotY: number; axis?: SeamAxis };
+    tilt: { deg: number; frontDeg?: number; pivotX: number; pivotY: number; axis?: SeamAxis };
 };
 
 /** 内容透明度：原型的 (开口 / 排版宽度 − .35) / .65，开到三成五以下就看不见。 */
@@ -59,7 +61,7 @@ const contentOpacityFor = (width: number, contentWidth: number) => (
     Math.max(0, Math.min(1, (width / Math.max(contentWidth, 1) - 0.35) / 0.65))
 );
 
-export const computeBravaisFrame = ({ center, view, anchorX, anchorY = null, openWidth, contentWidth, hidden, poster = false, tiltDeg = 0, liftY = 0 }: BravaisFrameInput): BravaisFrame => {
+export const computeBravaisFrame = ({ center, view, anchorX, anchorY = null, openWidth, contentWidth, hidden, poster = false, tiltDeg = 0, tiltFrontDeg = 0, liftY = 0 }: BravaisFrameInput): BravaisFrame => {
     const camera = cameraFromViewCenter(center, view);
     if (anchorX === null && anchorY !== null) {
         const geometry = getSeamGeometryY({ anchorY, cameraY: center.y, openWidth, view });
@@ -71,7 +73,7 @@ export const computeBravaisFrame = ({ center, view, anchorX, anchorY = null, ope
             seam: { axis: 'y', x: view.width / 2, y: geometry.screenY, width: geometry.width, visible: geometry.width >= 1 },
             contentOpacity: contentOpacityFor(geometry.width, Math.max(contentWidth, 1)),
             tab: { visible: hidden || geometry.collapsed, side: 'left' },
-            tilt: { deg: tiltDeg, pivotX: view.width / 2, pivotY: geometry.screenY + geometry.width / 2, axis: 'y' },
+            tilt: { deg: tiltDeg, frontDeg: tiltFrontDeg, pivotX: view.width / 2, pivotY: geometry.screenY + geometry.width / 2, axis: 'y' },
         };
     }
     if (anchorX === null) {
@@ -97,7 +99,7 @@ export const computeBravaisFrame = ({ center, view, anchorX, anchorY = null, ope
         contentOpacity: contentOpacityFor(geometry.width, layoutWidth),
         tab: { visible: hidden || geometry.collapsed, side: geometry.side },
         // 倾斜绕缝的右缘、视口半高转：两半墙与缝一起转，是同一张纸。
-        tilt: { deg: tiltDeg, pivotX: geometry.screenX + geometry.width / 2, pivotY: view.height / 2, axis: 'x' },
+        tilt: { deg: tiltDeg, frontDeg: tiltFrontDeg, pivotX: geometry.screenX + geometry.width / 2, pivotY: view.height / 2, axis: 'x' },
     };
 };
 
@@ -290,13 +292,17 @@ export const getTiltReach = (view: { width: number; height: number }, tilt: Brav
  * 横缝绕下缘 rotateX，带一段透视，纸才像往屏幕里倒而不是被压扁。
  */
 export const withTilt = (transform: string, tilt: BravaisFrame['tilt']) => {
-    if (Math.abs(tilt.deg) < 0.001) return transform;
+    const front = tilt.frontDeg ?? 0;
+    if (Math.abs(tilt.deg) < 0.001 && Math.abs(front) < 0.001) return transform;
     const pivot = `translate(${tilt.pivotX}px, ${tilt.pivotY}px)`;
     const back = `translate(${-tilt.pivotX}px, ${-tilt.pivotY}px)`;
-    const turn = tilt.axis === 'y'
-        ? `perspective(1400px) rotateX(${tilt.deg}deg)`
-        : `rotate(${tilt.deg}deg)`;
-    return `${pivot} ${turn} ${back} ${transform}`;
+    // 横缝的 deg 以前就是前后角；现在两个角度总是同时生效，横缝的 deg 并进 rotateX。
+    const frontDeg = front + (tilt.axis === 'y' ? tilt.deg : 0);
+    const turns = [
+        Math.abs(frontDeg) >= 0.001 ? `perspective(1400px) rotateX(${frontDeg}deg)` : '',
+        tilt.axis !== 'y' && Math.abs(tilt.deg) >= 0.001 ? `rotate(${tilt.deg}deg)` : '',
+    ].filter(Boolean).join(' ');
+    return `${pivot} ${turns} ${back} ${transform}`;
 };
 
 /**
@@ -313,14 +319,19 @@ export const seamTransforms = (frame: BravaisFrame, { tiltSettled, devicePixelRa
     // 横缝的轨道只有竖直平移：倾斜整段交给合成器转（rotateX，落定后也不拆开——拆开要另算旋转原点）。
     if (seam.axis === 'y') return { track: withTilt(`translate3d(0, ${seam.y - seam.width / 2}px, 0)`, tilt), seam: '' };
     const left = seam.x - seam.width / 2;
-    if (Math.abs(tilt.deg) < 0.001) return { track: `translate3d(${left}px, 0, 0)`, seam: '' };
+    const front = tilt.frontDeg ?? 0;
+    if (Math.abs(tilt.deg) < 0.001 && Math.abs(front) < 0.001) return { track: `translate3d(${left}px, 0, 0)`, seam: '' };
     if (!tiltSettled) return { track: withTilt(`translate3d(${left}px, 0, 0)`, tilt), seam: '' };
     const ratio = devicePixelRatio > 0 ? devicePixelRatio : 1;
     const round = (value: number) => Math.round(value * 100) / 100;
     const pivotX = round(tilt.pivotX - left);
     const pivotY = round(tilt.pivotY);
+    const seamTurns = [
+        Math.abs(front) >= 0.001 ? `perspective(1400px) rotateX(${front}deg)` : '',
+        Math.abs(tilt.deg) >= 0.001 ? `rotate(${tilt.deg}deg)` : '',
+    ].filter(Boolean).join(' ');
     return {
         track: `translate3d(${Math.round(left * ratio) / ratio}px, 0, 0)`,
-        seam: `translate(${pivotX}px, ${pivotY}px) rotate(${tilt.deg}deg) translate(${-pivotX}px, ${-pivotY}px)`,
+        seam: `translate(${pivotX}px, ${pivotY}px) ${seamTurns} translate(${-pivotX}px, ${-pivotY}px)`,
     };
 };
