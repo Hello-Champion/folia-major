@@ -25,10 +25,10 @@ export const SAMPLE_COVERS = ['#6d5a8c', '#3f6f7a', '#a8664b', '#56745a', '#8a4f
  * 全局玻璃开着时，把 kit 的实色表面按设置里的不透明度混成半透明。内联自定义属性优先于样式表，
  * 所以这一步只能在写令牌的时候算，CSS 覆盖不了。
  */
-const glassSurface = (color: string): string => {
+const glassSurface = (color: string, factor = 1): string => {
     const store = usePlayerChromeSettingsStore.getState();
     if (!store.globalGlassEnabled) return color;
-    const percent = Math.max(0, Math.min(100, store.globalGlassOpacity));
+    const percent = Math.max(0, Math.min(100, store.globalGlassOpacity)) * factor;
     return `color-mix(in srgb, ${color} ${percent}%, transparent)`;
 };
 
@@ -47,7 +47,8 @@ export const settingsTokens = (isDaylight: boolean, theme?: Theme): CSSPropertie
         '--st-side-base': sideColor,
         '--st-side': glassSurface(sideColor),
         '--st-card-base': cardColor,
-        '--st-card': glassSurface(cardColor),
+        // 分类卡片：比用户设定的玻璃不透明度再透一档，浅色主题下不再是一块近白板。
+        '--st-card': glassSurface(cardColor, 0.55),
         '--st-menu-base': menuColor,
         '--st-menu': glassSurface(menuColor),
         '--st-raise-base': raiseColor,
