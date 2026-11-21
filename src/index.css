@@ -89,6 +89,31 @@ html.theme-fading [data-theme-instant] * {
   transition: none;
 }
 
+/* 全局玻璃：kit 画的工作窗口与弹层（设置、歌词样式、主题工坊、场景、各种对话框与菜单）统一换玻璃底。
+   各自的底色仍是主题给的 --st-win / --st-menu，按全局玻璃的透明度混成半透明，再加同一个磨砂配方与内发光。
+   内联组件（播放页按钮、面板、搜索页、toast）走 useGlobalGlassStyle，不在这里。 */
+html.global-glass .st-window {
+  background-color: color-mix(in srgb, var(--st-win) calc(var(--glass-alpha, 0.85) * 100%), transparent);
+  -webkit-backdrop-filter: var(--glass-backdrop);
+  backdrop-filter: var(--glass-backdrop);
+  box-shadow:
+    inset 0 0 2px 1px rgba(255, 255, 255, var(--glass-glow, 0.16)),
+    inset 0 0 10px 4px rgba(255, 255, 255, calc(var(--glass-glow, 0.16) * 0.94)),
+    0 36px 90px rgba(0, 0, 0, 0.35),
+    0 0 0 1px var(--st-line2);
+}
+
+html.global-glass .st-pop {
+  background-color: color-mix(in srgb, var(--st-menu) calc(var(--glass-alpha, 0.85) * 100%), transparent);
+  -webkit-backdrop-filter: var(--glass-backdrop);
+  backdrop-filter: var(--glass-backdrop);
+  box-shadow:
+    inset 0 0 2px 1px rgba(255, 255, 255, var(--glass-glow, 0.16)),
+    inset 0 0 10px 4px rgba(255, 255, 255, calc(var(--glass-glow, 0.16) * 0.94)),
+    0 14px 36px rgba(0, 0, 0, 0.3),
+    0 0 0 1px var(--st-line2);
+}
+
 @keyframes visualizer-comes-up {
   from { opacity: 0; }
 }

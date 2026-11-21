@@ -16,6 +16,8 @@ const GlobalGlassVariables: React.FC = () => {
 
     useEffect(() => {
         const root = document.documentElement;
+        // 也不止这些变量：kit 的窗口/弹层在 CSS 里按这个类换玻璃底（index.css 的 global-glass 规则）。
+        root.classList.toggle('global-glass', enabled);
         if (enabled) {
             root.style.setProperty('--glass-alpha', String(opacityPercent / 100));
             root.style.setProperty('--glass-backdrop', `blur(${blurPx}px) saturate(${saturate}) brightness(${brightness})`);
