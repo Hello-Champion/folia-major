@@ -296,11 +296,10 @@ export const withTilt = (transform: string, tilt: BravaisFrame['tilt']) => {
     if (Math.abs(tilt.deg) < 0.001 && Math.abs(front) < 0.001) return transform;
     const pivot = `translate(${tilt.pivotX}px, ${tilt.pivotY}px)`;
     const back = `translate(${-tilt.pivotX}px, ${-tilt.pivotY}px)`;
-    // 横缝的 deg 以前就是前后角；现在两个角度总是同时生效，横缝的 deg 并进 rotateX。
-    const frontDeg = front + (tilt.axis === 'y' ? tilt.deg : 0);
+    // 两个角度各管一件事，和缝的方向无关：前后角是 rotateX，左右角是屏幕平面里的 rotate。
     const turns = [
-        Math.abs(frontDeg) >= 0.001 ? `perspective(1400px) rotateX(${frontDeg}deg)` : '',
-        tilt.axis !== 'y' && Math.abs(tilt.deg) >= 0.001 ? `rotate(${tilt.deg}deg)` : '',
+        Math.abs(front) >= 0.001 ? `perspective(1400px) rotateX(${front}deg)` : '',
+        Math.abs(tilt.deg) >= 0.001 ? `rotate(${tilt.deg}deg)` : '',
     ].filter(Boolean).join(' ');
     return `${pivot} ${turns} ${back} ${transform}`;
 };

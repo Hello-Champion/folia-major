@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getSeamSplitOffsets } from '@/components/wall/seamPlan';
 import bravais, { BRAVAIS_LAYOUT_STORAGE_PREFIX } from '@/library/suites/bravais/entry';
-import { computeBravaisFrame } from '@/library/suites/bravais/bravaisFrame';
+import { computeBravaisFrame, withTilt } from '@/library/suites/bravais/bravaisFrame';
 import { getBlockSize } from '@/components/wall/wallSlots';
 import { BRAVAIS_BLOCK_SHAPE, EXPLORE_BLOCK_SIZE, createExploreShape, nearestShapeBoundaryX } from '@/library/suites/bravais/bravaisWallShape';
 import {
@@ -17,6 +17,16 @@ import {
 
 const view = { width: 1200, height: 800, scale: 0.5 };
 const metrics = { cellSize: 128, gap: 8 };
+
+describe('front tilt', () => {
+    it('keeps the front angle on the frame and turns it into rotateX', () => {
+        const frame = computeBravaisFrame({
+            center: { x: 0, y: 0 }, view, anchorX: 0, openWidth: 300, contentWidth: 300, hidden: false, tiltFrontDeg: -8,
+        });
+        expect(frame.tilt.frontDeg).toBe(-8);
+        expect(withTilt('translate(0px, 0px)', frame.tilt)).toContain('rotateX(-8deg)');
+    });
+});
 
 describe('computeBravaisFrame', () => {
     it('splits the two halves around an open seam on the base line', () => {

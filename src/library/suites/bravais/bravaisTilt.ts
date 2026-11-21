@@ -34,8 +34,8 @@ export type BravaisTiltInput = {
     finite: boolean;
     /** 降低动态效果（lattice）时不倾斜。 */
     reducedMotion: boolean;
-    /** 集合页倾不倾斜（useLibraryWallLookStore 的 collectionTilt）：关掉时集合页的角度取 0，首页与海报照表。 */
-    collectionTilt: boolean;
+    /** @deprecated 倾斜只由两个角度滑块决定（0 = 不倾）；保留字段是为了旧调用与测试的形状不变。 */
+    collectionTilt?: boolean;
 };
 
 /**
@@ -43,14 +43,14 @@ export type BravaisTiltInput = {
  * table 缺省是出厂的那张表（测试里换一张，各种页面的角度互不相同才分得清走的是哪一格）。
  */
 export const resolveBravaisTiltDeg = (
-    { variant, openWidth, targetAxis, renderedAxis, finite, reducedMotion, collectionTilt }: BravaisTiltInput,
+    { variant, openWidth, targetAxis, renderedAxis, finite, reducedMotion }: BravaisTiltInput,
     table: Record<BravaisTiltPage, number> = BRAVAIS_TILT_DEG,
 ): number => {
     if (reducedMotion || finite || openWidth <= 0 || targetAxis === null) return 0;
     // 缝正在换方向（横条还没合上）：此刻不转，等新方向的内容画上来再转，免得方向切换时跳一下。
     if (renderedAxis !== null && renderedAxis !== targetAxis) return 0;
     const page = resolveBravaisTiltPage(variant);
-    if (!page || (page === 'collection' && !collectionTilt)) return 0;
+    if (!page) return 0;
     // shortcut: 横缝（axis y）的倾斜没有 2D 的出血/让位修正（insets、tiltEdgeRoom 都只按竖缝算），
     // 靠 overscan 兜底；角度开到很大且内容贴边时可能被裁一点，需要时再补一套按 rotateX 的余量。
     return table[page];

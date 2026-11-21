@@ -62,9 +62,9 @@ describe('resolveBravaisTiltDeg', () => {
         expect(tilt({ variant: 'full', openWidth: 0 })).toBe(0);
     });
 
-    it('keeps collection pages upright when collection tilt is off, the home and poster still follow the table', () => {
-        expect(tilt({ variant: 'full', collectionTilt: false })).toBe(0);
-        expect(tilt({ variant: 'spine', collectionTilt: false })).toBe(0);
+    it('follows the angle table regardless of the old collection switch', () => {
+        expect(tilt({ variant: 'full', collectionTilt: false })).toBe(-6);
+        expect(tilt({ variant: 'spine', collectionTilt: false })).toBe(-6);
         expect(tilt({ variant: 'poster', collectionTilt: false })).toBe(-10);
         expect(tilt({ variant: 'home', collectionTilt: false })).toBe(-4);
     });

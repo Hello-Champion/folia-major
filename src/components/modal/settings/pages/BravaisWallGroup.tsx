@@ -37,7 +37,6 @@ const O = {
     look: option(BRAVAIS_WALL, 'libraryWallLook', 'options.libraryWallLook'),
     windows: option(BRAVAIS_WALL, 'libraryWallWindows', 'options.libraryWallWindows'),
     stackEdges: option(BRAVAIS_WALL, 'bravaisStackEdges', 'options.bravaisStackEdges'),
-    collectionTilt: option(BRAVAIS_WALL, 'bravaisCollectionTilt', 'options.bravaisCollectionTilt'),
     seamDirection: option(BRAVAIS_WALL, 'bravaisSeamDirection', 'options.bravaisSeamDirection'),
     tilt: option(BRAVAIS_WALL, 'libraryWallTilt', 'options.bravaisTilt'),
     tiltFront: option(BRAVAIS_WALL, 'libraryWallTiltFront', 'options.bravaisTiltFront'),
@@ -75,7 +74,6 @@ export const BravaisWallGroup: React.FC = () => {
         look: state.look,
         windowsPerBlock: state.windowsPerBlock,
         stackEdges: state.collectionStackEdges,
-        collectionTilt: state.collectionTilt,
         seamClear: state.seamClear,
         seamStyle: state.seamStyle,
         backdropLyrics: state.backdropLyrics,
@@ -86,7 +84,6 @@ export const BravaisWallGroup: React.FC = () => {
         setLook: state.setLook,
         setWindowsPerBlock: state.setWindowsPerBlock,
         setStackEdges: state.setCollectionStackEdges,
-        setCollectionTilt: state.setCollectionTilt,
         setSeamClear: state.setSeamClear,
         setSeamStyle: state.setSeamStyle,
         setBackdropLyrics: state.setBackdropLyrics,
@@ -126,9 +123,6 @@ export const BravaisWallGroup: React.FC = () => {
             </Reveal>
             <Row option={O.stackEdges} note={t('options.bravaisStackEdgesDesc')}>
                 <Toggle checked={wall.stackEdges} onChange={wall.setStackEdges} />
-            </Row>
-            <Row option={O.collectionTilt} note={t('options.bravaisCollectionTiltDesc')}>
-                <Toggle checked={wall.collectionTilt} onChange={wall.setCollectionTilt} />
             </Row>
             <Row option={O.seamDirection} hint={t(LIBRARY_WALL_SEAM_DIRECTION_TEXT[wall.seamDirection].description)} note={t('options.bravaisSeamDirectionDesc')}>
                 <Segmented
