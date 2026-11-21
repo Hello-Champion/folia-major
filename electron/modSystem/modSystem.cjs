@@ -871,22 +871,10 @@ const createModSystem = ({ app, BrowserWindow, getMainWindow, getLocaleKey, isFe
             firstLoad();
             return;
         }
-        startQuestionOpen = true;
-        startDecision = safeStart.askStartWithoutMods()
-            .then((without) => {
-                skippedThisRun = without;
-            }, (error) => {
-                console.warn('[Mods] The start question could not be asked; starting as usual', error);
-            })
-            .then(() => {
-                startQuestionOpen = false;
-                safeStart.clearNote();
-                firstLoad();
-            })
-            // Every request from a window waits on this promise: it must not stay rejected.
-            .catch((error) => {
-                console.error('[Mods] Failed to load the mods after the start question', error);
-            });
+        // The start note used to open the "start without mods?" question here. The question is gone:
+        // a leftover note is taken up and the mods start as usual.
+        safeStart.clearNote();
+        firstLoad();
     };
 
     /** "Reopen without mods": every running mod is stopped, and none runs again in this run. */
