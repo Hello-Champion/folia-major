@@ -1,6 +1,6 @@
 import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { CheckSquare, ChevronDown, CircleCheck, CircleOff, FlaskConical, ShieldAlert, ShieldCheck, ShieldQuestion, Square, TriangleAlert } from 'lucide-react';
+import { CheckSquare, ChevronDown, CircleCheck, CircleOff, FlaskConical, ShieldAlert, ShieldCheck, ShieldQuestion, Square, Trash2, TriangleAlert } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { Theme } from '@/types';
 import { SettingsToggle } from '../../components/modal/settings/SettingsRow';
@@ -154,12 +154,14 @@ type ModListItemProps = {
     onToggleSelected: () => void;
     /** Reports an outcome in the manager's notice line (the storage section's "clear cache"). */
     onNotice: (notice: ModNotice) => void;
+    /** Asks the manager to uninstall this mod; absent for mods that ship with the app. */
+    onUninstall?: () => void;
 };
 
 const NO_OLD_NAMES: readonly string[] = [];
 
 export const ModListItem: React.FC<ModListItemProps> = ({
-    mod, cost, expanded, selected, selectionMode, isLast, isDaylight, theme, classes, onToggleExpand, onToggleEnabled, onToggleSelected, onNotice,
+    mod, cost, expanded, selected, selectionMode, isLast, isDaylight, theme, classes, onToggleExpand, onToggleEnabled, onToggleSelected, onNotice, onUninstall,
 }) => {
     // Only a running mod has a cost to show.
     const runningCost = mod.status === 'loaded' ? cost : undefined;
@@ -373,6 +375,22 @@ export const ModListItem: React.FC<ModListItemProps> = ({
                                         : mod.enabled ? t('mods.notLoaded') : t('mods.modDisabledHint')}
                                 </div>
                             )}
+                            {onUninstall ? (
+                                <div className="flex justify-end">
+                                    <button
+                                        type="button"
+                                        onClick={onUninstall}
+                                        className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors"
+                                        style={{
+                                            color: isDaylight ? '#dc2626' : 'rgba(248,113,113,0.92)',
+                                            borderColor: isDaylight ? 'rgba(220,38,38,0.35)' : 'rgba(248,113,113,0.35)',
+                                        }}
+                                    >
+                                        <Trash2 size={12} />
+                                        {t('mods.uninstall')}
+                                    </button>
+                                </div>
+                            ) : null}
                         </div>
                     </motion.div>
                 ) : null}

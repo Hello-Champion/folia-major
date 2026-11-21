@@ -59,7 +59,8 @@ export const ModManager: React.FC<ModManagerProps> = ({ classes, isDaylight, the
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [batchPending, setBatchPending] = useState(false);
     const [uninstallPending, setUninstallPending] = useState(false);
-    const [confirmUninstallOpen, setConfirmUninstallOpen] = useState(false);
+    // Ids waiting for the delete confirmation: the batch toolbar or a row's own delete button.
+    const [uninstallIds, setUninstallIds] = useState<string[] | null>(null);
     const [isDragging, setIsDragging] = useState(false);
     const [installing, setInstalling] = useState(false);
     const [notice, setNotice] = useState<Notice | null>(null);
@@ -181,27 +182,32 @@ export const ModManager: React.FC<ModManagerProps> = ({ classes, isDaylight, the
     // list in the main process and the store mirrors it, so the panel always
     // shows the live state. Built-in (repo / packaged) mods are rejected by the
     // main process and reported through the same notice.
-    const handleUninstallSelected = async () => {
-        setConfirmUninstallOpen(false);
-        const ids = [...selectedIds];
+    const handleUninstall = async () => {
+        const ids = uninstallIds ?? [];
+        setUninstallIds(null);
         if (ids.length === 0) {
             return;
         }
         setUninstallPending(true);
         let succeeded = 0;
         let failed = 0;
+        // Deleted, but the app still lists the mod: the copy that ships with the app remains.
+        let keptBuiltIn = 0;
         let firstError: string | undefined;
         try {
             for (const modId of ids) {
                 const result = await useModsStore.getState().uninstallMod(modId);
                 if (result.ok) {
-                    succeeded += 1;
+                    if (result.mods.some(mod => mod.id === modId)) keptBuiltIn += 1;
+                    else succeeded += 1;
                 } else {
                     failed += 1;
                     firstError ??= result.error;
                 }
             }
-            if (failed === 0) {
+            if (failed === 0 && keptBuiltIn > 0 && succeeded === 0) {
+                setNotice({ kind: 'ok', text: t('mods.uninstallKeptBuiltIn', { count: keptBuiltIn }) });
+            } else if (failed === 0) {
                 setNotice({ kind: 'ok', text: t('mods.uninstallSuccess', { count: succeeded }) });
             } else if (succeeded === 0) {
                 setNotice({ kind: 'error', text: translateModError(t, firstError ?? 'uninstall-failed', 'uninstall-failed') });
@@ -385,7 +391,7 @@ export const ModManager: React.FC<ModManagerProps> = ({ classes, isDaylight, the
                                 <button
                                     type="button"
                                     disabled={uninstallPending || batchPending || selectedIds.size === 0}
-                                    onClick={() => setConfirmUninstallOpen(true)}
+                                    onClick={() => setUninstallIds([...selectedIds])}
                                     className={`${toolbarButtonClass} ${classes.ghostButton}`}
                                     style={{ color: isDaylight ? '#dc2626' : 'rgba(248,113,113,0.92)' }}
                                 >
@@ -414,6 +420,7 @@ export const ModManager: React.FC<ModManagerProps> = ({ classes, isDaylight, the
                         onToggleExpand={() => selectMod(selectedModId === mod.id ? null : mod.id)}
                         onToggleEnabled={() => { void handleToggleEnabled(mod.id, !mod.enabled); }}
                         onToggleSelected={() => toggleSelected(mod.id)}
+                        onUninstall={mod.builtIn ? undefined : () => setUninstallIds([mod.id])}
                         onNotice={setNotice}
                     />
                 ))}
@@ -441,14 +448,14 @@ export const ModManager: React.FC<ModManagerProps> = ({ classes, isDaylight, the
             ) : null}
 
             <ConfirmDialog
-                isOpen={confirmUninstallOpen}
+                isOpen={uninstallIds !== null}
                 title={t('mods.uninstallConfirmTitle')}
-                description={t('mods.uninstallConfirm', { count: selectedIds.size })}
+                description={t('mods.uninstallConfirm', { count: uninstallIds?.length ?? 0 })}
                 confirmText={t('mods.uninstall')}
                 confirmVariant="danger"
                 isDaylight={isDaylight}
-                onConfirm={() => { void handleUninstallSelected(); }}
-                onClose={() => setConfirmUninstallOpen(false)}
+                onConfirm={() => { void handleUninstall(); }}
+                onClose={() => setUninstallIds(null)}
             />
         </div>
     );

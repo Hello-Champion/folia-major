@@ -130,12 +130,11 @@ export const useModsStore = create<ModsStoreState>((set, get) => ({
 
     uninstallMod: async (modId) => {
         const result = await uninstallMod(modId);
-        if (result.mods.length > 0) {
-            set((state) => ({
-                mods: result.mods,
-                selectedModId: state.selectedModId === modId ? null : state.selectedModId,
-            }));
-        }
+        // Always mirror: deleting the last mod comes back as an empty list.
+        set((state) => ({
+            mods: result.mods,
+            selectedModId: state.selectedModId === modId ? null : state.selectedModId,
+        }));
         return result;
     },
 

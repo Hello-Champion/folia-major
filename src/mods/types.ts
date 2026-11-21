@@ -85,6 +85,8 @@ export interface ModRuntimeInfo {
      * revoking it (see isDevSourceMod in electron/modSystem/approval.cjs).
      */
     devSource: boolean;
+    /** Ships with the app (resources/mods): deleting only removes a user-installed copy of it. */
+    builtIn?: boolean;
     /** Opted-in experimental surfaces (manifest `experimental`). */
     experimental: string[];
     /** Origins `folium.ui.embed` may load (manifest `embedOrigins`). */

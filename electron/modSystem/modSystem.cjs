@@ -250,6 +250,9 @@ const createModSystem = ({ app, BrowserWindow, getMainWindow, getLocaleKey, isFe
             trustStale: Boolean(entry.trustStale),
             signature: publicSignatureState(entry.signature),
             devSource: Boolean(entry.devSource),
+            // Shipped inside resources/mods: uninstalling only removes the user's own copy, if any.
+            builtIn: Boolean(entry.dirPath && process.resourcesPath
+                && path.normalize(entry.dirPath + path.sep).startsWith(path.normalize(process.resourcesPath + path.sep))),
             // Position in the dependency-resolved load plan; clients activate in this order.
             loadOrder: typeof entry.loadOrder === 'number' ? entry.loadOrder : null,
             // Folium 1.6 only: the old names the mod used (deprecated.cjs).
