@@ -32,10 +32,18 @@ const buildBackgroundRegistry = (modules: Record<string, VisualizerBackgroundEnt
     };
 };
 
+// 同 visualizer/registry：打包器可能把本模块复制进多个 chunk（主入口与懒加载页各一份），
+// 模组注册落到没人读的副本里，背景类型就永远不出现在选择器里。状态放在 globalThis 上，
+// 所有副本共用一份。
+const REGISTRY_STATE_KEY = Symbol.for('folia.visualizerBackgroundRegistryState');
+type RegistryState = ReturnType<typeof buildBackgroundRegistry>;
+const registryHolder = globalThis as typeof globalThis & { [REGISTRY_STATE_KEY]?: RegistryState };
+const registryState: RegistryState = registryHolder[REGISTRY_STATE_KEY]
+    ?? (registryHolder[REGISTRY_STATE_KEY] = buildBackgroundRegistry(backgroundEntryModules));
 const {
     entries: VISUALIZER_BACKGROUND_REGISTRY,
     byMode: VISUALIZER_BACKGROUND_REGISTRY_BY_MODE,
-} = buildBackgroundRegistry(backgroundEntryModules);
+} = registryState;
 
 export { VISUALIZER_BACKGROUND_REGISTRY };
 

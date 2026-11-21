@@ -74,11 +74,22 @@ export interface FoliumVisualizerSource {
     setAnimationIntensity(mod: ModRuntimeInfo, value: FoliumAnimationIntensity): boolean;
 }
 
-let visualizerSource: FoliumVisualizerSource | null = null;
+interface VisualizerServiceRuntime {
+    source: FoliumVisualizerSource | null;
+    countedWrites: Map<string, number[]>;
+}
+
+// 打包器会把本模块同时放进 bootstrap 与 service 两个 chunk（多入口 + 动态 import），
+// 安装方与读取方各持一份，`folium.visualizer` 就会报 unavailable。状态放在 globalThis 上，
+// 所有副本共用一份；`dev/checkChunkDuplication.mjs` 的标记也指向这里。
+const SERVICE_STATE_KEY = Symbol.for('folia.foliumVisualizerService');
+const serviceHolder = globalThis as typeof globalThis & { [SERVICE_STATE_KEY]?: VisualizerServiceRuntime };
+const runtime: VisualizerServiceRuntime = serviceHolder[SERVICE_STATE_KEY]
+    ?? (serviceHolder[SERVICE_STATE_KEY] = { source: null, countedWrites: new Map<string, number[]>() });
 
 /** Installs (or with null removes) the main window's `folium.visualizer` source. */
 export const registerFoliumVisualizerSource = (source: FoliumVisualizerSource | null) => {
-    visualizerSource = source;
+    runtime.source = source;
 };
 
 /** The values the contract promises for 1.x (FoliumLyricRenderScale / FoliumLyricAntialias); setRenderQuality takes these and no others. */
@@ -126,7 +137,7 @@ const WRITES_PER_MINUTE = 20;
 const MINUTE_MS = 60_000;
 
 /** When each mod's counted writes of each kind were, within the last minute, by `<mod id>\n<kind>`: a reload of the mod keeps them. */
-const countedWrites = new Map<string, number[]>();
+const countedWrites = runtime.countedWrites;
 
 /* Whether one more counted write of this kind by this mod fits its allowance now. */
 const withinAllowance = (key: string, now: number): boolean => {
@@ -286,8 +297,8 @@ export const createFoliumVisualizerService = (
 ): FoliumVisualizerService => {
     /* The installed source; outside the main window, and before it is installed, every call throws. */
     const sourceOf = (): FoliumVisualizerSource => {
-        if (context !== 'main' || !visualizerSource) throw new Error(`visualizer-unavailable-in-${context}-context`);
-        return visualizerSource;
+        if (context !== 'main' || !runtime.source) throw new Error(`visualizer-unavailable-in-${context}-context`);
+        return runtime.source;
     };
 
     const requirePermission = (kind: WriteKind) => {

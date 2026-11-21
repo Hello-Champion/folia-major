@@ -43,10 +43,24 @@ export interface FoliumHostRegistry<Def, Stored = Def> {
 
 export const foliumId = (modId: string, name: string): FoliumId => `${modId}:${name}`;
 
+/*
+ * 打包器可能把本模块复制进多个 chunk（多入口构建与动态 import 各一份），那样每个副本
+ * 各有一张表：模组把条目注册进一份，界面从另一份读，入口就永远不出现。实例按 name 放在
+ * globalThis 上，所有副本共用同一个。
+ */
+const INSTANCES_KEY = Symbol.for('folia.foliumRegistryInstances');
+const instancesHolder = globalThis as typeof globalThis & { [INSTANCES_KEY]?: Map<string, unknown> };
+const sharedInstances = instancesHolder[INSTANCES_KEY]
+    ?? (instancesHolder[INSTANCES_KEY] = new Map<string, unknown>());
+
 export const createFoliumRegistry = <Def extends { id: string }, Stored = Def>(
     name: string,
     options: FoliumRegistryOptions<Def, Stored> = {},
 ): FoliumHostRegistry<Def, Stored> => {
+    const existing = sharedInstances.get(name);
+    if (existing) {
+        return existing as FoliumHostRegistry<Def, Stored>;
+    }
     const entries = new Map<FoliumId, FoliumRegistryEntry<Stored>>();
     const listeners = createFoliumListeners(`${name} listener`);
     let snapshot: readonly FoliumRegistryEntry<Stored>[] = Object.freeze([]);
@@ -97,7 +111,7 @@ export const createFoliumRegistry = <Def extends { id: string }, Stored = Def>(
         });
     };
 
-    return {
+    const registry: FoliumHostRegistry<Def, Stored> = {
         name,
         register,
         unregister: remove,
@@ -110,6 +124,8 @@ export const createFoliumRegistry = <Def extends { id: string }, Stored = Def>(
         list: () => snapshot,
         subscribe: listeners.subscribe,
     };
+    sharedInstances.set(name, registry);
+    return registry;
 };
 
 /** React view of a registry's entries; re-renders on every register/unregister. */
