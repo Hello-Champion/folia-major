@@ -88,6 +88,17 @@ export const usePlayerChrome = (props: PlayerChromeProps | undefined, enabled = 
         backVisibilityRef.current = visible;
         setShowBackButton(visible);
     }, []);
+    // 左上角热区：不只靠绘制这一层收到的 mousemove——场景、覆盖层在上面时事件到不了壳，按钮就一直不亮。
+    // 在窗口上直接听鼠标位置，热区判断与 pointer.move 相同。
+    useEffect(() => {
+        if (!onBack) return undefined;
+        const onWindowMove = (event: MouseEvent) => {
+            updateBackVisibility(event.clientX <= PLAYER_CHROME_HOTSPOT_SIZE && event.clientY <= PLAYER_CHROME_HOTSPOT_SIZE);
+        };
+        window.addEventListener('mousemove', onWindowMove, { passive: true });
+        return () => window.removeEventListener('mousemove', onWindowMove);
+    }, [onBack, updateBackVisibility]);
+
     const updatePlayerPanelGuideHotspot = (isActive: boolean) => {
         if (playerPanelGuideHotspotRef.current === isActive) {
             return;
@@ -125,8 +136,9 @@ export const usePlayerChrome = (props: PlayerChromeProps | undefined, enabled = 
 
     const pointer: PlayerChromePointer = {
         move: (event) => {
-            // 鼠标一动就显示返回键（离开播放页盒子再收起）；不再只在左上角热区里露出来。
-            updateBackVisibility(true);
+            // Back button is intentionally hidden most of the time.
+            // Only reveal it near the top-left hot area so it does not pollute the visual field.
+            updateBackVisibility(event.clientX <= PLAYER_CHROME_HOTSPOT_SIZE && event.clientY <= PLAYER_CHROME_HOTSPOT_SIZE);
 
             updatePlayerPanelGuideHotspot(!isPanelOpen && isNearPlayerPanelHotspot(event.clientX, event.clientY));
         },
