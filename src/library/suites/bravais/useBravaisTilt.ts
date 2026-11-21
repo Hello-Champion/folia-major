@@ -56,7 +56,9 @@ export const useBravaisTilt = ({
         animationRef.current?.stop();
         animationRef.current = null;
         // shortcut: 前后角不进补间（和左右角分开动画要两套进度），滑块改完立刻生效。
-        frameRef.current.tiltFrontDeg = frontDeg ?? 0;
+        const nextFront = frontDeg ?? 0;
+        const frontChanged = (frameRef.current.tiltFrontDeg ?? 0) !== nextFront;
+        frameRef.current.tiltFrontDeg = nextFront;
         frameRef.current.tiltTargetDeg = to;
         // 补间中缝整块交给合成器转，落定后旋转才画进轨道那一层（字清楚，见 bravaisFrame 的 seamTransforms）。
         const settle = () => {
@@ -65,6 +67,8 @@ export const useBravaisTilt = ({
         };
         if (Math.abs(to - from) < 0.01) {
             if (!frameRef.current.tiltSettled) settle();
+            // 只动了前后角时角度没变，也要重画一次，否则滑块看着没反应。
+            else if (frontChanged) renderFrame();
             return;
         }
         if (reducedMotion) {
