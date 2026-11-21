@@ -35,7 +35,7 @@ const path = require('path');
 const { dialog, ipcMain, protocol, safeStorage, shell } = require('electron');
 const Store = require('electron-store').default || require('electron-store');
 
-const { FOLIUM_VERSION, resolveLoadPlan, satisfiesHostRange, parseDependency, permissionGuarding } = require('./manifest.cjs');
+const { FOLIUM_VERSION, resolveLoadPlan, satisfiesHostRange, parseDependency, permissionGuarding, validateManifest } = require('./manifest.cjs');
 const { computeModDigest, shortDigest } = require('./modDigest.cjs');
 const { verifyModSignature } = require('./modSignature.cjs');
 const { clearDirectoryContents, isBrokenDirectory, measureDirectoryBytes, resolveModStorageDirs } = require('./modFiles.cjs');

@@ -130,11 +130,16 @@ export const useModsStore = create<ModsStoreState>((set, get) => ({
 
     uninstallMod: async (modId) => {
         const result = await uninstallMod(modId);
-        // Always mirror: deleting the last mod comes back as an empty list.
-        set((state) => ({
-            mods: result.mods,
-            selectedModId: state.selectedModId === modId ? null : state.selectedModId,
-        }));
+        if (result.ok) {
+            // Mirror even an empty list: deleting the last mod leaves nothing.
+            set((state) => ({
+                mods: result.mods,
+                selectedModId: state.selectedModId === modId ? null : state.selectedModId,
+            }));
+        } else {
+            // A failed call may come back without a list; resync instead of blanking the panel.
+            await get().refresh();
+        }
         return result;
     },
 

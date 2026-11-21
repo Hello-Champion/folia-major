@@ -216,6 +216,20 @@ export const ModListItem: React.FC<ModListItemProps> = ({
                     </div>
                     <div className="text-[11px] opacity-50 truncate" style={{ color: 'var(--text-secondary)' }}>{meta}</div>
                 </div>
+                {onUninstall ? (
+                    <div onClick={(event) => event.stopPropagation()} className="shrink-0">
+                        <button
+                            type="button"
+                            onClick={onUninstall}
+                            title={t('mods.uninstall')}
+                            aria-label={t('mods.uninstall')}
+                            className="grid h-6 w-6 place-items-center rounded-full transition-colors"
+                            style={{ color: isDaylight ? '#dc2626' : 'rgba(248,113,113,0.92)' }}
+                        >
+                            <Trash2 size={13} />
+                        </button>
+                    </div>
+                ) : null}
                 <div onClick={(event) => event.stopPropagation()} className="shrink-0">
                     <SettingsToggle
                         checked={mod.enabled}
@@ -246,22 +260,6 @@ export const ModListItem: React.FC<ModListItemProps> = ({
                         <div className={`px-4 pb-4 pt-3 flex flex-col gap-3 border-t text-left ${classes.divider} ${classes.expandedRow}`}>
                             {mod.description ? (
                                 <div className="text-xs leading-relaxed opacity-75" style={{ color: 'var(--text-primary)' }}>{mod.description}</div>
-                            ) : null}
-                            {onUninstall ? (
-                                <div className="flex justify-end">
-                                    <button
-                                        type="button"
-                                        onClick={onUninstall}
-                                        className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors"
-                                        style={{
-                                            color: isDaylight ? '#dc2626' : 'rgba(248,113,113,0.92)',
-                                            borderColor: isDaylight ? 'rgba(220,38,38,0.35)' : 'rgba(248,113,113,0.35)',
-                                        }}
-                                    >
-                                        <Trash2 size={12} />
-                                        {t('mods.uninstall')}
-                                    </button>
-                                </div>
                             ) : null}
                             {grants.length > 0 ? (
                                 <div className="flex flex-wrap gap-1">
