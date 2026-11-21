@@ -1585,6 +1585,7 @@ export default {
     "uninstallSuccess_one": "Berhasil menghapus {{count}} mod",
     "uninstallSuccess_other": "Berhasil menghapus {{count}} mod",
     "uninstallPartial": "Berhasil menghapus {{success}}, gagal menghapus {{failed}}",
+    "builtIn": "Bawaan aplikasi",
     "uninstallKeptBuiltIn_one": "Salinan yang Anda pasang sudah dihapus; {{count}} yang masih tampil adalah versi bawaan aplikasi.",
     "uninstallKeptBuiltIn_other": "Salinan yang Anda pasang sudah dihapus; {{count}} yang masih tampil adalah versi bawaan aplikasi.",
     "runCommand": "Jalankan",

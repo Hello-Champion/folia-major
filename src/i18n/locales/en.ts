@@ -1585,6 +1585,7 @@ export default {
     "uninstallSuccess_one": "Deleted {{count}} mod",
     "uninstallSuccess_other": "Deleted {{count}} mods",
     "uninstallPartial": "Deleted {{success}}, failed to delete {{failed}}",
+    "builtIn": "Ships with the app",
     "uninstallKeptBuiltIn_one": "Deleted the copy you installed; {{count}} still listed is the one that ships with the app.",
     "uninstallKeptBuiltIn_other": "Deleted the copy you installed; {{count}} still listed is the one that ships with the app.",
     "runCommand": "Run",

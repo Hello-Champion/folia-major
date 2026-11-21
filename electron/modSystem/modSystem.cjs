@@ -629,10 +629,18 @@ const createModSystem = ({ app, BrowserWindow, getMainWindow, getLocaleKey, isFe
         }
     };
 
-    const listMods = () => Array.from(mods.values())
-        .map((runtime) => publicModState(runtime))
-        .filter(Boolean)
-        .sort((left, right) => left.id.localeCompare(right.id));
+    const listMods = () => {
+        const shown = new Set();
+        return Array.from(mods.values())
+            .map((runtime) => publicModState(runtime))
+            .filter(Boolean)
+            .filter((mod) => {
+                if (shown.has(mod.id)) return false;
+                shown.add(mod.id);
+                return true;
+            })
+            .sort((left, right) => left.id.localeCompare(right.id));
+    };
 
     // The user's own mods folder, and installing a .zip into it (zipInstall.cjs).
     const { getUserModsDirectory, pruneStagingDirectory, installModFromZip } = createZipInstall({

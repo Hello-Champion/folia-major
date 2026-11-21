@@ -1637,6 +1637,7 @@ export default {
     "uninstallSuccess_one": "Đã xóa {{count}} mod",
     "uninstallSuccess_other": "Đã xóa {{count}} mod",
     "uninstallPartial": "Đã xóa {{success}}, xóa thất bại {{failed}}",
+    "builtIn": "Đi kèm ứng dụng",
     "uninstallKeptBuiltIn_one": "Đã xóa bản bạn tự cài; {{count}} còn trong danh sách là bản đi kèm ứng dụng.",
     "uninstallKeptBuiltIn_other": "Đã xóa bản bạn tự cài; {{count}} còn trong danh sách là bản đi kèm ứng dụng.",
     "storageData": "Dữ liệu {{size}}",

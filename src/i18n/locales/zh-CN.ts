@@ -1585,6 +1585,7 @@ export default {
     "uninstallSuccess_one": "已删除 {{count}} 个模组",
     "uninstallSuccess_other": "已删除 {{count}} 个模组",
     "uninstallPartial": "已删除 {{success}} 个，失败 {{failed}} 个",
+    "builtIn": "随应用附带",
     "uninstallKeptBuiltIn_one": "已删除你自己安装的那份，列表里剩下的 {{count}} 个是应用自带的内置版本。",
     "uninstallKeptBuiltIn_other": "已删除你自己安装的那份，列表里剩下的 {{count}} 个是应用自带的内置版本。",
     "runCommand": "执行",
