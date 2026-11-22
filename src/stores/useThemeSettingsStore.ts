@@ -183,7 +183,18 @@ export const useThemeSettingsStore = create<ThemeSettingsState>((set, get) => ({
     },
     setPlayerDaylightAuto: (enabled) => {
         setStoredBoolean(PLAYER_AUTO_DAYLIGHT_KEY, enabled);
-        set({ playerDaylightAuto: enabled });
+        // 播放页的「自动（按画面深浅）」按画面自己切明暗，跟随系统开着就永远轮不到它。
+        const wasFollowingSystem = enabled && get().followSystemTheme;
+        if (wasFollowingSystem) {
+            setStoredBoolean(FOLLOW_SYSTEM_THEME_STORAGE_KEY, false);
+        }
+        set({
+            playerDaylightAuto: enabled,
+            ...(wasFollowingSystem ? { followSystemTheme: false } : {}),
+        });
+        if (wasFollowingSystem && typeof window !== 'undefined' && window.electron?.setNativeTheme) {
+            void window.electron.setNativeTheme(get().isDaylight ? 'light' : 'dark');
+        }
     },
     syncDaylightToPage: (page) => {
         if (get().followSystemTheme) return;

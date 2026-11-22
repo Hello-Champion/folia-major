@@ -7960,7 +7960,8 @@ ipcMain.handle('sample-window-tone', async (event) => {
   }
   if (luminances.length === 0) return null;
   luminances.sort((a, b) => a - b);
-  return luminances[Math.min(luminances.length - 1, Math.floor(luminances.length * 0.7))];
+  // 取中位数：亮浪花、亮 UI 只占少数像素，按 70 分位取会让同一张深色画面在 0.42~0.56 之间漂。
+  return luminances[Math.min(luminances.length - 1, Math.floor(luminances.length * 0.5))];
 });
 
 ipcMain.handle('remote-control-open', (event) => {

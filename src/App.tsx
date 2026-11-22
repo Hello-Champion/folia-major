@@ -1610,9 +1610,10 @@ export default function App() {
     // 播放页「自动」：只看当前窗口截图的平均亮度（画面真实颜色，可视化画布读不到像素）。
     // 没有截图（浏览器版、窗口不可截）就不动——不再用主题底色兜底：底色本身随深浅模式变，会互相触发来回切，
     // 把 Bravais 的显示提交拖进无限更新。
-    // 一次取样最多切一次（autoDaylightAppliedRef）：滞回 ≥0.5 判浅、≤0.35 判深，中间保持。
+    // 一次取样最多切一次（autoDaylightAppliedRef）：以 0.5 为界，≥0.5 判浅、<0.5 判深。
     const chosenSceneId = useSceneSettingsStore(state => state.sceneId);
-    const backgroundSampleKey = `${visualizerMode}|${visualizerBackgroundMode ?? ''}|${bgMode}|${chosenSceneId ?? 'none'}`;
+    // 歌也算取样来源：模组的背景会按歌换壁纸，画面深浅跟着变。
+    const backgroundSampleKey = `${visualizerMode}|${visualizerBackgroundMode ?? ''}|${bgMode}|${chosenSceneId ?? 'none'}|${currentSong?.id ?? ''}`;
     const sampledBackgroundTone = useSampledBackgroundTone(playerDaylightAuto && currentView === 'player', backgroundSampleKey);
 
     const autoDaylightAppliedRef = useRef<number | null>(null);
@@ -1621,15 +1622,16 @@ export default function App() {
         autoDaylightAppliedRef.current = null;
     }, [currentView, playerDaylightAuto, backgroundSampleKey]);
     useEffect(() => {
-        if (!playerDaylightAuto || currentView !== 'player' || followSystemTheme || sampledBackgroundTone === null) return;
-        // 分位数取到的亮度更接近「看着多亮」：≥0.5 判浅、≤0.35 判深，中间保持。
-        const target = sampledBackgroundTone >= 0.5 ? 1 : sampledBackgroundTone <= 0.35 ? 0 : null;
-        if (target === null || autoDaylightAppliedRef.current === target) return;
+        // 面板选了「自动」就按画面亮度走：跟随系统开着也不拦（下面 setPageDaylight 会退出跟随系统）。
+        if (!playerDaylightAuto || currentView !== 'player' || sampledBackgroundTone === null) return;
+        // 分位数取到的亮度更接近「看着多亮」：以 0.5 为界。
+        const target = sampledBackgroundTone >= 0.5 ? 1 : 0;
+        if (autoDaylightAppliedRef.current === target) return;
         autoDaylightAppliedRef.current = target;
         if (isDaylight !== Boolean(target)) {
             updateDaylightWithFade(() => setPageDaylight('player', Boolean(target)));
         }
-    }, [currentView, followSystemTheme, isDaylight, playerDaylightAuto, sampledBackgroundTone, setPageDaylight, updateDaylightWithFade]);
+    }, [currentView, isDaylight, playerDaylightAuto, sampledBackgroundTone, setPageDaylight, updateDaylightWithFade]);
     const { visualizerTheme, visualizerSubtitleTheme, visualizerGeometrySeed } = useMemo(() => buildVisualizerTheme({
         appStyle,
         theme,

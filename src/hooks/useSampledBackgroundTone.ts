@@ -16,8 +16,7 @@ export const useSampledBackgroundTone = (active: boolean, resampleKey = ''): num
             return undefined;
         }
         let cancelled = false;
-        // 换样式/背景有过渡动画，等它落定再截这一张。
-        const timer = window.setTimeout(() => {
+        const sample = () => {
             const api = window.electron?.sampleWindowTone;
             if (!api) return;
             void api()
@@ -26,10 +25,15 @@ export const useSampledBackgroundTone = (active: boolean, resampleKey = ''): num
                     setTone(value);
                 })
                 .catch(() => { /* 截图失败时保持上一次的值 */ });
-        }, 700);
+        };
+        // 换样式/背景有过渡动画，等它落定再截这一张。
+        const timer = window.setTimeout(sample, 700);
+        // 模组的背景可能在第一次截图时还没画上来（扫描、海报、视频缓冲）：再取一次，后到的为准。
+        const later = window.setTimeout(sample, 2600);
         return () => {
             cancelled = true;
             window.clearTimeout(timer);
+            window.clearTimeout(later);
         };
     }, [active, resampleKey]);
 
