@@ -16,9 +16,9 @@ import {
 
 // src/components/visualizer/window/SubtitleOverlayRowsSetting.tsx
 // The bottom subtitle's rows in the lyric style window's 字幕 page: how many, then what each one shows.
-// The first row can be the translation or the romanization as well as the current line, so a stack can leave the
-// original text out. A layout without the current line also says what a line with none of its content shows:
-// the coming lyrics, or nothing.
+// The first row can be the next line, the translation or the romanization as well as the current line, so a stack
+// can leave the original text out (a single row showing only the coming line is allowed). A layout without the
+// current line also says what a line with none of its content shows: the coming lyrics, or nothing.
 
 const ROW_COUNT_KEYS: Record<SubtitleOverlayRowCount, string> = {
     1: 'options.subtitleOverlayRowsOne',

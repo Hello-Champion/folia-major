@@ -15,14 +15,14 @@ import {
 // user's 副字幕内容 becomes their first layout.
 
 describe('subtitle overlay layout', () => {
-    it('accepts one to three rows that open with the current line, the translation or the romanization', () => {
-        for (const value of ['current', 'translation', 'romanization', 'current+next', 'current+romanization+translation', 'current+next+next', 'romanization+translation', 'translation+romanization', 'translation+next+next']) {
+    it('accepts one to three rows that open with the current line, the next line, the translation or the romanization', () => {
+        for (const value of ['next', 'next|only', 'next+translation', 'current', 'translation', 'romanization', 'current+next', 'current+romanization+translation', 'current+next+next', 'romanization+translation', 'translation+romanization', 'translation+next+next']) {
             expect(parseSubtitleOverlayLayout(value)).toBe(value);
         }
     });
 
     it('rejects anything else', () => {
-        for (const value of ['next', 'both', 'none', '', 'translation+current', 'current+current', 'current+next+next+next', 'current+', 'next+translation', '+translation', '|only', 'next|only', 'translation|only|only', 'translation|', 'translation|none', 42, null, undefined]) {
+        for (const value of ['both', 'none', '', 'translation+current', 'current+current', 'current+next+next+next', 'current+', '+translation', '|only', 'translation|only|only', 'translation|', 'translation|none', 42, null, undefined]) {
             expect(parseSubtitleOverlayLayout(value)).toBeNull();
         }
     });
@@ -59,7 +59,7 @@ describe('subtitle overlay layout', () => {
         expect(withSubtitleOverlayRow('current+next+translation', 2, 'romanization')).toBe('current+next+romanization');
         expect(withSubtitleOverlayRow('current+next', 0, 'translation')).toBe('translation+next');
         expect(withSubtitleOverlayRow('current+romanization', 0, 'translation')).toBe('translation+romanization');
-        expect(withSubtitleOverlayRow('current+next', 0, 'next')).toBe('current+next');
+        expect(withSubtitleOverlayRow('current+next', 0, 'next')).toBe('next+translation');
         expect(withSubtitleOverlayRow('translation+romanization', 1, 'current')).toBe('translation+romanization');
     });
 

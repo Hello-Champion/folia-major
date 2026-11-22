@@ -3204,7 +3204,7 @@ export default {
     "subtitleContentNone": "不显示",
     "subtitleContentModeDesc": "莫奈、时计、Lattice 和静止排进自己版面的副字幕，以及顶部和声字幕显示什么。底部字幕按上面的行数和每行内容显示。",
     "subtitleOverlayRows": "底部字幕行数",
-    "subtitleOverlayRowsDesc": "第一行可选当前句、翻译或罗马音，后面每行可选下一句、翻译或罗马音。第一行不选当前句，就不显示这一句的原文。",
+    "subtitleOverlayRowsDesc": "第一行可选当前句、下一句、翻译或罗马音，后面每行可选下一句、翻译或罗马音。第一行不选当前句，就不显示这一句的原文。",
     "subtitleOverlayRowsOne": "单行",
     "subtitleOverlayRowsTwo": "双行",
     "subtitleOverlayRowsThree": "三行",

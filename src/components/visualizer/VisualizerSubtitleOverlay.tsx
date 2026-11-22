@@ -76,9 +76,12 @@ export const resolveVisualizerSubtitleOverlayContent = ({
 
     const line = activeLine ?? recentCompletedLine;
     const previewLines = nextLines.filter((next) => hasReadableText(next.fullText));
+    const layoutRows = getSubtitleOverlayRows(subtitleOverlayLayout);
+    // 第一行就是「下一句」的布局（包括只显示一行的）可以整块只有下一句；跟随行不能顶替当前行缺失的内容。
+    const leadsWithNext = layoutRows[0] === 'next';
     const rows: SubtitleOverlayRow[] = [];
     let nextIndex = 0;
-    for (const source of line ? getSubtitleOverlayRows(subtitleOverlayLayout) : []) {
+    for (const source of line ? layoutRows : []) {
         if (source === 'next') {
             const next = previewLines[nextIndex];
             nextIndex += 1;
@@ -92,8 +95,8 @@ export const resolveVisualizerSubtitleOverlayContent = ({
         rows.push({ key: source, source, text });
     }
     // 'next' rows sit under the line's own rows. With none of those to show (a translation row on a line
-    // without one) the coming lines do not take their place: the layout then has nothing for this line.
-    if (rows.every(row => row.source === 'next')) rows.length = 0;
+    // without one) the coming lines do not take their place, unless the layout's first row is the next line.
+    if (!leadsWithNext && rows.every(row => row.source === 'next')) rows.length = 0;
 
     return {
         shouldRenderOverlay: true,

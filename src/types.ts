@@ -53,9 +53,9 @@ export type SubtitleContentMode = 'translation' | 'romanization' | 'both' | 'non
 export type SubtitleOverlayRowSource = 'current' | 'next' | 'translation' | 'romanization';
 export type SubtitleOverlayFollowRow = Exclude<SubtitleOverlayRowSource, 'current'>;
 // The shared bottom subtitle overlay's rows, top to bottom, joined with '+'.
-// The first row is the current line, its translation or its romanization (so a stack can leave the original text out);
-// each row after it is the next line, the translation or the romanization.
-export type SubtitleOverlayFirstRow = Exclude<SubtitleOverlayRowSource, 'next'>;
+// The first row is the current line, the next line, or the current line's translation or romanization (a single
+// row showing only the coming line is allowed); each row after it is the next line, the translation or the romanization.
+export type SubtitleOverlayFirstRow = SubtitleOverlayRowSource;
 export type SubtitleOverlayRowsLayout =
   | SubtitleOverlayFirstRow
   | `${SubtitleOverlayFirstRow}+${SubtitleOverlayFollowRow}`

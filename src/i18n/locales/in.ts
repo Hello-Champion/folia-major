@@ -3204,7 +3204,7 @@ export default {
     "subtitleContentNone": "Tidak Ada",
     "subtitleContentModeDesc": "Isi subtitle yang ditata sendiri oleh Monet, Pendolo, Lattice, dan Still, serta subtitle harmoni di atas. Subtitle bawah mengikuti pengaturan baris di atas.",
     "subtitleOverlayRows": "Baris Subtitle Bawah",
-    "subtitleOverlayRowsDesc": "Baris pertama bisa baris lirik saat ini, terjemahan, atau romanisasi; tiap baris sesudahnya bisa baris berikutnya, terjemahan, atau romanisasi. Pilih selain baris saat ini untuk baris pertama agar teks asli baris saat ini tidak ditampilkan.",
+    "subtitleOverlayRowsDesc": "Baris pertama bisa baris lirik saat ini, baris berikutnya, terjemahan, atau romanisasi; tiap baris sesudahnya bisa baris berikutnya, terjemahan, atau romanisasi. Pilih selain baris saat ini untuk baris pertama agar teks asli baris saat ini tidak ditampilkan.",
     "subtitleOverlayRowsOne": "Satu",
     "subtitleOverlayRowsTwo": "Dua",
     "subtitleOverlayRowsThree": "Tiga",

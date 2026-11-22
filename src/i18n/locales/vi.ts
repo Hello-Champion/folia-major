@@ -3204,7 +3204,7 @@ export default {
     "subtitleContentNone": "Không hiển thị",
     "subtitleContentModeDesc": "Nội dung phụ đề mà Monet, Pendolo, Lattice và Still tự sắp xếp, cùng phụ đề hòa âm ở trên cùng. Phụ đề dưới hiển thị theo cài đặt số dòng ở trên.",
     "subtitleOverlayRows": "Số dòng phụ đề dưới",
-    "subtitleOverlayRowsDesc": "Dòng đầu có thể là câu hiện tại, bản dịch hoặc phiên âm La-tinh; mỗi dòng sau có thể là câu tiếp theo, bản dịch hoặc phiên âm La-tinh. Chọn nội dung khác câu hiện tại cho dòng đầu để ẩn lời gốc của câu hiện tại.",
+    "subtitleOverlayRowsDesc": "Dòng đầu có thể là câu hiện tại, câu tiếp theo, bản dịch hoặc phiên âm La-tinh; mỗi dòng sau có thể là câu tiếp theo, bản dịch hoặc phiên âm La-tinh. Chọn nội dung khác câu hiện tại cho dòng đầu để ẩn lời gốc của câu hiện tại.",
     "subtitleOverlayRowsOne": "Một",
     "subtitleOverlayRowsTwo": "Hai",
     "subtitleOverlayRowsThree": "Ba",

@@ -3204,7 +3204,7 @@ export default {
     "subtitleContentNone": "None",
     "subtitleContentModeDesc": "What Monet, Pendolo, Lattice and Still show in the subtitle they lay out themselves, and in the harmony subtitle at the top. The bottom subtitle follows the rows above.",
     "subtitleOverlayRows": "Bottom Subtitle Rows",
-    "subtitleOverlayRowsDesc": "The first row can be the current line, the translation or the romanization; each row after it can be the next line, the translation or the romanization. Pick something other than the current line for the first row to leave the current line's original text out.",
+    "subtitleOverlayRowsDesc": "The first row can be the current line, the next line, the translation or the romanization; each row after it can be the next line, the translation or the romanization. Pick something other than the current line for the first row to leave the current line's original text out.",
     "subtitleOverlayRowsOne": "One",
     "subtitleOverlayRowsTwo": "Two",
     "subtitleOverlayRowsThree": "Three",

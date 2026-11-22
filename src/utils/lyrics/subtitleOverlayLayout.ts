@@ -10,10 +10,10 @@ import type {
 // Reads, validates and edits the shared bottom subtitle's row layout (SubtitleOverlayLayout).
 
 export type SubtitleOverlayRowCount = 1 | 2 | 3;
-export type SubtitleOverlaySingleRow = Exclude<SubtitleOverlayRowSource, 'next'>;
+export type SubtitleOverlaySingleRow = SubtitleOverlayRowSource;
 
 /** What the first row can be, alone or on top of a stack. */
-export const SUBTITLE_OVERLAY_SINGLE_ROWS: readonly SubtitleOverlaySingleRow[] = ['current', 'translation', 'romanization'];
+export const SUBTITLE_OVERLAY_SINGLE_ROWS: readonly SubtitleOverlaySingleRow[] = ['current', 'next', 'translation', 'romanization'];
 /** What each row after the first can be. */
 export const SUBTITLE_OVERLAY_FOLLOW_ROWS: readonly SubtitleOverlayFollowRow[] = ['next', 'translation', 'romanization'];
 
