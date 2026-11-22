@@ -62,9 +62,9 @@ describe('resolveBravaisTiltDeg', () => {
         expect(tilt({ variant: 'full', openWidth: 0 })).toBe(0);
     });
 
-    it('follows the angle table regardless of the old collection switch', () => {
-        expect(tilt({ variant: 'full', collectionTilt: false })).toBe(-6);
-        expect(tilt({ variant: 'spine', collectionTilt: false })).toBe(-6);
+    it('straightens the playlist page when 集合页倾斜 is off; posters still lean', () => {
+        expect(tilt({ variant: 'full', collectionTilt: false })).toBe(0);
+        expect(tilt({ variant: 'spine', collectionTilt: false })).toBe(0);
         expect(tilt({ variant: 'poster', collectionTilt: false })).toBe(-10);
         expect(tilt({ variant: 'home', collectionTilt: false })).toBe(-4);
     });

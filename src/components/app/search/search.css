@@ -412,6 +412,11 @@
     background: color-mix(in srgb, var(--search-paper) 88%, transparent);
 }
 
+/* 全局玻璃：结果平面不再铺纸色，和窗口其它玻璃面一样透出后面的背景。 */
+.search-workspace.is-glass .search-plane {
+    background: color-mix(in srgb, var(--search-ink) 5%, transparent);
+}
+
 .search-row {
     position: relative;
     display: flex;
