@@ -1,4 +1,5 @@
 import { OnlineProviderError } from '../../types/onlineMusic';
+import { sharedModuleState } from '../../mods/runtime/sharedModuleState';
 import type { OnlineMusicProvider, OnlineProviderId, ProviderCapabilities } from '../../types/onlineMusic';
 import type { SongResult } from '../../types';
 import { getPlaybackSourceRef } from '../../utils/appPlaybackGuards';
@@ -7,7 +8,16 @@ import { announceCacheLimit } from '../audioCache';
 
 // src/services/onlineMusic/providerRegistry.ts
 
-const providers = new Map<OnlineProviderId, OnlineMusicProvider>();
+// 打包器会把本模块复制进多个 chunk：音源注册进一份、首页与 omni 从另一份读，界面就永远看不到在线音源。
+// 状态按 symbol 放 globalThis，所有副本共用。
+const runtime = sharedModuleState('folia.onlineMusicProviderRegistry', () => ({
+    providers: new Map<OnlineProviderId, OnlineMusicProvider>(),
+    registeredAt: new Map<OnlineProviderId, number>(),
+    registrationCount: 0,
+    orderedProviders: null as OnlineMusicProvider[] | null,
+    registryVersion: 0,
+    registryListeners: new Set<() => void>(),
+}));
 
 /*
  * The order every list of sources follows (Folium 2.0 plan §10, the remaining stages, step 2): the nine built-in
@@ -19,64 +29,64 @@ const providers = new Map<OnlineProviderId, OnlineMusicProvider>();
 const BUILT_IN_SOURCE_ORDER: readonly OnlineProviderId[] = ['netease', 'kugou', 'qq', 'bodian', 'ytm', 'spotify', 'qishui', 'appleMusic', 'fnmusic', 'lxmusic'];
 
 // When each id registered (a later registration of the same id counts anew), for the sources after the nine.
-const registeredAt = new Map<OnlineProviderId, number>();
-let registrationCount = 0;
+
+
 // The ordered list, rebuilt after a change only when someone reads it.
-let orderedProviders: OnlineMusicProvider[] | null = null;
+
 
 const rankOf = (providerId: OnlineProviderId): number => {
     const builtInIndex = BUILT_IN_SOURCE_ORDER.indexOf(providerId);
-    return builtInIndex >= 0 ? builtInIndex : BUILT_IN_SOURCE_ORDER.length + (registeredAt.get(providerId) ?? 0);
+    return builtInIndex >= 0 ? builtInIndex : BUILT_IN_SOURCE_ORDER.length + (runtime.registeredAt.get(providerId) ?? 0);
 };
 
 // Folium mods register and remove providers at runtime, after the UI first read the list. The version
 // lets that UI (through omni, see useOnlineProviderPlatform) notice instead of keeping a stale list.
-let registryVersion = 0;
-const registryListeners = new Set<() => void>();
+
+
 
 const announceRegistryChange = () => {
-    orderedProviders = null;
-    registryVersion += 1;
-    registryListeners.forEach(listener => listener());
+    runtime.orderedProviders = null;
+    runtime.registryVersion += 1;
+    runtime.registryListeners.forEach(listener => listener());
 };
 
 export const registerOnlineMusicProvider = (provider: OnlineMusicProvider): void => {
     // `?noSources` (dev only): none of the nine built-in platforms is registered (their source mods, and the web build's
     // registerWebSources), to see the app with no platform at all.
     if (startsWithoutSources && BUILT_IN_SOURCE_ORDER.includes(provider.id)) return;
-    if (!providers.has(provider.id)) {
-        registrationCount += 1;
-        registeredAt.set(provider.id, registrationCount);
+    if (!runtime.providers.has(provider.id)) {
+        runtime.registrationCount += 1;
+        runtime.registeredAt.set(provider.id, runtime.registrationCount);
     }
-    providers.set(provider.id, provider);
+    runtime.providers.set(provider.id, provider);
     announceRegistryChange();
 };
 
 export const unregisterOnlineMusicProvider = (providerId: OnlineProviderId): void => {
-    if (!providers.delete(providerId)) return;
-    registeredAt.delete(providerId);
+    if (!runtime.providers.delete(providerId)) return;
+    runtime.registeredAt.delete(providerId);
     announceRegistryChange();
 };
 
 /** Bumped by every registration and removal. */
-export const getOnlineMusicProviderRegistryVersion = (): number => registryVersion;
+export const getOnlineMusicProviderRegistryVersion = (): number => runtime.registryVersion;
 
 /** Calls `listener` after every registration and removal; returns the unsubscribe function. */
 export const subscribeOnlineMusicProviderRegistry = (listener: () => void): (() => void) => {
-    registryListeners.add(listener);
+    runtime.registryListeners.add(listener);
     return () => {
-        registryListeners.delete(listener);
+        runtime.registryListeners.delete(listener);
     };
 };
 
 export const getOnlineMusicProvider = (providerId: OnlineProviderId): OnlineMusicProvider | null => (
-    providers.get(providerId) || null
+    runtime.providers.get(providerId) || null
 );
 
 /** The registered sources in the order the lists show them (BUILT_IN_SOURCE_ORDER above); a fresh array each call. */
 export const listOnlineMusicProviders = (): OnlineMusicProvider[] => {
-    orderedProviders ??= Array.from(providers.values()).sort((a, b) => rankOf(a.id) - rankOf(b.id));
-    return orderedProviders.slice();
+    runtime.orderedProviders ??= Array.from(runtime.providers.values()).sort((a, b) => rankOf(a.id) - rankOf(b.id));
+    return runtime.orderedProviders.slice();
 };
 
 /**
@@ -84,7 +94,7 @@ export const listOnlineMusicProviders = (): OnlineMusicProvider[] => {
  * registered sources by registration, then the ids not registered now (a source mod switched off), as given.
  */
 export const sortOnlineMusicSourceIds = (ids: readonly OnlineProviderId[]): OnlineProviderId[] => {
-    const rank = (id: OnlineProviderId) => (BUILT_IN_SOURCE_ORDER.includes(id) || providers.has(id) ? rankOf(id) : Number.POSITIVE_INFINITY);
+    const rank = (id: OnlineProviderId) => (BUILT_IN_SOURCE_ORDER.includes(id) || runtime.providers.has(id) ? rankOf(id) : Number.POSITIVE_INFINITY);
     return [...ids].sort((a, b) => {
         const left = rank(a);
         const right = rank(b);

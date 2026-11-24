@@ -1,4 +1,5 @@
 import { readStoredString, setStoredString } from '../../stores/storagePrimitives';
+import { sharedModuleState } from '../../mods/runtime/sharedModuleState';
 import { LYRIC_SOURCES } from '../../utils/lyrics/lyricSources';
 import { getSourceDeclaration, listSourceDeclarations, subscribeSourceDeclarations, type SourceDeclaration } from './sourceDeclarations';
 
@@ -13,28 +14,31 @@ export type SourceState = 'enabled' | 'matching' | 'disabled';
 
 const SOURCE_STATE_VALUES: readonly SourceState[] = ['enabled', 'matching', 'disabled'];
 
-let states: Readonly<Record<string, SourceState>> = Object.freeze({});
-// Bumped by every real change of the table, for the lists that follow it (omni's provider lists).
-let statesVersion = 0;
-const listeners = new Set<() => void>();
+const runtime = sharedModuleState('folia.sourceStates', () => ({
+    states: Object.freeze({}) as Readonly<Record<string, SourceState>>,
+    statesVersion: 0,
+    listeners: new Set<() => void>(),
+}));
+
+
 
 /** The state of `sourceId`: its record, or 'enabled' without one. */
-export const getSourceState = (sourceId: string): SourceState => states[sourceId] ?? 'enabled';
+export const getSourceState = (sourceId: string): SourceState => runtime.states[sourceId] ?? 'enabled';
 
 /** The whole table as last handed in (only the sources that have a record, or that the main process listed). */
-export const getSourceStates = (): Readonly<Record<string, SourceState>> => states;
+export const getSourceStates = (): Readonly<Record<string, SourceState>> => runtime.states;
 
-/** Replaces the table; anything that is not one of the three states is left out. Listeners hear a real change. */
+/** Replaces the table; anything that is not one of the three runtime.states is left out. Listeners hear a real change. */
 export const setSourceStates = (next: Readonly<Record<string, unknown>> | null | undefined): void => {
     const cleaned: Record<string, SourceState> = {};
     Object.entries(next ?? {}).forEach(([sourceId, state]) => {
         if (SOURCE_STATE_VALUES.includes(state as SourceState)) cleaned[sourceId] = state as SourceState;
     });
-    const before = JSON.stringify(states);
-    states = Object.freeze(cleaned);
-    if (JSON.stringify(states) === before) return;
-    statesVersion += 1;
-    listeners.forEach((listener) => {
+    const before = JSON.stringify(runtime.states);
+    runtime.states = Object.freeze(cleaned);
+    if (JSON.stringify(runtime.states) === before) return;
+    runtime.statesVersion += 1;
+    runtime.listeners.forEach((listener) => {
         try {
             listener();
         } catch (error) {
@@ -44,13 +48,13 @@ export const setSourceStates = (next: Readonly<Record<string, unknown>> | null |
 };
 
 /** Bumped by every real change of the table. */
-export const getSourceStatesVersion = (): number => statesVersion;
+export const getSourceStatesVersion = (): number => runtime.statesVersion;
 
 /** Calls `listener` whenever the table changes; returns the function that stops it. */
 export const subscribeSourceStates = (listener: () => void): (() => void) => {
-    listeners.add(listener);
+    runtime.listeners.add(listener);
     return () => {
-        listeners.delete(listener);
+        runtime.listeners.delete(listener);
     };
 };
 
@@ -65,7 +69,7 @@ export const subscribeSourceStates = (listener: () => void): (() => void) => {
  *
  * A switched-off source mod is not loaded and declares nothing: what it declared the last time it ran in this window
  * is remembered (`folia.sources.matchOnly`), so "Settings → Sources" and the command palette still offer it the
- * three states and it can go straight from disabled to used only for matching. One that never ran here has no
+ * three runtime.states and it can go straight from disabled to used only for matching. One that never ran here has no
  * answer until it is enabled once.
  */
 export const canSourceMatchOnly = (sourceId: string): boolean => {
@@ -118,7 +122,7 @@ const rememberDeclaredMatchOnly = () => {
     try {
         setStoredString(MATCH_ONLY_KEY, JSON.stringify(remembered));
     } catch {
-        // Without storage a switched-off source only offers the three states again once it is loaded.
+        // Without storage a switched-off source only offers the three runtime.states again once it is loaded.
     }
 };
 

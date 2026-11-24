@@ -1,4 +1,5 @@
 import { getOnlineMusicProvider, subscribeOnlineMusicProviderRegistry } from './providerRegistry';
+import { sharedModuleState } from '../../mods/runtime/sharedModuleState';
 import { getSourceState, subscribeSourceStates } from './sourceStates';
 
 // src/services/onlineMusic/sourceReadiness.ts
@@ -9,14 +10,14 @@ import { getSourceState, subscribeSourceStates } from './sourceStates';
 // the source mods' clients have started (or the first screen's 3 s for them ran out) and the source states have
 // arrived. Until then, and where there is no mod runtime (the web build, tests), it is settled from the start.
 
-let settled: Promise<void> = Promise.resolve();
+const runtime = sharedModuleState('folia.sourceReadiness', () => ({ settled: Promise.resolve() as Promise<void> }));
 
 /** Resolves once the built-in platforms are registered, or have given up (it never rejects). */
-export const builtinSourcesSettled = (): Promise<void> => settled;
+export const builtinSourcesSettled = (): Promise<void> => runtime.settled;
 
 /** Replaces what `builtinSourcesSettled` waits for. A rejection counts as settled. */
 export const setBuiltinSourcesSettled = (promise: Promise<unknown>): void => {
-    settled = promise.then(() => undefined, () => undefined);
+    runtime.settled = promise.then(() => undefined, () => undefined);
 };
 
 /** The longest `sourceRegistered` waits: past the first screen's cap, for a client that starts slowly. */

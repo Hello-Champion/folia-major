@@ -25,6 +25,10 @@ const MARKS = [
     { label: 'omni service', marker: 'omni-unavailable-in-', shared: 'folia.foliumOmniService' },
     { label: 'account service', marker: 'account-unavailable-in-', shared: 'folia.foliumAccount' },
     { label: 'secrets bridge', marker: 'secret fields could not be declared', shared: 'folia.foliumSecrets' },
+    { label: 'online provider registry', marker: 'is not registered: ', shared: 'folia.onlineMusicProviderRegistry' },
+    { label: 'source states', marker: 'sourceStates] a listener failed', shared: 'folia.sourceStates' },
+    { label: 'source declarations', marker: 'sourceDeclarations] a listener failed', shared: 'folia.sourceDeclarations' },
+    { label: 'source readiness', marker: 'folia.sourceReadiness', shared: 'folia.sourceReadiness' },
 ];
 
 if (!existsSync(ASSETS)) {

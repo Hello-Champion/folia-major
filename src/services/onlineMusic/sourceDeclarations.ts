@@ -1,4 +1,5 @@
 import type { OnlineProviderId } from '../../types/onlineMusic';
+import { sharedModuleState } from '../../mods/runtime/sharedModuleState';
 
 // src/services/onlineMusic/sourceDeclarations.ts
 // What a source declares for the features that ask a platform other than the song's own (Folium 2.0 plan §4.7):
@@ -22,10 +23,13 @@ export interface SourceDeclaration {
     checksAvailability: boolean;
 }
 
-const declarations = new Map<OnlineProviderId, SourceDeclaration>();
-const listeners = new Set<() => void>();
+const runtime = sharedModuleState('folia.sourceDeclarations', () => ({
+    declarations: new Map<OnlineProviderId, SourceDeclaration>(),
+    listeners: new Set<() => void>(),
+}));
 
-const announce = () => listeners.forEach((listener) => {
+
+const announce = () => runtime.listeners.forEach((listener) => {
     try {
         listener();
     } catch (error) {
@@ -36,25 +40,25 @@ const announce = () => listeners.forEach((listener) => {
 /** Declares (or declares anew, in place) what `sourceId` does; returns the function that takes it back. */
 export const declareSource = (sourceId: OnlineProviderId, declaration: SourceDeclaration): (() => void) => {
     const frozen = Object.freeze({ ...declaration });
-    declarations.set(sourceId, frozen);
+    runtime.declarations.set(sourceId, frozen);
     announce();
     return () => {
-        if (declarations.get(sourceId) !== frozen) return;
-        declarations.delete(sourceId);
+        if (runtime.declarations.get(sourceId) !== frozen) return;
+        runtime.declarations.delete(sourceId);
         announce();
     };
 };
 
 /** What `sourceId` declared; undefined for a source that declared nothing (a built-in platform, one not there). */
-export const getSourceDeclaration = (sourceId: OnlineProviderId): SourceDeclaration | undefined => declarations.get(sourceId);
+export const getSourceDeclaration = (sourceId: OnlineProviderId): SourceDeclaration | undefined => runtime.declarations.get(sourceId);
 
 /** The sources that declared, in the order they first did. */
-export const listSourceDeclarations = (): Array<[OnlineProviderId, SourceDeclaration]> => Array.from(declarations.entries());
+export const listSourceDeclarations = (): Array<[OnlineProviderId, SourceDeclaration]> => Array.from(runtime.declarations.entries());
 
 /** Calls `listener` after every change; returns the function that stops it. */
 export const subscribeSourceDeclarations = (listener: () => void): (() => void) => {
-    listeners.add(listener);
+    runtime.listeners.add(listener);
     return () => {
-        listeners.delete(listener);
+        runtime.listeners.delete(listener);
     };
 };
