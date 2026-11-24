@@ -1935,7 +1935,6 @@ export default {
     "selectionCount_other": "已选 {{count}} 个模组",
     "batchEnable": "批量启用",
     "batchDisable": "批量禁用",
-    "uninstallKeptBuiltIn": "已删除你自己安装的那份，列表里剩下的是应用自带的内置版本。",
     "runCommand": "执行",
     "exporting": "正在导出",
     "running": "运行中",

@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { ChevronRight, ExternalLink, Filter, ListFilter, Loader2, MoreHorizontal, Search, Trash2, X } from 'lucide-react';
+import { ChevronRight, ExternalLink, Filter, ListFilter, Loader2, MoreHorizontal, Search, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { Theme } from '@/types';
 import { Menu, type MenuItem } from '../../components/modal/settings/kit';
@@ -9,7 +9,7 @@ import type { ModMarketCategory, ModMarketProgress } from '../types';
 import type { ModManagerClasses } from '../manager/modManagerClasses';
 import type { ModViewItem, ModsSection, ModsSort } from './marketModel';
 import { MODS_QUERY_FILTERS, toggleModsQueryToken } from './modsQuery';
-import { canUninstall, primaryActionOf } from './modActions';
+import { primaryActionOf } from './modActions';
 import { ModListEntry } from './ModListEntry';
 import type { ModOps } from './ModsWorkbench';
 
@@ -28,7 +28,6 @@ const EntryAction: React.FC<{ item: ModViewItem; progress: ModMarketProgress | n
     const { t } = useTranslation();
     const busy = Boolean(progress && progress.phase !== 'error' && progress.phase !== 'done');
     const action = primaryActionOf(item, busy);
-    const body = (() => {
     switch (action.kind) {
         case 'open': return (
             <button type="button" className={ICON_BUTTON} title={t('mods.view.openRepository')} aria-label={t('mods.view.openRepository')} onClick={() => { void openOutsideLink(action.url); }}>
@@ -52,24 +51,6 @@ const EntryAction: React.FC<{ item: ModViewItem; progress: ModMarketProgress | n
         ) : null;
         default: return null;
     }
-    })();
-    // 用户要的：可卸载的模组在每一行都有一个删除键，不必先点开详情。
-    return (
-        <span className="flex items-center gap-1">
-            {body}
-            {canUninstall(item) && !busy ? (
-                <button
-                    type="button"
-                    className={ICON_BUTTON}
-                    title={t('mods.view.uninstall')}
-                    aria-label={t('mods.view.uninstall')}
-                    onClick={() => ops.uninstall(item.id)}
-                >
-                    <Trash2 size={14} />
-                </button>
-            ) : null}
-        </span>
-    );
 };
 
 type ModsSidebarProps = {

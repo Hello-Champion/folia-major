@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { AlertCircle, Boxes, CheckSquare, CircleCheck, CloudOff, Download, ExternalLink, FolderOpen, Power, RefreshCw, Store, Trash2, TriangleAlert, Upload, X } from 'lucide-react';
+import { AlertCircle, Boxes, CheckSquare, CircleCheck, CloudOff, Download, ExternalLink, FolderOpen, Power, RefreshCw, Store, TriangleAlert, Upload, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { Theme } from '@/types';
 import { DEFAULT_THEME } from '@/services/baseThemes';
@@ -16,7 +16,6 @@ import type { ModManagerClasses } from '../manager/modManagerClasses';
 import type { ModNotice } from '../manager/ModStorageUsage';
 import { useModMarketStore } from './useModMarketStore';
 import { buildModViewItems, isEmptyModsQuery, searchModViewItems, sectionModViewItems, type ModViewItem, type ModsSort } from './marketModel';
-import { canUninstall } from './modActions';
 import { parseModsQuery } from './modsQuery';
 import { ModsSidebar } from './ModsSidebar';
 import { ModDetailPane } from './ModDetailPane';
@@ -174,13 +173,7 @@ export const ModsWorkbench: React.FC<ModsWorkbenchProps> = ({ classes, isDayligh
                 })();
             },
             uninstall: (modId) => {
-                void market().uninstall(modId).then((answer) => {
-                    // 删掉的是用户装的那份、随应用附带的内置版还在时，列表里仍会有这个 id：说清楚。
-                    const keptBuiltIn = Boolean(answer.ok) && useModsStore.getState().mods.some((mod) => mod.id === modId);
-                    report(answer, 'uninstall-failed', keptBuiltIn
-                        ? t('mods.uninstallKeptBuiltIn', { count: 1 })
-                        : t('mods.view.uninstalled', { id: modId }));
-                });
+                void market().uninstall(modId).then((answer) => report(answer, 'uninstall-failed', t('mods.view.uninstalled', { id: modId })));
             },
             toggle: (modId, enabled) => {
                 void toggleMod(modId, enabled).then((answer) => report(answer, 'enable-failed'));
@@ -220,15 +213,6 @@ export const ModsWorkbench: React.FC<ModsWorkbenchProps> = ({ classes, isDayligh
         setSelectionMode((on) => !on);
         setCheckedIds(new Set());
     }
-
-    /** 批量删除：只删主进程说可卸载的；每个模组仍会在原生对话框里确认。 */
-    const applyUninstallBatch = async () => {
-        for (const item of items) {
-            if (!checkedIds.has(item.id) || !canUninstall(item)) continue;
-            const answer = await useModMarketStore.getState().uninstall(item.id);
-            report(answer, 'uninstall-failed', t('mods.view.uninstalled', { id: item.id }));
-        }
-    };
 
     const applyBatch = async (enabled: boolean) => {
         for (const modId of checkedIds) {
@@ -327,7 +311,6 @@ export const ModsWorkbench: React.FC<ModsWorkbenchProps> = ({ classes, isDayligh
                     <span className="flex items-center gap-1">
                         <button type="button" disabled={checkedIds.size === 0} onClick={() => { void applyBatch(true); }} className="rounded-md px-2 py-0.5 text-[11.5px] text-[color:var(--st-t1)] hover:bg-[var(--st-fill2)] disabled:opacity-40">{t('mods.batchEnable')}</button>
                         <button type="button" disabled={checkedIds.size === 0} onClick={() => { void applyBatch(false); }} className="rounded-md px-2 py-0.5 text-[11.5px] text-[color:var(--st-t1)] hover:bg-[var(--st-fill2)] disabled:opacity-40">{t('mods.batchDisable')}</button>
-                        <button type="button" disabled={checkedIds.size === 0} onClick={() => { void applyUninstallBatch(); }} className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11.5px] text-[color:var(--st-err)] hover:bg-[var(--st-fill2)] disabled:opacity-40"><Trash2 size={11} />{t('mods.view.uninstall')}</button>
                         <button type="button" onClick={toggleSelectionMode} className="rounded-md px-2 py-0.5 text-[11.5px] text-[color:var(--st-t2)] hover:bg-[var(--st-fill2)]">{t('mods.selectionCancel')}</button>
                     </span>
                 </div>

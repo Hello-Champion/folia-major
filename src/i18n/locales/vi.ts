@@ -1935,7 +1935,6 @@ export default {
     "selectionCount_other": "Đã chọn {{count}} mod",
     "batchEnable": "Bật",
     "batchDisable": "Tắt",
-    "uninstallKeptBuiltIn": "Đã xóa bản bạn tự cài; bản còn trong danh sách là bản đi kèm ứng dụng.",
     "runCommand": "Chạy",
     "exporting": "Đang xuất",
     "running": "Đang chạy",
