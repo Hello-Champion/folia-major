@@ -87,7 +87,7 @@ const PonderSlotPickerSurface: React.FC<PonderSurfaceProps> = ({ accent, line, o
         <div className="absolute inset-0 flex flex-col p-[5%]" data-ponder-slot-picker>
             <span className="mb-[4%] h-1 w-[28%] rounded-full opacity-60" style={{ backgroundColor: line }} />
             <div className="grid min-h-0 flex-1 grid-cols-4 gap-[3%]">
-                {PLAYER_CONTROL_SLOT_OPTIONS.map(option => {
+                {PLAYER_CONTROL_SLOT_OPTIONS.filter(option => option.id !== 'hidden').map(option => {
                     const Icon = option.icon;
                     const isCurrent = option.id === primaryId;
                     return (
