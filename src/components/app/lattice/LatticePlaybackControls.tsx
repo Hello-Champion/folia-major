@@ -81,6 +81,7 @@ export default function LatticePlaybackControls({
                     // 轨道默认就画深一些，不靠悬浮加深（与同一排的图标一致）。
                     trackColor="color-mix(in srgb, var(--lattice-chrome-ink) 40%, transparent)"
                     disabled={!canControlCurrent}
+                    chorusMarker={canControlCurrent}
                     edgeStyle="square"
                 />
             </div>

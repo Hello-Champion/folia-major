@@ -63,10 +63,6 @@ export const SETTINGS_ANCHOR_DEFINITIONS = {
     customShortcut: { section: 'interaction' },
     globalShortcuts: { section: 'interaction' },
 
-    // pages/ModsPage
-    modSystem: { section: 'mods' },
-    modList: { section: 'mods' },
-
     // pages/IntegrationPage — the desktop app and the web build draw stage mode with different
     // rows; it is one destination.
     discordRichPresence: { section: 'integration' },
@@ -93,6 +89,7 @@ export const SETTINGS_ANCHOR_DEFINITIONS = {
     // pages/RemotePage (desktop app only)
     remoteControl: { section: 'remote' },
     remoteLyrics: { section: 'remote' },
+    alphaVideoExport: { section: 'remote' },
 
     // pages/GraphicsPage; the render GPU row only in the Windows desktop app.
     graphicsPerformance: { section: 'graphics' },
@@ -100,9 +97,14 @@ export const SETTINGS_ANCHOR_DEFINITIONS = {
     gpuPreference: { section: 'graphics' },
     lyricRenderScale: { section: 'graphics' },
 
-    // 用户功能：底部控制条与全局玻璃的调节区。
-    playerBottomBarGlass: { section: 'player' },
-    globalGlassSettings: { section: 'general' },
+    // pages/SourcesPage (desktop app only)
+    sourceList: { section: 'sources' },
+    sourceInstall: { section: 'sources' },
+    sourceOther: { section: 'sources' },
+
+    // pages/ModsPage
+    modSystem: { section: 'mods' },
+    modList: { section: 'mods' },
 } as const satisfies Record<string, { section: SettingsSubviewId }>;
 
 export type SettingsAnchorId = keyof typeof SETTINGS_ANCHOR_DEFINITIONS;

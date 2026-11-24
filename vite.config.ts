@@ -4,6 +4,7 @@ import { type ConfigEnv, type UserConfig, type ViteDevServer } from 'vite';
 import react from '@vitejs/plugin-react';
 import { commandPinyinPlugin } from './dev/pinyin/commandPinyinPlugin.mjs';
 import { traditionalLocalePlugin } from './dev/i18n/traditionalLocalePlugin.mjs';
+import { webSourcePlugin } from './dev/sources/webSourcePlugin.mjs';
 import { icuFoliaDataPlugin } from './dev/icuFolia/icuFoliaDataPlugin.mjs';
 import { nebbiaStrokesPlugin } from './dev/nebbia/nebbiaStrokesPlugin.mjs';
 import { normalizeBuildCommit, resolveBuildKind, resolveBuildRepo, resolveDevBuildKindOverride } from './dev/build/buildIdentity.mjs';
@@ -257,9 +258,7 @@ export default async function viteConfig(_config: ConfigEnv): Promise<UserConfig
       },
     },
     server: {
-      // 5173（Vite 默认）而非 3000：Mineradio 桌面版会占 3000 端口，Windows 下 localhost 优先命中它，
-      // 导致 Electron dev 窗口加载到 Mineradio 页面（开屏卡住的根因之一）。
-      port: 5173,
+      port: 3000,
       host: '0.0.0.0',
       watch: {
         // Build output and model weights are not sources, and watching them breaks packaging: the
@@ -270,13 +269,16 @@ export default async function viteConfig(_config: ConfigEnv): Promise<UserConfig
         // .claude holds the git worktrees of parallel sessions, each a full checkout of the repo:
         // watched, they cost one handle per file (hundreds of thousands on Windows), and setting
         // those up starves the dev server for minutes before it answers the first page.
-        ignored: ['**/release/**', '**/models/**', '**/.claude/**'],
+        // dist-mods/ is the build output of the source mods (dev/sources/build.mjs --watch rewrites it); the app's
+        // main process reloads it, the page never imports it.
+        ignored: ['**/release/**', '**/models/**', '**/.claude/**', '**/dist-mods/**'],
       },
     },
     plugins: [
       devLyricProxyPlugin(),
       commandPinyinPlugin(),
       traditionalLocalePlugin(),
+      webSourcePlugin(),
       icuFoliaDataPlugin(),
       nebbiaStrokesPlugin(),
       react(),
@@ -284,10 +286,7 @@ export default async function viteConfig(_config: ConfigEnv): Promise<UserConfig
         registerType: 'autoUpdate',
         includeAssets: ['icon.svg'],
         devOptions: {
-          // Electron dev 加载 localhost 页面时会注册 dev SW：SW 把 index.html 打进 precache 并拦截 `/`
-          // 导航（缓存命中不回源），dev server 重启或尚未 ready 的间隙会用旧缓存兜底，模块请求全部 404，
-          // 页面就永远卡在首屏开屏。SW 是 Web/PWA 部署的能力，桌面 Electron 用不到，只在纯浏览器 dev 下保留。
-          enabled: process.env.ELECTRON_DEV !== 'true' && process.env.ELECTRON !== 'true',
+          enabled: true
         },
         workbox: {
           maximumFileSizeToCacheInBytes: 5000000,
@@ -342,8 +341,10 @@ export default async function viteConfig(_config: ConfigEnv): Promise<UserConfig
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
+        // 音源模组共用的纯函数（packages/folium-source-kit），宿主和 sources/ 都从包的入口取。
+        '@folia/folium-source-kit': path.resolve(__dirname, './packages/folium-source-kit/src/index.ts'),
       },
-      // One React instance for the whole bundle. Two copies would each have their own hooks dispatcher.
+      // One React instance for the whole bundle: two copies each carry their own hooks dispatcher.
       dedupe: ['react', 'react-dom', 'scheduler'],
     }
   };

@@ -4,6 +4,7 @@ import {
     clearModCache,
     getFfmpegStatus,
     getModStorageUsage,
+    installModFromPickedZip,
     installModFromZip,
     isModsBridgeAvailable,
     listMods,
@@ -13,7 +14,6 @@ import {
     subscribeExportProgress,
     subscribeModLogs,
     subscribeModsState,
-    uninstallMod,
 } from './ipc';
 import type {
     ModClearCacheResult,
@@ -26,6 +26,7 @@ import type {
 } from './types';
 import { reconcileFoliumClients } from './runtime/clientLoader';
 import { restoreSavedFoliumSelections } from './runtime/missingEntries';
+import { stopPlaybackOfSources } from './runtime/sourceSwitches';
 
 // src/mods/useModsStore.ts
 // Renderer-side state for the mod system panel. All mutations flow through the
@@ -56,7 +57,8 @@ interface ModsStoreState {
     cancelActiveExport: () => Promise<void>;
     openModsDirectory: () => Promise<{ ok: boolean; directory?: string; error?: string }>;
     installModFromZip: (zipPath: string) => Promise<{ ok: boolean; id?: string; error?: string }>;
-    uninstallMod: (modId: string) => Promise<ModSetEnabledResult>;
+    /** 「从 zip 安装音源模组」: the main process asks for the file. */
+    installModFromPickedZip: () => Promise<{ ok: boolean; id?: string; error?: string }>;
     getModStorageUsage: (modId: string) => Promise<ModStorageUsageResult>;
     clearModCache: (modId: string) => Promise<ModClearCacheResult>;
     bindEvents: () => void;
@@ -75,18 +77,15 @@ export const useModsStore = create<ModsStoreState>((set, get) => ({
 
     refresh: async () => {
         const payload = await listMods();
-        set((state) => {
-            const selectedModId = state.selectedModId ?? payload.mods[0]?.id ?? null;
-            return {
-                mods: payload.mods,
-                ffmpeg: payload.ffmpeg,
-                directories: payload.directories,
-                startSkipped: payload.startSkipped,
-                selectedModId: payload.mods.some((mod) => mod.id === selectedModId)
-                    ? selectedModId
-                    : payload.mods[0]?.id ?? null,
-            };
-        });
+        // The chosen mod stays chosen while it is listed; nothing is chosen for the user (the mods view picks
+        // what it shows when wide, and shows the list when narrow).
+        set((state) => ({
+            mods: payload.mods,
+            ffmpeg: payload.ffmpeg,
+            directories: payload.directories,
+            startSkipped: payload.startSkipped,
+            selectedModId: payload.mods.some((mod) => mod.id === state.selectedModId) ? state.selectedModId : null,
+        }));
     },
 
     refreshFfmpeg: async () => {
@@ -104,6 +103,9 @@ export const useModsStore = create<ModsStoreState>((set, get) => ({
     // outcome the panel surfaces; the mod list is only replaced when the call
     // actually returned one (a declined confirmation returns the current list).
     toggleMod: async (modId, enabled) => {
+        // Folium 2.0 (plan §5.2): a source mod that is about to stop has its playing song stopped first.
+        const sourceIds = get().mods.find((mod) => mod.id === modId)?.sources?.map((source) => source.id) ?? [];
+        if (!enabled && sourceIds.length > 0) await stopPlaybackOfSources(sourceIds);
         const result = await setModEnabled(modId, enabled);
         if (result.mods.length > 0 || result.ok) {
             set({ mods: result.mods });
@@ -128,16 +130,9 @@ export const useModsStore = create<ModsStoreState>((set, get) => ({
         return result;
     },
 
-    uninstallMod: async (modId) => {
-        const result = await uninstallMod(modId);
+    installModFromPickedZip: async () => {
+        const result = await installModFromPickedZip();
         if (result.ok) {
-            // Mirror even an empty list: deleting the last mod leaves nothing.
-            set((state) => ({
-                mods: result.mods,
-                selectedModId: state.selectedModId === modId ? null : state.selectedModId,
-            }));
-        } else {
-            // A failed call may come back without a list; resync instead of blanking the panel.
             await get().refresh();
         }
         return result;
