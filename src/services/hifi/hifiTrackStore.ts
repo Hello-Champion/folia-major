@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../../mods/runtime/sharedModuleState';
 import type { SongResult } from '../../types';
 import type { HifiErrorCode, HifiSourceSpec } from '../../types/hifi';
 import { createHifiClock, type HifiClockSync } from './hifiClock';
@@ -53,7 +54,7 @@ export type HifiTrackStoreState = {
 
 const EMPTY_TRACK_STATE: HifiTrackStoreState = { current: null, loadState: 'idle', loadError: null, sourceSpec: null, next: null };
 
-export const useHifiTrackStore = create<HifiTrackStoreState>(() => ({ ...EMPTY_TRACK_STATE }));
+export const useHifiTrackStore = sharedModuleState('folia.store.src/services/hifi/hifiTrackStore.ts#useHifiTrackStore', () => create<HifiTrackStoreState>(() => ({ ...EMPTY_TRACK_STATE })));
 
 /** mpv 位置的外推时钟：可视化、歌词和 shim 的 currentTime 都读它。 */
 export const hifiPlaybackClock = createHifiClock();

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 import { getStoredBoolean, getStoredString, setStoredBoolean, setStoredString } from './storagePrimitives';
 
 // src/stores/useLatticeSettingsStore.ts
@@ -95,7 +96,7 @@ export type LatticeSettingsState = {
     setWallToolsQuickOrder: (ids: readonly string[]) => void;
 };
 
-export const useLatticeSettingsStore = create<LatticeSettingsState>(set => ({
+export const useLatticeSettingsStore = sharedModuleState('folia.store.src/stores/useLatticeSettingsStore.ts#useLatticeSettingsStore', () => create<LatticeSettingsState>(set => ({
     latticeVignette: getStoredBoolean(LATTICE_VIGNETTE_KEY, true),
     autoFocusOnSongChange: getStoredBoolean(LATTICE_AUTO_FOCUS_ON_SONG_CHANGE_KEY, true),
     latticeLightsOn: getStoredBoolean(LATTICE_LIGHTS_ON_KEY, true),
@@ -159,4 +160,4 @@ export const useLatticeSettingsStore = create<LatticeSettingsState>(set => ({
         set({ wallToolsQuickOrder: next });
         setStoredString(WALL_TOOLS_QUICK_ORDER_KEY, JSON.stringify(next));
     },
-}));
+})));

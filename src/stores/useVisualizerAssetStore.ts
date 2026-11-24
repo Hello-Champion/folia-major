@@ -1,3 +1,4 @@
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 // src/stores/useVisualizerAssetStore.ts
 // User-supplied visualizer assets: the cappella emoji/avatar packs and the monet background /
 // portrait images, plus the loading flags their restore paths set.
@@ -42,7 +43,7 @@ export type VisualizerAssetState = {
     setIsLoadingMonetPortraitImage: (loading: boolean) => void;
 };
 
-export const useVisualizerAssetStore = create<VisualizerAssetState>((set, get) => ({
+export const useVisualizerAssetStore = sharedModuleState('folia.store.src/stores/useVisualizerAssetStore.ts#useVisualizerAssetStore', () => create<VisualizerAssetState>((set, get) => ({
     storedCappellaEmojiPack: [],
     cappellaCustomEmojiImages: [],
     isLoadingCappellaCustomEmojiPack: true,
@@ -67,7 +68,7 @@ export const useVisualizerAssetStore = create<VisualizerAssetState>((set, get) =
     setStoredMonetPortraitImage: (image) => set({ storedMonetPortraitImage: image }),
     setMonetPortraitImage: (image) => set({ monetPortraitImage: image }),
     setIsLoadingMonetPortraitImage: (loading) => set({ isLoadingMonetPortraitImage: loading }),
-}));
+})));
 
 /** The asset half of the former settings snapshot, for the settings surfaces that edit them. */
 export const selectVisualizerAssetSnapshot = (state: VisualizerAssetState) => ({

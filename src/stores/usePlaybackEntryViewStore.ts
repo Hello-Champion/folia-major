@@ -1,3 +1,4 @@
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 // src/stores/usePlaybackEntryViewStore.ts
 // Which surface a "play this song" action lands on, plus the one-time prompt that asks for it.
 //
@@ -89,7 +90,7 @@ export type PlaybackEntryViewState = {
     dismissLatticeFmNotice: () => void;
 };
 
-export const usePlaybackEntryViewStore = create<PlaybackEntryViewState>((set, get) => ({
+export const usePlaybackEntryViewStore = sharedModuleState('folia.store.src/stores/usePlaybackEntryViewStore.ts#usePlaybackEntryViewStore', () => create<PlaybackEntryViewState>((set, get) => ({
     playbackEntryView: readEntryView(),
     hasChosenPlaybackEntryView: getStoredBoolean(ENTRY_VIEW_CHOSEN_KEY, false),
     hasSeenLibrarySuitePrompt: getStoredBoolean(LIBRARY_SUITE_PROMPT_SEEN_KEY, false),
@@ -130,7 +131,7 @@ export const usePlaybackEntryViewStore = create<PlaybackEntryViewState>((set, ge
     // while still on screen, which is what restarts the dismissal timer.
     showLatticeFmNotice: () => set({ latticeFmNoticeToken: Date.now() }),
     dismissLatticeFmNotice: () => set({ latticeFmNoticeToken: 0 }),
-}));
+})));
 
 /** Module-level handle for the assembly layer; it is an action, so it needs no subscription. */
 export const requestPlaybackEntryViewPrompt = (options?: StartupPromptOptions) => (

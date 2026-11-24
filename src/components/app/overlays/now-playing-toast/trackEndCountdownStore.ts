@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../../../../mods/runtime/sharedModuleState';
 
 // src/components/app/overlays/now-playing-toast/trackEndCountdownStore.ts
 // Whether the now playing card is previewing the queue's next track at a plain track end (a blend
@@ -25,14 +26,14 @@ export const isInTrackEndCountdown = ({ enabled, duration, time }: TrackEndCount
     && duration - time <= NEXT_UP_LEAD_SEC;
 
 /** Written by TrackEndCountdownHost, read by AppOverlays. */
-export const useTrackEndCountdownStore = create<{
+export const useTrackEndCountdownStore = sharedModuleState('folia.store.src/components/app/overlays/now-playing-toast/trackEndCountdownStore.ts#useTrackEndCountdownStore', () => create<{
     active: boolean;
     setActive: (active: boolean) => void;
 }>((set) => ({
     active: false,
     // Returning the state it was given tells zustand nothing changed: no subscriber is called.
     setActive: (active) => set(state => (state.active === active ? state : { active })),
-}));
+})));
 
 type NextUpCard = { nextUp?: unknown; isNextUp?: boolean };
 

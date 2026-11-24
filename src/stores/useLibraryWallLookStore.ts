@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 import {
     clampLibraryWallTiltDeg,
     clampLibraryWallWindowsPerBlock,
@@ -155,7 +156,7 @@ const writeFlag = (key: string, enabled: boolean): boolean => {
     return value;
 };
 
-export const useLibraryWallLookStore = create<LibraryWallLookState>(set => ({
+export const useLibraryWallLookStore = sharedModuleState('folia.store.src/stores/useLibraryWallLookStore.ts#useLibraryWallLookStore', () => create<LibraryWallLookState>(set => ({
     ...readAll(),
     setLook: (look) => {
         const normalized = normalizeLibraryWallLook(look);
@@ -198,4 +199,4 @@ export const useLibraryWallLookStore = create<LibraryWallLookState>(set => ({
     setCollectionTilt: enabled => set({ collectionTilt: writeFlag(LIBRARY_WALL_COLLECTION_TILT_KEY, enabled) }),
     setHomeFinite: enabled => set({ homeFinite: writeFlag(LIBRARY_WALL_HOME_FINITE_KEY, enabled) }),
     hydrate: () => set(readAll()),
-}));
+})));

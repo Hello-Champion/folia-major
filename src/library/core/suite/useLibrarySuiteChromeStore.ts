@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../../../mods/runtime/sharedModuleState';
 import type { LibrarySuiteChromeHandle } from './suiteChrome.contract';
 
 // src/library/core/suite/useLibrarySuiteChromeStore.ts
@@ -12,7 +13,7 @@ type LibrarySuiteChromeState = {
     registerChrome: (handle: LibrarySuiteChromeHandle) => () => void;
 };
 
-export const useLibrarySuiteChromeStore = create<LibrarySuiteChromeState>((set, get) => ({
+export const useLibrarySuiteChromeStore = sharedModuleState('folia.store.src/library/core/suite/useLibrarySuiteChromeStore.ts#useLibrarySuiteChromeStore', () => create<LibrarySuiteChromeState>((set, get) => ({
     chrome: null,
     registerChrome: (handle) => {
         set({ chrome: handle });
@@ -22,7 +23,7 @@ export const useLibrarySuiteChromeStore = create<LibrarySuiteChromeState>((set, 
             }
         };
     },
-}));
+})));
 
 /** 注册 suite 外观（动作，不需要订阅）。 */
 export const registerLibrarySuiteChrome: LibrarySuiteChromeState['registerChrome'] = (handle) => (

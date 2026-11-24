@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 import {
     HEX_CARD_MIN_OPACITY_BOUNDS,
     HEX_CARD_MIN_OPACITY_DEFAULT,
@@ -52,7 +53,7 @@ const persistNumber = (key: string, value: number) => {
     if (typeof window !== 'undefined') localStorage.setItem(key, String(value));
 };
 
-export const useGridViewSettingsStore = create<GridViewSettingsState>(set => ({
+export const useGridViewSettingsStore = sharedModuleState('folia.store.src/stores/useGridViewSettingsStore.ts#useGridViewSettingsStore', () => create<GridViewSettingsState>(set => ({
     gridViewFullBleedCover: getStoredBoolean(GRID_VIEW_FULL_BLEED_COVER_KEY, false),
     gridViewSquareCards: getStoredBoolean(GRID_VIEW_SQUARE_CARDS_KEY, false),
     gridViewMinCardScale: getStoredNumber(GRID_VIEW_MIN_CARD_SCALE_KEY, HEX_CARD_MIN_SCALE_DEFAULT, clampGridViewMinCardScale),
@@ -83,7 +84,7 @@ export const useGridViewSettingsStore = create<GridViewSettingsState>(set => ({
         persistNumber(GRID_VIEW_MIN_CARD_SCALE_KEY, HEX_CARD_MIN_SCALE_DEFAULT);
         persistNumber(GRID_VIEW_MIN_CARD_OPACITY_KEY, HEX_CARD_MIN_OPACITY_DEFAULT);
     },
-}));
+})));
 
 /** The falloff pair the grid surfaces read together on every frame budget recompute. */
 export const selectGridViewCardFalloff = (state: GridViewSettingsState) => ({

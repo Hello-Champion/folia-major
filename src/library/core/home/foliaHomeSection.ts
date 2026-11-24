@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../../../mods/runtime/sharedModuleState';
 
 // src/library/core/home/foliaHomeSection.ts
 // 首页 Folia 组的二级页签：歌单（聚合歌单）与标签（速记簿「时刻」里打的标签，一个标签一张卡）。
@@ -18,7 +19,7 @@ type FoliaHomeSectionState = {
     setSection: (section: FoliaHomeSection) => void;
 };
 
-export const useFoliaHomeSectionStore = create<FoliaHomeSectionState>(set => ({
+export const useFoliaHomeSectionStore = sharedModuleState('folia.store.src/library/core/home/foliaHomeSection.ts#useFoliaHomeSectionStore', () => create<FoliaHomeSectionState>(set => ({
     section: 'playlists',
     setSection: section => set({ section }),
-}));
+})));

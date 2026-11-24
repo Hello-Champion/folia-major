@@ -1,3 +1,4 @@
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 // src/stores/useVisualizerSettingsStore.ts
 // Visualizer and background settings: the active mode, the background mode and URL background
 // list, opacity/frame-rate, and the per-mode tuning objects.
@@ -112,7 +113,7 @@ const declaredFields = (set: (fields: object) => void, get: () => Fields) => {
     return fields as unknown as VisualizerTuningSettings;
 };
 
-export const useVisualizerSettingsStore = create<VisualizerSettingsState>((set, get) => ({
+export const useVisualizerSettingsStore = sharedModuleState('folia.store.src/stores/useVisualizerSettingsStore.ts#useVisualizerSettingsStore', () => create<VisualizerSettingsState>((set, get) => ({
     ...declaredFields(set as (fields: object) => void, get as unknown as () => Fields),
     disableVisualizerVignette: getStoredBoolean('disable_visualizer_vignette', false),
     disableVisualizerGeometricBackground: getStoredBoolean('disable_visualizer_geometric_background', false),
@@ -228,7 +229,7 @@ export const useVisualizerSettingsStore = create<VisualizerSettingsState>((set, 
         setGlowBlurQuantized(enable);
         set({ glowBlurQuantize: enable });
     },
-}));
+})));
 
 /**
  * The visualizer half of what selectSettingsUiSnapshot used to expose, kept as one grouped

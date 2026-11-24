@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 import type { MediaId, OnlineProviderId, ProviderCollection, ProviderUser } from '../types/onlineMusic';
 
 // src/stores/useOnlineProviderAccountStore.ts
@@ -129,7 +130,7 @@ const placeAccountEntriesSecond = (collections: ProviderCollection[]): ProviderC
 
 const initialProviderId = getInitialProviderId();
 
-export const useOnlineProviderAccountStore = create<OnlineProviderAccountStore>((set, get) => ({
+export const useOnlineProviderAccountStore = sharedModuleState('folia.store.src/stores/useOnlineProviderAccountStore.ts#useOnlineProviderAccountStore', () => create<OnlineProviderAccountStore>((set, get) => ({
     accounts: {},
     activeProviderId: initialProviderId,
     chosenProviderId: initialProviderId,
@@ -173,4 +174,4 @@ export const useOnlineProviderAccountStore = create<OnlineProviderAccountStore>(
             },
         },
     })),
-}));
+})));

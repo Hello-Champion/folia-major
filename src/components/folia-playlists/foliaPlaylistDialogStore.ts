@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../../mods/runtime/sharedModuleState';
 import type { FoliaSavableCollection } from '../../library/app/foliaOriginSongs';
 
 // src/components/folia-playlists/foliaPlaylistDialogStore.ts
@@ -33,7 +34,7 @@ type FoliaPlaylistDialogState = {
     closeImport: () => void;
 };
 
-export const useFoliaPlaylistDialogStore = create<FoliaPlaylistDialogState>(set => ({
+export const useFoliaPlaylistDialogStore = sharedModuleState('folia.store.src/components/folia-playlists/foliaPlaylistDialogStore.ts#useFoliaPlaylistDialogStore', () => create<FoliaPlaylistDialogState>(set => ({
     dialog: null,
     transfer: null,
     open: dialog => set({ dialog }),
@@ -46,7 +47,7 @@ export const useFoliaPlaylistDialogStore = create<FoliaPlaylistDialogState>(set 
     closeExport: () => set({ exportPlaylistId: null }),
     openImport: (file, done) => set({ importRequest: { file, done } }),
     closeImport: () => set({ importRequest: null }),
-}));
+})));
 
 export const openFoliaPlaylistDialog = (dialog: FoliaPlaylistDialog) => useFoliaPlaylistDialogStore.getState().open(dialog);
 export const openFoliaTransferDialog = (request: FoliaTransferRequest) => useFoliaPlaylistDialogStore.getState().openTransfer(request);

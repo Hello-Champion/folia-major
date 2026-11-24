@@ -1,3 +1,4 @@
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 // src/stores/useSettingsModalStore.ts
 // The settings dialog's own UI state: which tab and subview are open, the user-guide gate, the
 // pinned command slots, and the app language preference.
@@ -68,7 +69,7 @@ export type SettingsModalUiState = {
     setPinnedCommandId: (slotIndex: number, commandId: string | null) => void;
 };
 
-export const useSettingsModalStore = create<SettingsModalUiState>((set, get) => ({
+export const useSettingsModalStore = sharedModuleState('folia.store.src/stores/useSettingsModalStore.ts#useSettingsModalStore', () => create<SettingsModalUiState>((set, get) => ({
     appLanguagePreference: readStoredAppLanguagePreference(),
     pinnedCommandIds: readPinnedCommandIds(),
     isSubSettingsViewOpen: false,
@@ -145,7 +146,7 @@ export const useSettingsModalStore = create<SettingsModalUiState>((set, get) => 
         writePinnedCommandIds(next);
         set({ pinnedCommandIds: next });
     },
-}));
+})));
 
 /**
  * The SettingsModal half of the former settings snapshot, for the surfaces that

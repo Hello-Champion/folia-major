@@ -1,3 +1,4 @@
+import { sharedModuleState } from '../../runtime/sharedModuleState';
 import { create } from 'zustand';
 import type { FoliumCommandDef, FoliumSetting } from '../contract';
 import { mergeFoliumParamValues, sanitizeFoliumParams } from '../../params/params';
@@ -47,7 +48,7 @@ interface FoliumCommandStateStore {
     byId: Record<string, FoliumCommandRunState>;
 }
 
-export const useFoliumCommandState = create<FoliumCommandStateStore>(() => ({ byId: {} }));
+export const useFoliumCommandState = sharedModuleState('folia.store.src/mods/folium/registries/commands.ts#useFoliumCommandState', () => create<FoliumCommandStateStore>(() => ({ byId: {} })));
 
 const setRunState = (id: string, state: FoliumCommandRunState) => {
     useFoliumCommandState.setState((current) => ({ byId: { ...current.byId, [id]: state } }));

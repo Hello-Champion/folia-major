@@ -1,3 +1,4 @@
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 // src/stores/useTypographySettingsStore.ts
 // Lyric and subtitle typography: the font stacks, scales and weights, plus how the bottom
 // subtitle overlay presents itself.
@@ -250,7 +251,7 @@ export type TypographySettingsState = {
     handleSetSubtitleFontFallbackFamilies: (families: string[]) => void;
 };
 
-export const useTypographySettingsStore = create<TypographySettingsState>((set, get) => ({
+export const useTypographySettingsStore = sharedModuleState('folia.store.src/stores/useTypographySettingsStore.ts#useTypographySettingsStore', () => create<TypographySettingsState>((set, get) => ({
     hidePlayerTranslationSubtitle: getStoredBoolean('hide_player_translation_subtitle', false),
     showSubtitleTranslation: readStoredSubtitleContentMode() !== 'none',
     subtitleContentMode: readStoredSubtitleContentMode(),
@@ -461,7 +462,7 @@ export const useTypographySettingsStore = create<TypographySettingsState>((set, 
         storeFontFamilyStack(SUBTITLE_FONT_FALLBACK_FAMILIES_STORAGE_KEY, next);
         set({ subtitleFontFallbackFamilies: next });
     },
-}));
+})));
 
 /** The typography half of the former settings snapshot, for the surfaces that edit it all. */
 export const selectTypographySettingsSnapshot = (state: TypographySettingsState) => ({

@@ -1,3 +1,4 @@
+import { sharedModuleState } from '../runtime/sharedModuleState';
 import { create } from 'zustand';
 import type { FoliumSetting, FoliumSettingAccess, FoliumSettingValues } from '../folium/contract';
 import { filterFoliumParamPatch, isFoliumSecretParam, mergeFoliumParamValues } from './params';
@@ -124,7 +125,7 @@ interface FoliumParamStoreState {
     excludeSecretKeys: (scope: string, keys: readonly string[]) => void;
 }
 
-export const useFoliumParamStore = create<FoliumParamStoreState>((set) => ({
+export const useFoliumParamStore = sharedModuleState('folia.store.src/mods/params/paramStore.ts#useFoliumParamStore', () => create<FoliumParamStoreState>((set) => ({
     byScope: load(),
     setValues: (scope, patch) => set((state) => {
         const byScope = { ...state.byScope, [scope]: { ...(state.byScope[scope] ?? {}), ...withoutSecretValues(scope, patch) } };
@@ -158,7 +159,7 @@ export const useFoliumParamStore = create<FoliumParamStoreState>((set) => ({
             return { byScope };
         });
     },
-}));
+})));
 
 /** Raw stored values of every scope; used by config export and the export window. */
 export const snapshotFoliumParams = (): ParamsByScope => useFoliumParamStore.getState().byScope;

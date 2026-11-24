@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 import { create } from 'zustand';
 import {
     getFoliaPlaylist,
@@ -38,7 +39,7 @@ const pending: { inFlight: Promise<void> | null; again: boolean; favoriteStale: 
 // 歌单被写了之后的重读（不修条目）；store 建好时接上。
 let rereadAfterWrite: () => void = () => {};
 
-export const useFoliaPlaylistsStore = create<FoliaPlaylistsState>((set, get) => {
+export const useFoliaPlaylistsStore = sharedModuleState('folia.store.src/stores/useFoliaPlaylistsStore.ts#useFoliaPlaylistsStore', () => create<FoliaPlaylistsState>((set, get) => {
     const readOnce = async (): Promise<void> => {
         const repair = pending.repair;
         pending.repair = false;
@@ -91,7 +92,7 @@ export const useFoliaPlaylistsStore = create<FoliaPlaylistsState>((set, get) => 
             return start();
         },
     };
-});
+}));
 
 subscribeFoliaPlaylists((change: FoliaPlaylistsChange) => {
     const favoriteId = useFoliaPlaylistsStore.getState().playlists.find(playlist => playlist.isFavorite)?.id;

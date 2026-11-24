@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../../../mods/runtime/sharedModuleState';
 import type { DailyStyleSelection } from '../../../types/onlineMusic';
 import { getStoredString, setStoredString } from '../../../stores/storagePrimitives';
 
@@ -27,7 +28,7 @@ type DailyRecommendationModeState = {
     noteStyleSelection: (selection: DailyStyleSelection | null) => void;
 };
 
-export const useDailyRecommendationModeStore = create<DailyRecommendationModeState>((set, get) => ({
+export const useDailyRecommendationModeStore = sharedModuleState('folia.store.src/library/core/collection/useDailyRecommendationModeStore.ts#useDailyRecommendationModeStore', () => create<DailyRecommendationModeState>((set, get) => ({
     mode: readStoredMode(),
     styleSelection: null,
     setMode: (mode) => {
@@ -42,4 +43,4 @@ export const useDailyRecommendationModeStore = create<DailyRecommendationModeSta
     noteStyleSelection: (selection) => {
         if (get().styleSelection !== selection) set({ styleSelection: selection });
     },
-}));
+})));

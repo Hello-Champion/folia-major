@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../../../mods/runtime/sharedModuleState';
 import type { LibraryArtistSurfaceHandle } from './artist.contract';
 
 // src/library/core/artist/useLibraryArtistSurfaceStore.ts
@@ -12,7 +13,7 @@ type LibraryArtistSurfaceState = {
     registerArtistSurface: (handle: LibraryArtistSurfaceHandle) => () => void;
 };
 
-export const useLibraryArtistSurfaceStore = create<LibraryArtistSurfaceState>((set, get) => ({
+export const useLibraryArtistSurfaceStore = sharedModuleState('folia.store.src/library/core/artist/useLibraryArtistSurfaceStore.ts#useLibraryArtistSurfaceStore', () => create<LibraryArtistSurfaceState>((set, get) => ({
     artistSurface: null,
     registerArtistSurface: (handle) => {
         set({ artistSurface: handle });
@@ -22,7 +23,7 @@ export const useLibraryArtistSurfaceStore = create<LibraryArtistSurfaceState>((s
             }
         };
     },
-}));
+})));
 
 /** 注册歌手页 surface（动作，不需要订阅）。 */
 export const registerLibraryArtistSurface: LibraryArtistSurfaceState['registerArtistSurface'] = (handle) => (

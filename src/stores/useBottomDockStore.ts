@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 import type { BottomLayout } from '../utils/playerBottomBarLayout';
 
 // src/stores/useBottomDockStore.ts
@@ -49,7 +50,7 @@ const withKey = (record: Record<string, true>, id: string, on: boolean): Record<
     return Object.fromEntries(Object.entries(record).filter(([key]) => key !== id));
 };
 
-export const useBottomDockStore = create<BottomDockState>(set => ({
+export const useBottomDockStore = sharedModuleState('folia.store.src/stores/useBottomDockStore.ts#useBottomDockStore', () => create<BottomDockState>(set => ({
     layout: 'desktop',
     layoutChangedAt: 0,
     isTracking: false,
@@ -84,7 +85,7 @@ export const useBottomDockStore = create<BottomDockState>(set => ({
         }
         return { wallLocates: [...state.wallLocates, { owner, action }] };
     }),
-}));
+})));
 
 /**
  * 指针离开挂件后多留这么久才算离开：从挂件挪回胶囊时，胶囊自己的悬停要过 20ms 才接上，

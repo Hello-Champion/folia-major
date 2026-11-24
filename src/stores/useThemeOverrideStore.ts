@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 import type { DualTheme } from '../types';
 import { getStoredBoolean } from './storagePrimitives';
 
@@ -45,7 +46,7 @@ type ThemeOverrideState = {
  */
 const readSavedCustomPreferred = (): boolean => getStoredBoolean('custom_theme_preferred', false);
 
-export const useThemeOverrideStore = create<ThemeOverrideState>((set, get) => ({
+export const useThemeOverrideStore = sharedModuleState('folia.store.src/stores/useThemeOverrideStore.ts#useThemeOverrideStore', () => create<ThemeOverrideState>((set, get) => ({
     override: null,
     origin: { kind: 'host' },
     customPreferred: readSavedCustomPreferred(),
@@ -58,7 +59,7 @@ export const useThemeOverrideStore = create<ThemeOverrideState>((set, get) => ({
     setCustomPreferred: (customPreferred) => {
         if (get().customPreferred !== customPreferred) set({ customPreferred });
     },
-}));
+})));
 
 const USER_ORIGIN: ThemeOverrideChangeOrigin = Object.freeze({ kind: 'user' });
 

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 import type React from 'react';
 import type { PanelTab } from '../components/UnifiedPanel';
 import type { LibraryQueryPort } from '../library/core/shared/session.contract';
@@ -125,7 +126,7 @@ const resolve = <T,>(next: React.SetStateAction<T>, previous: T): T => (
     typeof next === 'function' ? (next as (prev: T) => T)(previous) : next
 );
 
-export const useAppViewStore = create<AppViewState>((set, get) => ({
+export const useAppViewStore = sharedModuleState('folia.store.src/stores/useAppViewStore.ts#useAppViewStore', () => create<AppViewState>((set, get) => ({
     view: 'home',
     latticeSource: 'queue',
     latticeReturnTileId: null,
@@ -161,7 +162,7 @@ export const useAppViewStore = create<AppViewState>((set, get) => ({
     requestCommandPaletteCommand: (commandId) => set({
         commandPaletteRequest: { seq: get().commandPaletteRequest.seq + 1, kind: 'command', commandId },
     }),
-}));
+})));
 
 // Module-level handles for the assembly layer: these are actions, so they need no subscription.
 // Importing them where they are used keeps App.tsx out of the chain (see setStatusMessage).

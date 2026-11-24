@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../../../mods/runtime/sharedModuleState';
 import { getStoredString, removeStoredKey, setStoredString } from '../../../stores/storagePrimitives';
 import { isSceneId } from '../../../types/sceneIds';
 import type { SceneQualityPreset } from '../definition';
@@ -68,7 +69,7 @@ interface SceneSettingsState {
     reloadScene: () => void;
 }
 
-export const useSceneSettingsStore = create<SceneSettingsState>((set, get) => ({
+export const useSceneSettingsStore = sharedModuleState('folia.store.src/components/scenes/settings/useSceneSettingsStore.ts#useSceneSettingsStore', () => create<SceneSettingsState>((set, get) => ({
     sceneId: sanitizeSceneId(getStoredString(SCENE_ID_KEY, '')),
     sceneOptions: readStoredOptions(),
     reloadToken: 0,
@@ -85,4 +86,4 @@ export const useSceneSettingsStore = create<SceneSettingsState>((set, get) => ({
         set({ sceneOptions: next });
     },
     reloadScene: () => set(state => ({ reloadToken: state.reloadToken + 1 })),
-}));
+})));

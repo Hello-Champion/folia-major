@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 
 import { getStoredBoolean, getStoredString, setStoredBoolean, setStoredString } from './storagePrimitives';
 
@@ -79,7 +80,7 @@ export type StemMixerState = {
 
 const writeGains = (gains: StemMixerGains) => setStoredString(STEM_MIXER_GAINS_KEY, JSON.stringify(gains));
 
-export const useStemMixerStore = create<StemMixerState>((set, get) => ({
+export const useStemMixerStore = sharedModuleState('folia.store.src/stores/useStemMixerStore.ts#useStemMixerStore', () => create<StemMixerState>((set, get) => ({
     stemMixerEnabled: getStoredBoolean(STEM_MIXER_ENABLED_KEY, false),
     stemMixerGains: readStoredGains(),
     stemMixerStatus: { phase: 'off' },
@@ -105,4 +106,4 @@ export const useStemMixerStore = create<StemMixerState>((set, get) => ({
         if (JSON.stringify(before) === JSON.stringify(status)) return;
         set({ stemMixerStatus: status });
     },
-}));
+})));

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../../../mods/runtime/sharedModuleState';
 
 // src/library/suites/bravais/bravaisHomeUiStore.ts
 // 首页缝里的全局搜索框开没开（B9）。它不是导航（不写 history），也不是缝的等级：开着时首页窄缝临时展开成完整宽度的
@@ -20,7 +21,7 @@ type BravaisHomeUiState = {
     popover: BravaisHomePopover | null;
 };
 
-export const useBravaisHomeUiStore = create<BravaisHomeUiState>(() => ({ searchOpen: false, openRequest: null, popover: null }));
+export const useBravaisHomeUiStore = sharedModuleState('folia.store.src/library/suites/bravais/bravaisHomeUiStore.ts#useBravaisHomeUiStore', () => create<BravaisHomeUiState>(() => ({ searchOpen: false, openRequest: null, popover: null })));
 
 export const setBravaisSearchOpen = (open: boolean) => {
     if (useBravaisHomeUiStore.getState().searchOpen !== open) useBravaisHomeUiStore.setState({ searchOpen: open });

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 import type { SongResult } from '../types';
 import { getPlaybackSourceRef } from '../utils/appPlaybackGuards';
 import { readStoredString, setStoredString } from './storagePrimitives';
@@ -43,7 +44,7 @@ type AddToPlaylistState = {
     setAvailability: (availability: AddToPlaylistAvailability) => void;
 };
 
-export const useAddToPlaylistStore = create<AddToPlaylistState>((set) => ({
+export const useAddToPlaylistStore = sharedModuleState('folia.store.src/stores/useAddToPlaylistStore.ts#useAddToPlaylistStore', () => create<AddToPlaylistState>((set) => ({
     isOpen: false,
     songs: null,
     origin: null,
@@ -51,7 +52,7 @@ export const useAddToPlaylistStore = create<AddToPlaylistState>((set) => ({
     open: (songs, origin) => set({ isOpen: true, songs: songs?.length ? songs : null, origin: songs?.length ? origin ?? null : null }),
     close: () => set({ isOpen: false, songs: null, origin: null }),
     setAvailability: (availability) => set({ availability }),
-}));
+})));
 
 export const openAddToPlaylist = () => useAddToPlaylistStore.getState().open();
 /** The picker for songs other than the shown one (the scratchpad's rows, groups and whole notebook, a card on the library wall); they may be of several sources. */

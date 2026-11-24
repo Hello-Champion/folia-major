@@ -1,3 +1,4 @@
+import { sharedModuleState } from '../../runtime/sharedModuleState';
 import { create } from 'zustand';
 import type { FoliumHomeTabDef } from '../contract';
 import { createFoliumRegistry } from '../../runtime/registry';
@@ -5,7 +6,7 @@ import { createFoliumRegistry } from '../../runtime/registry';
 // src/mods/folium/registries/homeTabs.ts
 // Owned full-page home entries. Selection is separate from native music-source tabs.
 
-export const useFoliumHomeTabStore = create<{ activeId: string | null }>(() => ({ activeId: null }));
+export const useFoliumHomeTabStore = sharedModuleState('folia.store.src/mods/folium/registries/homeTabs.ts#useFoliumHomeTabStore', () => create<{ activeId: string | null }>(() => ({ activeId: null })));
 
 export const homeTabsRegistry = createFoliumRegistry<FoliumHomeTabDef>('homeTabs', {
     validate: def => {

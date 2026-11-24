@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../../mods/runtime/sharedModuleState';
 import type { OnlineProviderId } from '../../types/onlineMusic';
 
 // src/components/login/loginWindowStore.ts
@@ -25,7 +26,7 @@ type LoginWindowState = {
 
 export type LoginWindowIntent = 'setup';
 
-export const useLoginWindowStore = create<LoginWindowState>(() => ({ isOpen: false, providerId: null, requestId: 0, origin: null, landing: null, intent: null }));
+export const useLoginWindowStore = sharedModuleState('folia.store.src/components/login/loginWindowStore.ts#useLoginWindowStore', () => create<LoginWindowState>(() => ({ isOpen: false, providerId: null, requestId: 0, origin: null, landing: null, intent: null })));
 
 /**
  * 打开登录窗口。`pressed` 是按下去的那个东西（按钮、头像），给了窗口就从它那一边出来。`intent` 是打开时要直接

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 import { getStoredString } from './storagePrimitives';
 import { isPonderHintVisibility, type PonderHintVisibility, type PonderTargetId } from '../types/ponder';
 import { parsePonderSeen, serializePonderSeen, withPonderSeen } from '../utils/ponder/ponderSeenRecord';
@@ -78,7 +79,7 @@ type PonderState = {
     closeNavigation: () => void;
 };
 
-export const usePonderStore = create<PonderState>((set, get) => ({
+export const usePonderStore = sharedModuleState('folia.store.src/stores/usePonderStore.ts#usePonderStore', () => create<PonderState>((set, get) => ({
     hoveredTargetId: null,
     session: null,
     isPaused: false,
@@ -146,7 +147,7 @@ export const usePonderStore = create<PonderState>((set, get) => ({
             // 同上。
         }
     },
-}));
+})));
 
 /** 设置面板与命令面板共用的一次性订阅。 */
 export const selectPonderSettingsSnapshot = (state: PonderState) => ({

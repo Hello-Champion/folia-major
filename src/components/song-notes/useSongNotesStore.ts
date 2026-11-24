@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { sharedModuleState } from '../../mods/runtime/sharedModuleState';
 import { create } from 'zustand';
 import type { SongResult } from '../../types';
 import { getPlaybackSongKey } from '../../utils/appPlaybackGuards';
@@ -53,7 +54,7 @@ let tagFocusNonce = 0;
 /** 「写评论」要输入框接焦点的要求多久内有效：抽屉滑出来、输入框挂上用不了这么久。 */
 const COMPOSE_TTL_MS = 2000;
 
-export const useSongNotesStore = create<SongNotesState>((set, get) => ({
+export const useSongNotesStore = sharedModuleState('folia.store.src/components/song-notes/useSongNotesStore.ts#useSongNotesStore', () => create<SongNotesState>((set, get) => ({
     version: 0,
     viewing: null,
     drafts: {},
@@ -81,7 +82,7 @@ export const useSongNotesStore = create<SongNotesState>((set, get) => ({
         return { tagFocus: { key, nonce: tagFocusNonce } };
     }),
     clearTagFocus: () => set({ tagFocus: null }),
-}));
+})));
 
 // 本窗口写了、别的窗口写了，都让读数据的 hook 重读一遍（数据量小：一首歌的评论、最近的几十首）。
 subscribeSongNotes(() => useSongNotesStore.getState().bump());

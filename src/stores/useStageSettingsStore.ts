@@ -1,3 +1,4 @@
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 // src/stores/useStageSettingsStore.ts
 // Stage / OBS / PlayerCap outputs: which external surfaces are enabled, how PlayerCap is
 // addressed, and the now-playing pill's presentation.
@@ -88,7 +89,7 @@ export type StageSettingsState = {
     handleToggleObsKeepMainWindowAnimation: (enable: boolean) => void;
 };
 
-export const useStageSettingsStore = create<StageSettingsState>((set, get) => ({
+export const useStageSettingsStore = sharedModuleState('folia.store.src/stores/useStageSettingsStore.ts#useStageSettingsStore', () => create<StageSettingsState>((set, get) => ({
     enableNowPlayingStage: getStoredBoolean('enable_now_playing_stage', false),
     enablePlayerCapStage: getStoredBoolean('enable_playercap_stage', false),
     playerCapHost: getStoredString('playercap_host', 'localhost:8765'),
@@ -170,7 +171,7 @@ export const useStageSettingsStore = create<StageSettingsState>((set, get) => ({
         setStoredBoolean('obs_keep_main_window_animation', enable);
         set({ obsKeepMainWindowAnimation: enable });
     },
-}));
+})));
 
 /**
  * The StageSettings half of the former settings snapshot, for the surfaces that

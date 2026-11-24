@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../../../mods/runtime/sharedModuleState';
 import { lyricCurrentTime } from '../../../stores/motionSignals';
 
 // src/components/app/backgroundThrottling/backgroundLyricHoldStore.ts
@@ -14,11 +15,11 @@ type BackgroundLyricHoldState = {
     perfCheck: boolean;
 };
 
-export const useBackgroundLyricHoldStore = create<BackgroundLyricHoldState>(() => ({
+export const useBackgroundLyricHoldStore = sharedModuleState('folia.store.src/components/app/backgroundThrottling/backgroundLyricHoldStore.ts#useBackgroundLyricHoldStore', () => create<BackgroundLyricHoldState>(() => ({
     held: false,
     background: false,
     perfCheck: false,
-}));
+})));
 
 /** Sets one reason to hold; `held` is either. */
 export const setLyricHoldReason = (reason: 'background' | 'perfCheck', on: boolean) => {

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../../mods/runtime/sharedModuleState';
 import type { SongResult } from '../../types';
 import i18n from '../../i18n/config';
 import { selectDisplaySong, usePlaybackStore } from '../../stores/usePlaybackStore';
@@ -21,7 +22,7 @@ type SongNotePinState = {
     blurClosedAt: number;
 };
 
-export const useSongNotePinStore = create<SongNotePinState>(() => ({ pending: null, blurClosedAt: 0 }));
+export const useSongNotePinStore = sharedModuleState('folia.store.src/components/song-notes/songNotePin.ts#useSongNotePinStore', () => create<SongNotePinState>(() => ({ pending: null, blurClosedAt: 0 })));
 
 /** 屏幕上正在播的那首（自动混音过渡中是淡入的下一首）；舞台歌不算。 */
 export const playingNoteSong = (): SongResult | null => {

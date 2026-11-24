@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../../../mods/runtime/sharedModuleState';
 import type { LibraryHomeListHandle, LibraryHomeTabsHandle } from './homeModel.contract';
 
 // src/library/core/home/useLibraryHomeSurfaceStore.ts
@@ -15,7 +16,7 @@ type LibraryHomeSurfaceState = {
     registerList: (handle: LibraryHomeListHandle) => () => void;
 };
 
-export const useLibraryHomeSurfaceStore = create<LibraryHomeSurfaceState>((set, get) => ({
+export const useLibraryHomeSurfaceStore = sharedModuleState('folia.store.src/library/core/home/useLibraryHomeSurfaceStore.ts#useLibraryHomeSurfaceStore', () => create<LibraryHomeSurfaceState>((set, get) => ({
     tabs: null,
     list: null,
     registerTabs: (handle) => {
@@ -30,4 +31,4 @@ export const useLibraryHomeSurfaceStore = create<LibraryHomeSurfaceState>((set, 
             if (get().list === handle) set({ list: null });
         };
     },
-}));
+})));

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 import type React from 'react';
 import { getStoredBoolean, setStoredBoolean } from './storagePrimitives';
 
@@ -41,7 +42,7 @@ const resolve = (next: React.SetStateAction<boolean>, previous: boolean) => (
     typeof next === 'function' ? (next as (prev: boolean) => boolean)(previous) : next
 );
 
-export const useAppChromeStore = create<AppChromeState>((set, get) => ({
+export const useAppChromeStore = sharedModuleState('folia.store.src/stores/useAppChromeStore.ts#useAppChromeStore', () => create<AppChromeState>((set, get) => ({
     isTitlebarRevealed: false,
     showTransparentWindowBorder: false,
     isMainWindowClickThroughEnabled: false,
@@ -64,7 +65,7 @@ export const useAppChromeStore = create<AppChromeState>((set, get) => ({
     },
     setIsDevDebugOverlayVisible: (next) => set({ isDevDebugOverlayVisible: resolve(next, get().isDevDebugOverlayVisible) }),
     setIsMemoryMonitorVisible: (next) => set({ isMemoryMonitorVisible: resolve(next, get().isMemoryMonitorVisible) }),
-}));
+})));
 
 // Module-level handles for the assembly layer; actions need no subscription.
 export const setIsDevDebugOverlayVisible: AppChromeState['setIsDevDebugOverlayVisible'] = (next) => useAppChromeStore.getState().setIsDevDebugOverlayVisible(next);

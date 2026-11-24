@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../../../mods/runtime/sharedModuleState';
 import type { SeamAxis } from '../../../components/wall/seamPlan';
 import {
     BRAVAIS_NARROW_VIEWPORT_PX,
@@ -96,7 +97,7 @@ type BravaisSeamStore = BravaisSeamLevelState & {
 
 const initialWidth = typeof window === 'undefined' ? 1280 : window.innerWidth;
 
-export const useBravaisSeamStore = create<BravaisSeamStore>((set, get) => ({
+export const useBravaisSeamStore = sharedModuleState('folia.store.src/library/suites/bravais/bravaisSeamLevel.ts#useBravaisSeamStore', () => create<BravaisSeamStore>((set, get) => ({
     level: defaultSeamLevel(initialWidth),
     restoreLevel: defaultSeamLevel(initialWidth),
     viewportWidth: 0,
@@ -112,4 +113,4 @@ export const useBravaisSeamStore = create<BravaisSeamStore>((set, get) => ({
         }
         set(state => ({ ...resolveSeamLevelOnResize(state, previous, width), viewportWidth: width }));
     },
-}));
+})));

@@ -1,3 +1,4 @@
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 // src/stores/useAudioSettingsStore.ts
 // Audio output and the media cache: stream quality, output device, the equalizer, how queued
 // songs are added, and the cache ceiling.
@@ -351,7 +352,7 @@ const commitAudioEqualizerChange = (
 
 const initialAudioEqualizerSettings = readStoredAudioEqualizerSettings();
 
-export const useAudioSettingsStore = create<AudioSettingsState>((set, get) => ({
+export const useAudioSettingsStore = sharedModuleState('folia.store.src/stores/useAudioSettingsStore.ts#useAudioSettingsStore', () => create<AudioSettingsState>((set, get) => ({
     audioQuality: readStoredAudioQuality(),
     enableMediaCache: readStoredEnableMediaCache(),
     mediaCacheLimitGb: readStoredMediaCacheLimitGb(),
@@ -545,7 +546,7 @@ export const useAudioSettingsStore = create<AudioSettingsState>((set, get) => ({
     handleToggleLoopMode: (isFmMode = false) => {
         get().handleSetLoopMode(nextLoopMode(get().loopMode, isFmMode));
     },
-}));
+})));
 
 /**
  * The AudioSettings half of the former settings snapshot, for the surfaces that

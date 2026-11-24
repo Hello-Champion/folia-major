@@ -1,3 +1,4 @@
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 // src/stores/useHomeLayoutSettingsStore.ts
 // Home surface layout: which grid style the home page uses and which tabs it offers.
 //
@@ -53,7 +54,7 @@ export type HomeLayoutSettingsState = {
     handleToggleHomeTabExplore: (show: boolean) => void;
 };
 
-export const useHomeLayoutSettingsStore = create<HomeLayoutSettingsState>((set, get) => ({
+export const useHomeLayoutSettingsStore = sharedModuleState('folia.store.src/stores/useHomeLayoutSettingsStore.ts#useHomeLayoutSettingsStore', () => create<HomeLayoutSettingsState>((set, get) => ({
     rememberHomeCardPosition: getStoredBoolean('remember_home_card_position', true),
     handleToggleRememberHomeCardPosition: (remember) => {
         set({ rememberHomeCardPosition: remember });
@@ -110,7 +111,7 @@ export const useHomeLayoutSettingsStore = create<HomeLayoutSettingsState>((set, 
         set({ showHomeTabExplore: show });
         if (typeof window !== 'undefined') localStorage.setItem('show_home_tab_explore', show.toString());
     },
-}));
+})));
 
 /**
  * The HomeLayoutSettings half of the former settings snapshot, for the surfaces that

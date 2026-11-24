@@ -1,3 +1,4 @@
+import { sharedModuleState } from '../../runtime/sharedModuleState';
 import { create } from 'zustand';
 import { foliumOldNameAdvice, type FoliumOldName } from './oldNames';
 
@@ -16,7 +17,7 @@ interface FoliumOldNameState {
     byMod: Readonly<Record<string, readonly string[]>>;
 }
 
-export const useFoliumOldNameStore = create<FoliumOldNameState>(() => ({ byMod: {} }));
+export const useFoliumOldNameStore = sharedModuleState('folia.store.src/mods/folium/deprecated/warnings.ts#useFoliumOldNameStore', () => create<FoliumOldNameState>(() => ({ byMod: {} })));
 
 /** Adds one line to the mod's list (index.ts says each name once). */
 export const noteFoliumOldName = (modId: string, line: string) => {

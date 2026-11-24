@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 import type { DualTheme, SongResult, ThemeMode } from '../types';
 import type { ThemeCacheSongKey } from '../services/themeCache';
 
@@ -53,7 +54,7 @@ const resolveDefaultEditorKind = (state: ThemeQuickEditorContext): ThemeQuickEdi
     return 'ai';
 };
 
-export const useThemeQuickEditorStore = create<ThemeQuickEditorState>((set, get) => ({
+export const useThemeQuickEditorStore = sharedModuleState('folia.store.src/stores/useThemeQuickEditorStore.ts#useThemeQuickEditorStore', () => create<ThemeQuickEditorState>((set, get) => ({
     aiTheme: null,
     customTheme: null,
     bgMode: 'default',
@@ -88,4 +89,4 @@ export const useThemeQuickEditorStore = create<ThemeQuickEditorState>((set, get)
         set({ isOpen: true, editorKind: nextKind });
     },
     closeEditor: () => set({ isOpen: false, editorKind: null }),
-}));
+})));

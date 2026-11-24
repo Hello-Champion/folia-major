@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 import type {
     CollectionNavigationOrigin,
     CollectionNavigationSnapshot,
@@ -29,7 +30,7 @@ type CollectionNavigationState = {
     clear: () => void;
 };
 
-export const useCollectionNavigationStore = create<CollectionNavigationState>((set, get) => ({
+export const useCollectionNavigationStore = sharedModuleState('folia.store.src/stores/useCollectionNavigationStore.ts#useCollectionNavigationStore', () => create<CollectionNavigationState>((set, get) => ({
     snapshot: null,
     openRoot: (collection, origin) => {
         const snapshot = { origin, stack: [collection] };
@@ -57,7 +58,7 @@ export const useCollectionNavigationStore = create<CollectionNavigationState>((s
     },
     restore: (snapshot) => set({ snapshot }),
     clear: () => set({ snapshot: null }),
-}));
+})));
 
 export const getActiveGridViewCollection = (
     snapshot: CollectionNavigationSnapshot | null,

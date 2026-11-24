@@ -1,3 +1,4 @@
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 // src/stores/useAutomixSettingsStore.ts
 // FOLIA's smart-transition switches: whether blending is on, which strategy plans the change,
 // and the two transition animation toggles.
@@ -90,7 +91,7 @@ export type AutomixSettingsState = {
     handleToggleTransitionAnimationCard: (enable: boolean) => void;
 };
 
-export const useAutomixSettingsStore = create<AutomixSettingsState>((set, get) => ({
+export const useAutomixSettingsStore = sharedModuleState('folia.store.src/stores/useAutomixSettingsStore.ts#useAutomixSettingsStore', () => create<AutomixSettingsState>((set, get) => ({
     automixEnabled: getStoredBoolean(AUTOMIX_ENABLED_KEY, false),
     transitionMode: readStoredTransitionMode(),
     crossfadeMaxSec: readStoredCrossfadeMaxSec(),
@@ -133,7 +134,7 @@ export const useAutomixSettingsStore = create<AutomixSettingsState>((set, get) =
         setStoredBoolean(TRANSITION_ANIMATION_CARD_KEY, enable);
         set({ transitionAnimationCard: enable });
     },
-}));
+})));
 
 /**
  * The AutomixSettings half of the former settings snapshot, for the surfaces that

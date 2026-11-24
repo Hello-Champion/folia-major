@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 import { DEFAULT_PERSONAL_FM_SELECTION, DEFAULT_PERSONAL_FM_CATALOG, isDefaultPersonalFmSelection, normalizePersonalFmSelection, toPersonalFmRequestOptions } from '../services/onlineMusic/fmModes';
 import type { PersonalFmCatalog, PersonalFmSelection } from '../types/personalFm';
 import type { PersonalFmRequestOptions } from '../types/onlineMusic';
@@ -59,7 +60,7 @@ export const selectStationCatalog = (state: PersonalFmModeState, providerId: str
     state.stationCatalogs[providerId]?.[station]
 );
 export const selectFmRun = (state: PersonalFmModeState, providerId: string): number => state.fmRuns[providerId] ?? 0;
-export const usePersonalFmModeStore = create<PersonalFmModeState>((set, get) => ({
+export const usePersonalFmModeStore = sharedModuleState('folia.store.src/stores/usePersonalFmModeStore.ts#usePersonalFmModeStore', () => create<PersonalFmModeState>((set, get) => ({
     selection: readLegacy(), providerSelections: readProviders(), catalogs: {}, stations: {}, stationCatalogs: {}, fmRuns: {},
     startStation(providerId, station, selection) {
         // A station that starts, again or after another, starts from the choice it comes with.
@@ -117,7 +118,7 @@ export const usePersonalFmModeStore = create<PersonalFmModeState>((set, get) => 
         set({ catalogs: { ...get().catalogs, [providerId]: catalog }, providerSelections });
         if (normalized) persist(PROVIDERS_KEY, providerSelections);
     },
-}));
+})));
 export const getPersonalFmSelection = (providerId?: string): PersonalFmSelection => (
     providerId ? selectProviderPersonalFm(usePersonalFmModeStore.getState(), providerId) : usePersonalFmModeStore.getState().selection
 );

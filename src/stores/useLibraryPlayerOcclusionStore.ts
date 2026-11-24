@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 
 // src/stores/useLibraryPlayerOcclusionStore.ts
 // 资料库的常驻舞台（stage）此刻是否完全盖住了播放页（B6b）。stage 经契约的 reportPlayerOcclusion 报告，宿主的挂载位
@@ -40,7 +41,7 @@ type LibraryPlayerOcclusionState = {
     reportBackdrop: (owner: LibraryPlayerOcclusionOwner, backdrop: LibraryPlayerBackdrop) => void;
 };
 
-export const useLibraryPlayerOcclusionStore = create<LibraryPlayerOcclusionState>((set, get) => ({
+export const useLibraryPlayerOcclusionStore = sharedModuleState('folia.store.src/stores/useLibraryPlayerOcclusionStore.ts#useLibraryPlayerOcclusionStore', () => create<LibraryPlayerOcclusionState>((set, get) => ({
     mountedOwner: null,
     reportOwner: null,
     reportedOccludes: false,
@@ -77,7 +78,7 @@ export const useLibraryPlayerOcclusionStore = create<LibraryPlayerOcclusionState
         if (state.backdropOwner !== null && state.backdropOwner !== owner && state.backdropOwner === state.mountedOwner) return;
         set({ backdropOwner: owner, reportedBackdrop: next });
     },
-}));
+})));
 
 /** 生效值：当前挂着的 stage 报告自己完全遮挡播放页。 */
 export const selectLibraryOccludesPlayer = (state: LibraryPlayerOcclusionState) => (

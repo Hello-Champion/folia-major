@@ -1,3 +1,4 @@
+import { sharedModuleState } from './sharedModuleState';
 import { create } from 'zustand';
 import type { FoliumEntryKind } from './FoliumMountHost';
 
@@ -66,7 +67,7 @@ const readMuted = (): string[] => {
     }
 };
 
-export const useFoliumStatusStore = create<FoliumStatusState>((set) => ({
+export const useFoliumStatusStore = sharedModuleState('folia.store.src/mods/runtime/status.ts#useFoliumStatusStore', () => create<FoliumStatusState>((set) => ({
     issues: {},
     mutedNotices: readMuted(),
     clear: (modId) => {
@@ -78,7 +79,7 @@ export const useFoliumStatusStore = create<FoliumStatusState>((set) => ({
             return { issues };
         });
     },
-}));
+})));
 
 // A mod may throw anything, and reading it may throw again (a `message` getter, a proxy).
 const describeError = (error: unknown): string => {

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../../../mods/runtime/sharedModuleState';
 import type { SongResult } from '../../../types';
 
 // src/components/app/scratchpad/songNoteTagPopoverStore.ts
@@ -15,7 +16,7 @@ type SongNoteTagPopoverState = {
     open: SongNoteTagPopover | null;
 };
 
-export const useSongNoteTagPopoverStore = create<SongNoteTagPopoverState>(() => ({ open: null }));
+export const useSongNoteTagPopoverStore = sharedModuleState('folia.store.src/components/app/scratchpad/songNoteTagPopoverStore.ts#useSongNoteTagPopoverStore', () => create<SongNoteTagPopoverState>(() => ({ open: null })));
 
 /** 按钮的位置：组头、浮动菜单里的按钮由 data 属性找（ScratchpadAction 的 run 不带事件）。找不到时贴着视口正中。 */
 const anchorOf = (selector: string): DOMRect => {

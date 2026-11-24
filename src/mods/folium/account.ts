@@ -1,5 +1,5 @@
-import type { FoliumAccountService, FoliumAccountState, FoliumContextKind } from './contract';
 import { sharedModuleState } from '../runtime/sharedModuleState';
+import type { FoliumAccountService, FoliumAccountState, FoliumContextKind } from './contract';
 
 // src/mods/folium/account.ts
 // `folium.account` (Folium 1.7) and the seam it reads through. Like services.ts this module is loaded in

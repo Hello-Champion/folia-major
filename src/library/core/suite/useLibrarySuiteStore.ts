@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../../../mods/runtime/sharedModuleState';
 import type { LibrarySuiteId } from './suite.contract';
 import { LIBRARY_SUITE_INITIAL_CHOICE } from './librarySuites';
 
@@ -40,11 +41,11 @@ type LibrarySuiteState = {
     hydrate: () => void;
 };
 
-export const useLibrarySuiteStore = create<LibrarySuiteState>(set => ({
+export const useLibrarySuiteStore = sharedModuleState('folia.store.src/library/core/suite/useLibrarySuiteStore.ts#useLibrarySuiteStore', () => create<LibrarySuiteState>(set => ({
     suite: readStoredSuite() ?? LIBRARY_SUITE_INITIAL_CHOICE,
     setSuite: (suite) => {
         writeStoredSuite(suite);
         set({ suite });
     },
     hydrate: () => set({ suite: readStoredSuite() ?? LIBRARY_SUITE_INITIAL_CHOICE }),
-}));
+})));

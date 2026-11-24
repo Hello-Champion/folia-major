@@ -1,5 +1,5 @@
-import { isThemeHexColor } from '@/services/themeSanitizer';
 import { sharedModuleState } from '../../runtime/sharedModuleState';
+import { isThemeHexColor } from '@/services/themeSanitizer';
 import { generateBuiltinDualTheme } from '@/utils/builtinTheme/generateBuiltinDualTheme';
 import type { ModRuntimeInfo } from '../../types';
 import type {

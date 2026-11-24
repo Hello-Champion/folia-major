@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 import { getStoredBoolean, setStoredBoolean } from './storagePrimitives';
 
 // src/stores/useLocalLibrarySettingsStore.ts
@@ -15,7 +16,7 @@ export type LocalLibrarySettingsState = {
     toggleAutoScan: () => void;
 };
 
-export const useLocalLibrarySettingsStore = create<LocalLibrarySettingsState>((set, get) => ({
+export const useLocalLibrarySettingsStore = sharedModuleState('folia.store.src/stores/useLocalLibrarySettingsStore.ts#useLocalLibrarySettingsStore', () => create<LocalLibrarySettingsState>((set, get) => ({
     autoScanEnabled: getStoredBoolean(AUTO_SCAN_STORAGE_KEY, true),
 
     setAutoScanEnabled: (enabled) => {
@@ -24,4 +25,4 @@ export const useLocalLibrarySettingsStore = create<LocalLibrarySettingsState>((s
     },
 
     toggleAutoScan: () => get().setAutoScanEnabled(!get().autoScanEnabled),
-}));
+})));

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 import { getStoredBoolean, getStoredString, setStoredBoolean, setStoredString } from './storagePrimitives';
 
 // src/stores/useScratchpadSettingsStore.ts
@@ -60,7 +61,7 @@ export type ScratchpadSettingsState = {
     setHandleStyle: (style: ScratchpadHandleStyle) => void;
 };
 
-export const useScratchpadSettingsStore = create<ScratchpadSettingsState>((set, get) => ({
+export const useScratchpadSettingsStore = sharedModuleState('folia.store.src/stores/useScratchpadSettingsStore.ts#useScratchpadSettingsStore', () => create<ScratchpadSettingsState>((set, get) => ({
     enabled: getStoredBoolean(ENABLED_KEY, true),
     showHandle: getStoredBoolean(SHOW_HANDLE_KEY, true),
     handlePosition: readStoredPosition(),
@@ -84,4 +85,4 @@ export const useScratchpadSettingsStore = create<ScratchpadSettingsState>((set, 
         set({ handleStyle: next });
         setStoredString(HANDLE_STYLE_KEY, next);
     },
-}));
+})));

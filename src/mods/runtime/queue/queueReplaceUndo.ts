@@ -1,3 +1,4 @@
+import { sharedModuleState } from '../sharedModuleState';
 import { create } from 'zustand';
 import { Undo2 } from 'lucide-react';
 import i18n from '@/i18n/config';
@@ -37,7 +38,7 @@ interface QueueUndoSnapshot {
 }
 
 /** Which mod replaced the queue while it can be undone, else null: for the command palette's undo command. */
-export const useFoliumQueueUndoStore = create<{ modId: string | null }>(() => ({ modId: null }));
+export const useFoliumQueueUndoStore = sharedModuleState('folia.store.src/mods/runtime/queue/queueReplaceUndo.ts#useFoliumQueueUndoStore', () => create<{ modId: string | null }>(() => ({ modId: null })));
 
 let snapshot: QueueUndoSnapshot | null = null;
 let stopWatching: (() => void) | null = null;

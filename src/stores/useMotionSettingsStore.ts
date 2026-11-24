@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 import { getStoredBoolean, setStoredBoolean } from './storagePrimitives';
 
 // src/stores/useMotionSettingsStore.ts
@@ -80,7 +81,7 @@ export type MotionSettingsState = {
     setSystemPrefersReducedMotion: (matches: boolean) => void;
 };
 
-export const useMotionSettingsStore = create<MotionSettingsState>(set => ({
+export const useMotionSettingsStore = sharedModuleState('folia.store.src/stores/useMotionSettingsStore.ts#useMotionSettingsStore', () => create<MotionSettingsState>(set => ({
     reducedMotionSurfaces: readStoredSurfaces(),
     followSystemReducedMotion: getStoredBoolean(FOLLOW_SYSTEM_KEY, false),
     systemPrefersReducedMotion: readSystemPreference(),
@@ -94,7 +95,7 @@ export const useMotionSettingsStore = create<MotionSettingsState>(set => ({
         setStoredBoolean(FOLLOW_SYSTEM_KEY, enabled);
     },
     setSystemPrefersReducedMotion: (matches) => set({ systemPrefersReducedMotion: matches }),
-}));
+})));
 
 /**
  * 某个动效面此刻是否应该降级。自己的开关优先，系统偏好只在用户主动选择跟随时才参与。

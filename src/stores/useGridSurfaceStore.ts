@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 import type { GridSurfaceHandle } from '../types/gridCommandSurface';
 
 // src/stores/useGridSurfaceStore.ts
@@ -15,7 +16,7 @@ type GridSurfaceState = {
     registerGridSurface: (handle: GridSurfaceHandle) => () => void;
 };
 
-export const useGridSurfaceStore = create<GridSurfaceState>((set, get) => ({
+export const useGridSurfaceStore = sharedModuleState('folia.store.src/stores/useGridSurfaceStore.ts#useGridSurfaceStore', () => create<GridSurfaceState>((set, get) => ({
     gridSurface: null,
     registerGridSurface: (handle) => {
         set({ gridSurface: handle });
@@ -27,7 +28,7 @@ export const useGridSurfaceStore = create<GridSurfaceState>((set, get) => ({
             }
         };
     },
-}));
+})));
 
 // Module-level handle for the registration hook; it is an action, so it needs no subscription.
 export const registerGridSurface: GridSurfaceState['registerGridSurface'] = (handle) => (

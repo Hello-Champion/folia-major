@@ -1,3 +1,4 @@
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 // src/stores/useDesktopSettingsStore.ts
 // Desktop-shell behaviour: tray and taskbar, wallpaper mode, display-sleep and voice-input
 // interlocks, launch target, the mod system and community mods switches, the Windows render GPU, and the
@@ -163,7 +164,7 @@ export type DesktopSettingsState = {
     handleStepUiZoom: (direction: 1 | -1) => boolean;
 };
 
-export const useDesktopSettingsStore = create<DesktopSettingsState>((set, get) => ({
+export const useDesktopSettingsStore = sharedModuleState('folia.store.src/stores/useDesktopSettingsStore.ts#useDesktopSettingsStore', () => create<DesktopSettingsState>((set, get) => ({
     minimizeToTray: getStoredBoolean(MINIMIZE_TO_TRAY_STORAGE_KEY, false),
     closeToTray: getStoredBoolean(CLOSE_TO_TRAY_STORAGE_KEY, false),
     voiceInputPauseEnabled: getStoredBoolean(VOICE_INPUT_PAUSE_STORAGE_KEY, false),
@@ -478,7 +479,7 @@ export const useDesktopSettingsStore = create<DesktopSettingsState>((set, get) =
         applyUiZoom(set, next.enabled, next.step);
         return true;
     },
-}));
+})));
 
 // 存下开关和挡位，提示现在是多少。页面真正缩放由 services/uiZoomRuntime.ts 订阅这两个值去做。
 function applyUiZoom(

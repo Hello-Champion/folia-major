@@ -1,5 +1,5 @@
-import type { ModRuntimeInfo } from '../../types';
 import { sharedModuleState } from '../../runtime/sharedModuleState';
+import type { ModRuntimeInfo } from '../../types';
 import type {
     FoliumCollection,
     FoliumCollectionKey,

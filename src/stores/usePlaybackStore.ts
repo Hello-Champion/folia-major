@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 import type React from 'react';
 import { PlayerState, type ActiveLocalLyricsSource, type LyricData, type PlaybackContext, type ReplayGainMode, type SongResult } from '../types';
 import { createCoverUrlResolver } from '../components/app/playback/createCoverUrlResolver';
@@ -122,7 +123,7 @@ const readStoredReplayGainMode = (): ReplayGainMode => {
     return saved === 'track' || saved === 'album' || saved === 'auto' ? saved : 'off';
 };
 
-export const usePlaybackStore = create<PlaybackStoreState>((set, get) => ({
+export const usePlaybackStore = sharedModuleState('folia.store.src/stores/usePlaybackStore.ts#usePlaybackStore', () => create<PlaybackStoreState>((set, get) => ({
     currentSong: null,
     audioSrc: null,
     lyrics: null,
@@ -168,7 +169,7 @@ export const usePlaybackStore = create<PlaybackStoreState>((set, get) => ({
     setPlaybackRoute: (next) => set({ playbackRoute: resolve(next, get().playbackRoute) }),
     releaseTransitionDisplay: (end) => set({ transitionDisplay: null, transitionEnd: end }),
     replacePlayQueue: (queue, isFmMode) => set({ playQueue: queue, isFmMode }),
-}));
+})));
 
 // ---- module-level setters ----
 //

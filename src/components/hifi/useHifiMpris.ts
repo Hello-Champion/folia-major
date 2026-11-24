@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
+import { sharedModuleState } from '../../mods/runtime/sharedModuleState';
 import { create } from 'zustand';
 import { PlayerState } from '../../types';
 import type { SongResult } from '../../types';
@@ -50,7 +51,7 @@ export const getHifiMprisApi = (): HifiMprisApi | null => {
 };
 
 /** 主进程报来的 MPRIS 登记结果；还没报过时为 null，那时先当作登记得上（不放会挡住 PipeWire 切采样率的保活）。 */
-export const useHifiMprisStatusStore = create<{ registered: boolean | null }>(() => ({ registered: null }));
+export const useHifiMprisStatusStore = sharedModuleState('folia.store.src/components/hifi/useHifiMpris.ts#useHifiMprisStatusStore', () => create<{ registered: boolean | null }>(() => ({ registered: null })));
 
 /** 系统媒体控制是不是由主进程的 MPRIS 给：是的话页面不放保活。主进程报了登记不上时为假，保活照旧。 */
 export const hasMainProcessMediaControls = (registered = useHifiMprisStatusStore.getState().registered): boolean => (

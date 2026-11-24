@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../../../mods/runtime/sharedModuleState';
 import type { LibraryHiddenCollections, LibraryHiddenScope } from '../directory/directory.contract';
 import { parseHiddenCollections, setHiddenCollection, toggleHiddenCollection } from '../directory/directoryVisibility';
 
@@ -37,7 +38,7 @@ type HiddenCollectionsState = {
     hydrate: () => void;
 };
 
-export const useHiddenCollectionsStore = create<HiddenCollectionsState>((set, get) => {
+export const useHiddenCollectionsStore = sharedModuleState('folia.store.src/library/core/collection/useHiddenCollectionsStore.ts#useHiddenCollectionsStore', () => create<HiddenCollectionsState>((set, get) => {
     // 状态没变就不写存储、不通知订阅者。
     const commit = (next: LibraryHiddenCollections) => {
         if (next === get().hiddenByScope) return;
@@ -51,4 +52,4 @@ export const useHiddenCollectionsStore = create<HiddenCollectionsState>((set, ge
         setHidden: (scope, id, hidden) => commit(setHiddenCollection(get().hiddenByScope, scope, id, hidden)),
         hydrate: () => set({ hiddenByScope: readStoredHiddenCollections() }),
     };
-});
+}));

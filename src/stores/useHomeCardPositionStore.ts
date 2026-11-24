@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 
 // src/stores/useHomeCardPositionStore.ts
 // Session-only home card bookmarks survive view unmounts without persisting library data.
@@ -11,7 +12,7 @@ type HomeCardPositionState = {
     clear: () => void;
 };
 
-export const useHomeCardPositionStore = create<HomeCardPositionState>(set => ({
+export const useHomeCardPositionStore = sharedModuleState('folia.store.src/stores/useHomeCardPositionStore.ts#useHomeCardPositionStore', () => create<HomeCardPositionState>(set => ({
     positions: {},
     remember: (scope, position) => set(state => {
         const previous = state.positions[scope];
@@ -19,4 +20,4 @@ export const useHomeCardPositionStore = create<HomeCardPositionState>(set => ({
         return { positions: { ...state.positions, [scope]: position } };
     }),
     clear: () => set({ positions: {} }),
-}));
+})));

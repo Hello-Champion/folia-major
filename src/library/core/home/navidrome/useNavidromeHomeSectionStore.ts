@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../../../../mods/runtime/sharedModuleState';
 import { DEFAULT_NAVIDROME_HOME_SECTION, isNavidromeHomeSection, type NavidromeHomeSection } from './navidromeHomeModel';
 
 // src/library/core/home/navidrome/useNavidromeHomeSectionStore.ts
@@ -33,11 +34,11 @@ type NavidromeHomeSectionState = {
     hydrate: () => void;
 };
 
-export const useNavidromeHomeSectionStore = create<NavidromeHomeSectionState>((set, get) => ({
+export const useNavidromeHomeSectionStore = sharedModuleState('folia.store.src/library/core/home/navidrome/useNavidromeHomeSectionStore.ts#useNavidromeHomeSectionStore', () => create<NavidromeHomeSectionState>((set, get) => ({
     section: readStoredSection(),
     setSection: (section) => {
         writeStoredSection(section);
         if (get().section !== section) set({ section });
     },
     hydrate: () => set({ section: readStoredSection() }),
-}));
+})));

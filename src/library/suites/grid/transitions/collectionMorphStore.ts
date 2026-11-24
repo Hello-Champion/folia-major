@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../../../../mods/runtime/sharedModuleState';
 import { useCollectionNavigationStore, type CollectionNavigationSnapshot } from '../../../../stores/useCollectionNavigationStore';
 import { collectionKey } from '../../../core/collection/collectionIdentity';
 import { captureClickedCard, latticeSourceKey, type CollectionMorphCapture } from './morphProbes';
@@ -104,7 +105,7 @@ const scheduleDiscard = (clear: () => void) => {
     }, COLLECTION_MORPH_OBSERVATION_WINDOW_MS);
 };
 
-export const useCollectionMorphStore = create<CollectionMorphState>((set, get) => {
+export const useCollectionMorphStore = sharedModuleState('folia.store.src/library/suites/grid/transitions/collectionMorphStore.ts#useCollectionMorphStore', () => create<CollectionMorphState>((set, get) => {
     const commitPlan = (plan: CollectionMorphPlan, depth: number) => {
         cancelPlanTtl();
         planTtlTimer = setTimeout(() => {
@@ -207,7 +208,7 @@ export const useCollectionMorphStore = create<CollectionMorphState>((set, get) =
             get().setCarrier(null);
         },
     };
-});
+}));
 
 /**
  * 记录一次卡片点击采集，并开启观察窗口。监听器本身在 morphProbes.attachMorphCapture，

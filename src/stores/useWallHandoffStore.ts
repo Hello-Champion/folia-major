@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 
 // src/stores/useWallHandoffStore.ts
 // 两面墙的翻牌交接（设计稿 §7「进入队列」：资料库墙 ↔ Lattice）的会话状态机。App 不认识任何 suite：资料库那面墙
@@ -117,7 +118,7 @@ const viewportCenter = (): WallHandoffPoint => (
         : { x: window.innerWidth / 2, y: window.innerHeight / 2 }
 );
 
-export const useWallHandoffStore = create<WallHandoffState>((set, get) => {
+export const useWallHandoffStore = sharedModuleState('folia.store.src/stores/useWallHandoffStore.ts#useWallHandoffStore', () => create<WallHandoffState>((set, get) => {
     /** 只在会话还是 `id` 那一次时改它。 */
     const patch = (id: number, next: Partial<WallHandoffSession>) => {
         const session = get().session;
@@ -250,7 +251,7 @@ export const useWallHandoffStore = create<WallHandoffState>((set, get) => {
             if (get().session) set({ session: null });
         },
     };
-});
+}));
 
 /** 交接中的哪一面：资料库墙（home）或 Lattice。 */
 export type WallHandoffSide = 'home' | 'lattice';

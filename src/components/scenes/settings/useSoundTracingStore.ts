@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../../../mods/runtime/sharedModuleState';
 import { getStoredBoolean, getStoredString, setStoredBoolean, setStoredString } from '../../../stores/storagePrimitives';
 
 // src/components/scenes/settings/useSoundTracingStore.ts
@@ -22,7 +23,7 @@ interface SoundTracingState {
     setOutput: (output: SoundTracingOutput) => void;
 }
 
-export const useSoundTracingStore = create<SoundTracingState>(set => ({
+export const useSoundTracingStore = sharedModuleState('folia.store.src/components/scenes/settings/useSoundTracingStore.ts#useSoundTracingStore', () => create<SoundTracingState>(set => ({
     enabled: getStoredBoolean(SOUND_TRACING_ENABLED_KEY, false),
     output: readOutput(),
     setEnabled: (enabled) => {
@@ -33,4 +34,4 @@ export const useSoundTracingStore = create<SoundTracingState>(set => ({
         setStoredString(SOUND_TRACING_OUTPUT_KEY, output);
         set({ output });
     },
-}));
+})));

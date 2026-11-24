@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 import { playerBottomBarLiveOffset } from './motionSignals';
 import { PLAYER_BOTTOM_BAR_BASE_OFFSET_PX, clampPlayerBottomBarOffset } from '../utils/playerBottomBarLayout';
 
@@ -19,7 +20,7 @@ type PlayerBottomBarLayoutState = {
     cancelPositioning: () => void;
 };
 
-export const usePlayerBottomBarLayoutStore = create<PlayerBottomBarLayoutState>((set, get) => ({
+export const usePlayerBottomBarLayoutStore = sharedModuleState('folia.store.src/stores/usePlayerBottomBarLayoutStore.ts#usePlayerBottomBarLayoutStore', () => create<PlayerBottomBarLayoutState>((set, get) => ({
     isPositioning: false,
     positioningStartOffset: PLAYER_BOTTOM_BAR_BASE_OFFSET_PX,
     positioningRequest: { seq: 0 },
@@ -48,4 +49,4 @@ export const usePlayerBottomBarLayoutStore = create<PlayerBottomBarLayoutState>(
         playerBottomBarLiveOffset.set(get().positioningStartOffset);
         set({ isPositioning: false });
     },
-}));
+})));

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../../../mods/runtime/sharedModuleState';
 import type { LocalSongFolderSortDirection, LocalSongFolderSortField } from '../../../utils/localSongSorting';
 
 // src/library/core/directory/useLocalTrackSortStore.ts
@@ -26,7 +27,7 @@ type LocalTrackSortState = {
     setDirection: (direction: LocalSongFolderSortDirection) => void;
 };
 
-export const useLocalTrackSortStore = create<LocalTrackSortState>(set => ({
+export const useLocalTrackSortStore = sharedModuleState('folia.store.src/library/core/directory/useLocalTrackSortStore.ts#useLocalTrackSortStore', () => create<LocalTrackSortState>(set => ({
     field: readField(),
     direction: readDirection(),
     setField: (field) => {
@@ -37,4 +38,4 @@ export const useLocalTrackSortStore = create<LocalTrackSortState>(set => ({
         localStorage.setItem(LOCAL_TRACK_SORT_DIRECTION_STORAGE_KEY, direction);
         set({ direction });
     },
-}));
+})));

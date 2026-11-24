@@ -1,3 +1,4 @@
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 // src/stores/useSleepTimerStore.ts
 // The sleep timer: the configured duration plus the armed deadline.
 //
@@ -36,7 +37,7 @@ export type SleepTimerState = {
     handleSetSleepTimerMinutes: (minutes: number) => void;
 };
 
-export const useSleepTimerStore = create<SleepTimerState>((set, get) => ({
+export const useSleepTimerStore = sharedModuleState('folia.store.src/stores/useSleepTimerStore.ts#useSleepTimerStore', () => create<SleepTimerState>((set, get) => ({
     // A sleep timer is a one-shot action. Persist its preferred duration, never an armed state.
     sleepTimerEnabled: false,
     sleepTimerHours: readStoredSleepTimerHours(),
@@ -87,7 +88,7 @@ export const useSleepTimerStore = create<SleepTimerState>((set, get) => ({
                 : state.sleepTimerEnabled,
         }));
     },
-}));
+})));
 
 /**
  * The SleepTimer half of the former settings snapshot, for the surfaces that

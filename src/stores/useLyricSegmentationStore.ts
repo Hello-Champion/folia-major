@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 import type { LyricSegmentationRecord } from '../types/lyricSegmentation';
 
 // src/stores/useLyricSegmentationStore.ts
@@ -18,12 +19,12 @@ type LyricSegmentationState = {
     clear: () => void;
 };
 
-export const useLyricSegmentationStore = create<LyricSegmentationState>((set) => ({
+export const useLyricSegmentationStore = sharedModuleState('folia.store.src/stores/useLyricSegmentationStore.ts#useLyricSegmentationStore', () => create<LyricSegmentationState>((set) => ({
     record: null,
     songKey: null,
     setRecord: (songKey, record) => set({ songKey, record }),
     clear: () => set({ songKey: null, record: null }),
-}));
+})));
 
 /** Read-only handle for the synchronous lyric setter, which must not subscribe. */
 export const getLyricSegmentationRecord = (): LyricSegmentationRecord | null => (

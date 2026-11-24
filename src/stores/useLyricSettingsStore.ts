@@ -1,3 +1,4 @@
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 // src/stores/useLyricSettingsStore.ts
 // How lyrics are sourced, filtered and timed: which provider wins, the staff-credits policy,
 // the rules that remove lyric lines, and this machine's timeline offset.
@@ -156,7 +157,7 @@ export type LyricSettingsState = {
     handleToggleAutoAiLyricSegmentation: (enable: boolean) => void;
 };
 
-export const useLyricSettingsStore = create<LyricSettingsState>((set, get) => ({
+export const useLyricSettingsStore = sharedModuleState('folia.store.src/stores/useLyricSettingsStore.ts#useLyricSettingsStore', () => create<LyricSettingsState>((set, get) => ({
     autoUseBestLyric: getStoredBoolean('auto_use_best_lyric', true),
     preferredAlternativeLyricSource: readStoredPreferredAlternativeLyricSource(),
     keepProviderWordTiming: getStoredBoolean(KEEP_PROVIDER_WORD_TIMING_KEY, true),
@@ -281,7 +282,7 @@ export const useLyricSettingsStore = create<LyricSettingsState>((set, get) => ({
             text: i18n.t('notifications.' + (enable ? 'autoAiLyricSegmentationOn' : 'autoAiLyricSegmentationOff')),
         });
     },
-}));
+})));
 
 /** The lyric-sourcing half of the former settings snapshot. */
 export const selectLyricSettingsSnapshot = (state: LyricSettingsState) => ({

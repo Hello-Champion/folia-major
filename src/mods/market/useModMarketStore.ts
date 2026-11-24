@@ -1,3 +1,4 @@
+import { sharedModuleState } from '../runtime/sharedModuleState';
 import { create } from 'zustand';
 import {
     allowExpiredModRange,
@@ -79,7 +80,7 @@ const takeMods = (answer: Answer) => {
 
 let progressBound = false;
 
-export const useModMarketStore = create<ModMarketState>((set, get) => ({
+export const useModMarketStore = sharedModuleState('folia.store.src/mods/market/useModMarketStore.ts#useModMarketStore', () => create<ModMarketState>((set, get) => ({
     catalog: null,
     loading: false,
     error: null,
@@ -181,7 +182,7 @@ export const useModMarketStore = create<ModMarketState>((set, get) => ({
         setStoredBoolean(MOD_UPDATE_CHECK_KEY, enabled);
         set({ autoCheck: enabled });
     },
-}));
+})));
 
 // The tab's mark follows the installed list too (an install from a zip, a reload).
 useModsStore.subscribe((state, previous) => {

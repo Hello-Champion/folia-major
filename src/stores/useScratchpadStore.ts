@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 import i18n from '../i18n/config';
 import type { SongResult } from '../types';
 import { getPlaybackSongKey, getPlaybackSourceRef, isStagePlaybackSong } from '../utils/appPlaybackGuards';
@@ -187,7 +188,7 @@ type ScratchpadState = {
     clear: () => void;
 };
 
-export const useScratchpadStore = create<ScratchpadState>((set, get) => ({
+export const useScratchpadStore = sharedModuleState('folia.store.src/stores/useScratchpadStore.ts#useScratchpadStore', () => create<ScratchpadState>((set, get) => ({
     entries: readEntries(),
     isOpen: false,
     tab: 'notes',
@@ -223,7 +224,7 @@ export const useScratchpadStore = create<ScratchpadState>((set, get) => ({
         set({ entries: [] });
         writeEntries([]);
     },
-}));
+})));
 
 /** 收进速记簿并报一句结果（入口们共用：命令、聚焦卡菜单、集合缝）。 */
 export const collectToScratchpad = (songs: readonly SongResult[], origin?: ScratchpadOrigin): ScratchpadAddResult => {

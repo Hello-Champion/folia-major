@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../../mods/runtime/sharedModuleState';
 import { omni } from '../../services/onlineMusic/omni';
 import { useOnlineProviderAccountStore } from '../../stores/useOnlineProviderAccountStore';
 import type { RecommendationPreferenceEntry, RecommendationPreferences } from '../../types/onlineMusic';
@@ -51,7 +52,7 @@ const isAbort = (error: unknown): boolean => error instanceof Error && error.nam
 // 保存属于账号，不属于某次打开。等写入结束再读，避免重开时读到旧值。
 const pendingSaves = new Map<string, Promise<void>>();
 
-export const useRecommendationPreferencesStore = create<RecommendationPreferencesState>((set, get) => ({
+export const useRecommendationPreferencesStore = sharedModuleState('folia.store.src/components/recommendationPreferences/useRecommendationPreferencesStore.ts#useRecommendationPreferencesStore', () => create<RecommendationPreferencesState>((set, get) => ({
     openTicket: 0,
     owner: null,
     phase: 'idle',
@@ -124,4 +125,4 @@ export const useRecommendationPreferencesStore = create<RecommendationPreference
             finish();
         }
     },
-}));
+})));

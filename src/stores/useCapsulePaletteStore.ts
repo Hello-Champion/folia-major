@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 
 // src/stores/useCapsulePaletteStore.ts
 // 进度条胶囊和命令面板之间的约定：胶囊在场时把自己登记在这里，面板打开那一刻看见它就从它
@@ -13,9 +14,9 @@ type CapsulePaletteState = {
     setIsMorphed: (isMorphed: boolean) => void;
 };
 
-export const useCapsulePaletteStore = create<CapsulePaletteState>(set => ({
+export const useCapsulePaletteStore = sharedModuleState('folia.store.src/stores/useCapsulePaletteStore.ts#useCapsulePaletteStore', () => create<CapsulePaletteState>(set => ({
     anchor: null,
     isMorphed: false,
     setAnchor: anchor => set(state => (state.anchor === anchor ? state : { anchor })),
     setIsMorphed: isMorphed => set(state => (state.isMorphed === isMorphed ? state : { isMorphed })),
-}));
+})));

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../../../mods/runtime/sharedModuleState';
 import type { LibraryDirectorySession, LibraryDirectoryVisibilityMode } from './directory.contract';
 import {
     EMPTY_DIRECTORY_SESSION,
@@ -42,7 +43,7 @@ type LibraryDirectorySessionState = {
     clearSession: (sessionId: string) => void;
 };
 
-export const useLibraryDirectorySessionStore = create<LibraryDirectorySessionState>((set, get) => {
+export const useLibraryDirectorySessionStore = sharedModuleState('folia.store.src/library/core/directory/useLibraryDirectorySessionStore.ts#useLibraryDirectorySessionStore', () => create<LibraryDirectorySessionState>((set, get) => {
     // 变换没改动会话（返回同一个对象）就不写、不通知订阅者。
     const update = (sessionId: string, change: (session: LibraryDirectorySession) => LibraryDirectorySession) => {
         const current = get().sessions[sessionId] ?? EMPTY_DIRECTORY_SESSION;
@@ -95,7 +96,7 @@ export const useLibraryDirectorySessionStore = create<LibraryDirectorySessionSta
             });
         },
     };
-});
+}));
 
 /** 关掉此刻打开着的目录（首页整个离开时，宿主调）。 */
 export const closeOpenLibraryDirectory = (): void => {

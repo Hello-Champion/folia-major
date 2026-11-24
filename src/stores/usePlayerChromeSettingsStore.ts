@@ -1,3 +1,4 @@
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 // src/stores/usePlayerChromeSettingsStore.ts
 // What the player page shows around the lyrics: the progress bar, the back and track-switch
 // buttons, the titlebar, the transparent background and the auto-hide behaviour.
@@ -275,7 +276,7 @@ export type PlayerChromeSettingsState = {
     handleResetGlobalGlass: () => void;
 };
 
-export const usePlayerChromeSettingsStore = create<PlayerChromeSettingsState>((set, get) => ({
+export const usePlayerChromeSettingsStore = sharedModuleState('folia.store.src/stores/usePlayerChromeSettingsStore.ts#usePlayerChromeSettingsStore', () => create<PlayerChromeSettingsState>((set, get) => ({
     hidePlayerProgressBar: getStoredBoolean('hide_player_progress_bar', false),
     progressBarChorusMarker: getStoredBoolean('progress_bar_chorus_marker', true),
     playerBottomBarOffset: readStoredPlayerBottomBarOffset(),
@@ -606,7 +607,7 @@ export const usePlayerChromeSettingsStore = create<PlayerChromeSettingsState>((s
             globalGlassGlow: DEFAULT_GLASS_GLOW,
         });
     },
-}));
+})));
 
 /**
  * The PlayerChromeSettings half of the former settings snapshot, for the surfaces that

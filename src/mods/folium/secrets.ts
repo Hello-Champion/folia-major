@@ -1,5 +1,5 @@
-import type { FoliumContextKind, FoliumDisposer, FoliumSecretAccess } from './contract';
 import { sharedModuleState } from '../runtime/sharedModuleState';
+import type { FoliumContextKind, FoliumDisposer, FoliumSecretAccess } from './contract';
 import type { ModSecretsState } from '../types';
 import { invokeModSecrets, subscribeModSecretChanges } from '../ipc';
 import { createFoliumGatedChannel } from '../runtime/guard';

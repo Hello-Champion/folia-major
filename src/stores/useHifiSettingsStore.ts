@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 import type { HifiDsdMode, HifiEngineConfig } from '../types/hifi';
 import { getStoredBoolean, getStoredString, removeStoredKey, setStoredBoolean, setStoredString } from './storagePrimitives';
 
@@ -61,7 +62,7 @@ export type HifiSettingsState = {
     setVolumeConfirmed: (confirmed: boolean) => void;
 };
 
-export const useHifiSettingsStore = create<HifiSettingsState>((set) => ({
+export const useHifiSettingsStore = sharedModuleState('folia.store.src/stores/useHifiSettingsStore.ts#useHifiSettingsStore', () => create<HifiSettingsState>((set) => ({
     enabled: getStoredBoolean(HIFI_ENABLED_KEY, false),
     mpvPath: getStoredString(HIFI_MPV_PATH_KEY, ''),
     audioDevice: getStoredString(HIFI_AUDIO_DEVICE_KEY, DEFAULT_AUDIO_DEVICE),
@@ -117,7 +118,7 @@ export const useHifiSettingsStore = create<HifiSettingsState>((set) => ({
         setStoredBoolean(HIFI_VOLUME_CONFIRMED_KEY, confirmed);
         set({ volumeConfirmed: confirmed });
     },
-}));
+})));
 
 /** 0–1 之间；非有限数按 0 算：软件音量下宁可无声，也不要满音量。 */
 const clampUnit = (value: number) => (Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : 0);

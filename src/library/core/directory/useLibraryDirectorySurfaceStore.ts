@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../../../mods/runtime/sharedModuleState';
 import type { LibraryDirectorySurfaceHandle } from './directory.contract';
 
 // src/library/core/directory/useLibraryDirectorySurfaceStore.ts
@@ -12,7 +13,7 @@ type LibraryDirectorySurfaceState = {
     registerDirectorySurface: (handle: LibraryDirectorySurfaceHandle) => () => void;
 };
 
-export const useLibraryDirectorySurfaceStore = create<LibraryDirectorySurfaceState>((set, get) => ({
+export const useLibraryDirectorySurfaceStore = sharedModuleState('folia.store.src/library/core/directory/useLibraryDirectorySurfaceStore.ts#useLibraryDirectorySurfaceStore', () => create<LibraryDirectorySurfaceState>((set, get) => ({
     directorySurface: null,
     registerDirectorySurface: (handle) => {
         set({ directorySurface: handle });
@@ -22,7 +23,7 @@ export const useLibraryDirectorySurfaceStore = create<LibraryDirectorySurfaceSta
             }
         };
     },
-}));
+})));
 
 /** 注册目录 surface（动作，不需要订阅）。 */
 export const registerLibraryDirectorySurface: LibraryDirectorySurfaceState['registerDirectorySurface'] = (handle) => (

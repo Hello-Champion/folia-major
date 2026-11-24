@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 import type { GridViewCollectionDescriptor } from '../components/app/home/gridViewCollectionAdapters';
 
 // src/stores/usePlayingSongLocatorStore.ts
@@ -79,7 +80,7 @@ interface PlayingSongLocatorState {
     setRequest: (request: LocateRequest | null) => void;
 }
 
-export const usePlayingSongLocatorStore = create<PlayingSongLocatorState>(set => ({
+export const usePlayingSongLocatorStore = sharedModuleState('folia.store.src/stores/usePlayingSongLocatorStore.ts#usePlayingSongLocatorStore', () => create<PlayingSongLocatorState>(set => ({
     source: recall(),
     request: null,
     navigator: null,
@@ -89,4 +90,4 @@ export const usePlayingSongLocatorStore = create<PlayingSongLocatorState>(set =>
         keep(source);
     },
     setRequest: request => set({ request }),
-}));
+})));

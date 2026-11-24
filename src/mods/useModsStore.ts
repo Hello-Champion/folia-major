@@ -1,3 +1,4 @@
+import { sharedModuleState } from './runtime/sharedModuleState';
 import { create } from 'zustand';
 import {
     cancelExport,
@@ -64,7 +65,7 @@ interface ModsStoreState {
     bindEvents: () => void;
 }
 
-export const useModsStore = create<ModsStoreState>((set, get) => ({
+export const useModsStore = sharedModuleState('folia.store.src/mods/useModsStore.ts#useModsStore', () => create<ModsStoreState>((set, get) => ({
     bridgeAvailable: isModsBridgeAvailable(),
     mods: [],
     ffmpeg: { available: false, path: null, version: null, candidates: [] },
@@ -154,7 +155,7 @@ export const useModsStore = create<ModsStoreState>((set, get) => ({
             logs: [...state.logs, entry].slice(-MAX_LOG_ENTRIES),
         })));
     },
-}));
+})));
 
 /*
  * Keep the Folium clients in lockstep with the mod list: any change to the list

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../../../mods/runtime/sharedModuleState';
 
 // src/library/suites/bravais/bravaisUiStore.ts
 // stage 与集合 surface 之间、层描述以外的几样小状态（模块作用域，跨 stage 卸载存活）：
@@ -25,7 +26,7 @@ export type BravaisUiState = {
     removalOrigin: BravaisRemovalOrigin | null;
 };
 
-export const useBravaisUiStore = create<BravaisUiState>(() => ({
+export const useBravaisUiStore = sharedModuleState('folia.store.src/library/suites/bravais/bravaisUiStore.ts#useBravaisUiStore', () => create<BravaisUiState>(() => ({
     panelFor: null,
     linkedKey: null,
     wallHoverKey: null,
@@ -34,7 +35,7 @@ export const useBravaisUiStore = create<BravaisUiState>(() => ({
     filterInput: null,
     focusFirst: null,
     removalOrigin: null,
-}));
+})));
 
 export const setBravaisFilterEditing = (editing: boolean) => {
     if (useBravaisUiStore.getState().filterEditing !== editing) useBravaisUiStore.setState({ filterEditing: editing });

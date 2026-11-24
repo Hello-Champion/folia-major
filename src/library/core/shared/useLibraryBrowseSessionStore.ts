@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../../../mods/runtime/sharedModuleState';
 import type { LibraryBrowseSession } from './session.contract';
 
 // src/library/core/shared/useLibraryBrowseSessionStore.ts
@@ -45,7 +46,7 @@ const writeSession = (
     return { sessions, order };
 };
 
-export const useLibraryBrowseSessionStore = create<LibraryBrowseSessionState>((set, get) => ({
+export const useLibraryBrowseSessionStore = sharedModuleState('folia.store.src/library/core/shared/useLibraryBrowseSessionStore.ts#useLibraryBrowseSessionStore', () => create<LibraryBrowseSessionState>((set, get) => ({
     sessions: {},
     order: [],
     setQuery: (sessionKey, query) => {
@@ -66,7 +67,7 @@ export const useLibraryBrowseSessionStore = create<LibraryBrowseSessionState>((s
             return { sessions, order: state.order.filter(key => key !== sessionKey) };
         });
     },
-}));
+})));
 
 export const getLibraryBrowseSession = (sessionKey: string): LibraryBrowseSession => (
     useLibraryBrowseSessionStore.getState().sessions[sessionKey] ?? EMPTY_SESSION

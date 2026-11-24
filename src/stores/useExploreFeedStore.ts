@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 import { omni } from '../services/onlineMusic/omni';
 import { inKeptOrder, noteCollectionSaved, withoutTakenOut } from './exploreFeedMemory';
 import type { UnifiedSong } from '../types';
@@ -335,7 +336,7 @@ const standsOn = (feed: ExploreFeed, section: OmniExploreSection): boolean => fe
     other.title !== '' && other.title === section.title && !hasOthers(section, namesIn(feed.kept[other.id].pool))
 ));
 
-export const useExploreFeedStore = create<ExploreFeedStore>((set, get) => {
+export const useExploreFeedStore = sharedModuleState('folia.store.src/stores/useExploreFeedStore.ts#useExploreFeedStore', () => create<ExploreFeedStore>((set, get) => {
     // An answer is for the page that asked; it is dropped when another key, or a newer read of
     // the same key, has taken its place.
     let reads = 0;
@@ -467,4 +468,4 @@ export const useExploreFeedStore = create<ExploreFeedStore>((set, get) => {
             set({ key: null, feed: null });
         },
     };
-});
+}));

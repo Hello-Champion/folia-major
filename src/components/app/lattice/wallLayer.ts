@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../../../mods/runtime/sharedModuleState';
 import type { Variants } from 'framer-motion';
 import { useAppViewStore } from '../../../stores/useAppViewStore';
 import { readReducedMotion } from '../../../stores/useMotionSettingsStore';
@@ -86,10 +87,10 @@ export type VisualizerAroundWall = {
  *   the player, which has the visualizer back then, in a fade as well.
  * A store, and not state of App: what it holds changes with the view, in the same render.
  */
-export const useVisualizerAroundWall = create<VisualizerAroundWall>(() => {
+export const useVisualizerAroundWall = sharedModuleState('folia.store.src/components/app/lattice/wallLayer.ts#useVisualizerAroundWall', () => create<VisualizerAroundWall>(() => {
     const isWallUp = useAppViewStore.getState().view === 'lattice';
     return { isUp: !isWallUp, fadesIn: false, hasWallLeft: !isWallUp };
-});
+}));
 
 let coverTimer: ReturnType<typeof setTimeout> | undefined;
 let entranceTimer: ReturnType<typeof setTimeout> | undefined;

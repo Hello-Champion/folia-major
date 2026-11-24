@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 import { getNavidromeConfig, navidromeApi } from '../services/navidromeService';
 import type { HomeOnlineViewTab, HomeViewTab, LocalSong, SongResult, UnifiedSong } from '../types';
 import type { OmniCollection, OmniSearchKind, OnlineProviderId } from '../types/onlineMusic';
@@ -430,7 +431,7 @@ const writeSearchHistory = (history: string[]) => {
     }
 };
 
-export const useSearchNavigationStore = create<SearchNavigationState>((set, get) => ({
+export const useSearchNavigationStore = sharedModuleState('folia.store.src/stores/useSearchNavigationStore.ts#useSearchNavigationStore', () => create<SearchNavigationState>((set, get) => ({
     homeViewTab: getInitialHomeViewTab(),
     homeOnlineTab: getInitialHomeOnlineTab(getInitialHomeViewTab()),
     searchQuery: '',
@@ -687,4 +688,4 @@ export const useSearchNavigationStore = create<SearchNavigationState>((set, get)
             }
         }
     },
-}));
+})));

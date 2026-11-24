@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 import type React from 'react';
 import type { StatusMessage } from '../types';
 
@@ -25,7 +26,7 @@ type StatusMessageState = {
 
 let activitySequence = 0;
 
-export const useStatusMessageStore = create<StatusMessageState>((set) => ({
+export const useStatusMessageStore = sharedModuleState('folia.store.src/stores/useStatusMessageStore.ts#useStatusMessageStore', () => create<StatusMessageState>((set) => ({
     message: null,
     held: false,
     setMessage: (next) => set(state => {
@@ -42,7 +43,7 @@ export const useStatusMessageStore = create<StatusMessageState>((set) => ({
         }
         return message === state.message ? { message } : { message, held: false };
     }),
-}));
+})));
 
 /**
  * Module-level emitter for everything that is not a React component: stores, services, and the

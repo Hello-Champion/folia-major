@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../../mods/runtime/sharedModuleState';
 import { getStoredString, setStoredString } from '../../stores/storagePrimitives';
 import { usePlayerChromeSettingsStore } from '../../stores/usePlayerChromeSettingsStore';
 import { isPlayerControlSlotActionId } from '../../types/playerControlSlots';
@@ -56,7 +57,7 @@ type PlayerControlSlotSuggestionState = {
     dismiss: () => void;
 };
 
-export const usePlayerControlSlotSuggestionStore = create<PlayerControlSlotSuggestionState>((set, get) => ({
+export const usePlayerControlSlotSuggestionStore = sharedModuleState('folia.store.src/components/floating-player/playerControlSlotSuggestionStore.ts#usePlayerControlSlotSuggestionStore', () => create<PlayerControlSlotSuggestionState>((set, get) => ({
     pending: null,
     offered: readOffered(),
     noteCommandUse: (commandId, useCount) => {
@@ -83,4 +84,4 @@ export const usePlayerControlSlotSuggestionStore = create<PlayerControlSlotSugge
         set({ offered: next });
     },
     dismiss: () => set({ pending: null }),
-}));
+})));

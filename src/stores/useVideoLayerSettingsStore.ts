@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 import { getStoredBoolean, getStoredString, setStoredBoolean } from './storagePrimitives';
 import {
     canPersistVideoLayerFile,
@@ -66,7 +67,7 @@ export type VideoLayerSettingsState = {
 // A pick or clear in this session supersedes the stored one, so it also counts as restored.
 let restoreStarted = false;
 
-export const useVideoLayerSettingsStore = create<VideoLayerSettingsState>((set, get) => {
+export const useVideoLayerSettingsStore = sharedModuleState('folia.store.src/stores/useVideoLayerSettingsStore.ts#useVideoLayerSettingsStore', () => create<VideoLayerSettingsState>((set, get) => {
     // Bumped by every pick/clear so a slow restore or re-grant cannot overwrite a newer choice.
     let fileRevision = 0;
 
@@ -152,7 +153,7 @@ export const useVideoLayerSettingsStore = create<VideoLayerSettingsState>((set, 
         restoreLocalFile: () => loadStoredFile(false),
         regrantLocalFile: () => loadStoredFile(true),
     };
-});
+}));
 
 /**
  * Restores the pick from an earlier session, once. Called lazily by the layer and the settings

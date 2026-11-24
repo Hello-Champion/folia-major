@@ -1,3 +1,4 @@
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 // src/stores/useThemeSettingsStore.ts
 // Day/night mode and the background-derivation switches.
 //
@@ -84,7 +85,7 @@ export type ThemeSettingsState = {
     setFollowSystemTheme: (enabled: boolean) => void;
 };
 
-export const useThemeSettingsStore = create<ThemeSettingsState>((set, get) => ({
+export const useThemeSettingsStore = sharedModuleState('folia.store.src/stores/useThemeSettingsStore.ts#useThemeSettingsStore', () => create<ThemeSettingsState>((set, get) => ({
     useCoverColorBg: getStoredBoolean('use_cover_color_bg', false),
     staticMode: getStoredBoolean('static_mode', false),
     disableHomeDynamicBackground: readStoredDisableHomeDynamicBackground(),
@@ -205,7 +206,7 @@ export const useThemeSettingsStore = create<ThemeSettingsState>((set, get) => ({
             void window.electron.setNativeTheme(enabled ? 'light' : 'dark');
         }
     },
-}));
+})));
 
 /**
  * The ThemeSettings half of the former settings snapshot, for the surfaces that

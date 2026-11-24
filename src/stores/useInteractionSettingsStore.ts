@@ -1,3 +1,4 @@
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 // src/stores/useInteractionSettingsStore.ts
 // How the listener drives the app rather than what it plays: what the grids' action button does,
 // which keys the command palette answers to, the one shortcut they can define themselves, and the
@@ -132,7 +133,7 @@ export type InteractionSettingsState = {
     setGlobalShortcutPortalEnabled: (enable: boolean) => void;
 };
 
-export const useInteractionSettingsStore = create<InteractionSettingsState>((set) => ({
+export const useInteractionSettingsStore = sharedModuleState('folia.store.src/stores/useInteractionSettingsStore.ts#useInteractionSettingsStore', () => create<InteractionSettingsState>((set) => ({
     gridActionButtonSlideTarget: readSlideTarget(),
     gridCommandPaletteHotkey: getStoredBoolean(PALETTE_HOTKEY_KEY, false),
     queuePaletteKeepOpen: getStoredBoolean(QUEUE_PALETTE_KEEP_OPEN_KEY, false),
@@ -191,4 +192,4 @@ export const useInteractionSettingsStore = create<InteractionSettingsState>((set
         setStoredBoolean(GLOBAL_SHORTCUT_PORTAL_KEY, enable);
         set({ globalShortcutPortalEnabled: enable });
     },
-}));
+})));

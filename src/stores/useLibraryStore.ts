@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 import type React from 'react';
 import { isNavidromeEnabled } from '../services/navidromeService';
 
@@ -22,13 +23,13 @@ const resolveNext = <T,>(next: React.SetStateAction<T>, previous: T): T => (
     typeof next === 'function' ? (next as (prev: T) => T)(previous) : next
 );
 
-export const useLibraryStore = create<LibraryState>((set, get) => ({
+export const useLibraryStore = sharedModuleState('folia.store.src/stores/useLibraryStore.ts#useLibraryStore', () => create<LibraryState>((set, get) => ({
     navidromeEnabled: isNavidromeEnabled(),
     starredNavidromeSongIds: new Set(),
 
     setNavidromeEnabledState: (next) => set({ navidromeEnabled: resolveNext(next, get().navidromeEnabled) }),
     setStarredNavidromeSongIds: (next) => set({ starredNavidromeSongIds: resolveNext(next, get().starredNavidromeSongIds) }),
-}));
+})));
 
 /** Stable module-level setters, for callers that should not have to be handed one. */
 export const setNavidromeEnabledState: React.Dispatch<React.SetStateAction<boolean>> = (next) => (

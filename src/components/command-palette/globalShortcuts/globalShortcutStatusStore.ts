@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../../../mods/runtime/sharedModuleState';
 
 // src/components/command-palette/globalShortcuts/globalShortcutStatusStore.ts
 // What the main process answered the last time the shortcuts were registered: whether the desktop
@@ -16,7 +17,7 @@ type GlobalShortcutStatusState = {
     publish: (answer: { backend: GlobalShortcutBackend; results: ReadonlyArray<{ accelerator: string; registered: boolean }> }) => void;
 };
 
-export const useGlobalShortcutStatusStore = create<GlobalShortcutStatusState>((set) => ({
+export const useGlobalShortcutStatusStore = sharedModuleState('folia.store.src/components/command-palette/globalShortcuts/globalShortcutStatusStore.ts#useGlobalShortcutStatusStore', () => create<GlobalShortcutStatusState>((set) => ({
     backend: null,
     refused: [],
     setBackend: (backend) => set({ backend }),
@@ -24,4 +25,4 @@ export const useGlobalShortcutStatusStore = create<GlobalShortcutStatusState>((s
         backend: answer.backend,
         refused: answer.results.filter(result => !result.registered).map(result => result.accelerator),
     }),
-}));
+})));

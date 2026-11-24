@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../../../mods/runtime/sharedModuleState';
 import { getSourceStates, invokeAnswerSourcesOnboarding, invokeSetSourceState } from '../../../mods/ipc';
 import { stopPlaybackOfSources } from '../../../mods/runtime/sourceSwitches';
 import type { ModSourceState, ModSourceStateRow } from '../../../mods/types';
@@ -47,7 +48,7 @@ interface SourcesOnboardingState {
     toggle: (sourceId: string) => void;
 }
 
-export const useSourcesOnboardingStore = create<SourcesOnboardingState>(set => ({
+export const useSourcesOnboardingStore = sharedModuleState('folia.store.src/components/modal/playback-entry-view/sourcesOnboarding.ts#useSourcesOnboardingStore', () => create<SourcesOnboardingState>(set => ({
     status: 'unknown',
     sources: [],
     ticked: new Set(),
@@ -57,7 +58,7 @@ export const useSourcesOnboardingStore = create<SourcesOnboardingState>(set => (
         else ticked.add(sourceId);
         return { ticked };
     }),
-}));
+})));
 
 let loading: Promise<void> | null = null;
 

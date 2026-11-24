@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sharedModuleState } from '../../../mods/runtime/sharedModuleState';
 import type { BravaisLayer } from './bravaisLayer';
 
 // src/library/suites/bravais/bravaisStageStore.ts
@@ -66,7 +67,7 @@ export const resolveCurrentLayer = ({
     return { layer: previous, owned: false };
 };
 
-export const useBravaisStageStore = create<BravaisStageState>(() => EMPTY);
+export const useBravaisStageStore = sharedModuleState('folia.store.src/library/suites/bravais/bravaisStageStore.ts#useBravaisStageStore', () => create<BravaisStageState>(() => EMPTY));
 
 let nextToken = 1;
 
