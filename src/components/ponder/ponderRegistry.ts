@@ -1,3 +1,4 @@
+import { sharedModuleState } from '../../mods/runtime/sharedModuleState';
 import { PONDER_TARGET_CATEGORIES, type PonderTargetCategory, type PonderTargetDefinition, type PonderTargetId } from '../../types/ponder';
 
 // src/components/ponder/ponderRegistry.ts
@@ -26,10 +27,15 @@ const buildRegistry = () => {
     return byId;
 };
 
-export const PONDER_TARGETS = buildRegistry();
+// 打包器可能把本模块复制进多个 chunk：模组注册的目标进一份、导航页读另一份。状态放 globalThis。
+const ponderState = sharedModuleState('folia.ponderRegistryState', () => {
+    const byId = buildRegistry();
+    return { byId, list: Object.values(byId).sort((a, b) => a.id.localeCompare(b.id)) };
+});
 
-export const PONDER_TARGET_LIST = Object.values(PONDER_TARGETS)
-    .sort((a, b) => a.id.localeCompare(b.id));
+export const PONDER_TARGETS = ponderState.byId;
+
+export const PONDER_TARGET_LIST = ponderState.list;
 
 /*
  * 模组（Folium 实验接口 ponder.targets）在运行时追加/撤下的目标。和内建目标一样进

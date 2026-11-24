@@ -1,4 +1,5 @@
 import type { FoliumContextKind, FoliumDisposer, FoliumSecretAccess } from './contract';
+import { sharedModuleState } from '../runtime/sharedModuleState';
 import type { ModSecretsState } from '../types';
 import { invokeModSecrets, subscribeModSecretChanges } from '../ipc';
 import { createFoliumGatedChannel } from '../runtime/guard';
@@ -16,7 +17,12 @@ type SecretOperation = 'get' | 'has' | 'set' | 'declare' | 'state';
 
 // The last declaration sent for each mod. Every later call of that mod waits for it, so a call made
 // right after the section registered never reaches the main process before the keys it uses.
-const declarations = new Map<string, Promise<unknown>>();
+const secretsRuntime = sharedModuleState('folia.foliumSecrets', () => ({
+    declarations: new Map<string, Promise<unknown>>(),
+    listenersByMod: new Map<string, Set<(key: string) => void>>(),
+    detachBridge: null as (() => void) | null,
+}));
+const declarations = secretsRuntime.declarations;
 
 const call = async <T>(modId: string, operation: SecretOperation, key?: string | readonly string[], value?: string | null): Promise<T> => {
     await declarations.get(modId);
@@ -49,8 +55,8 @@ export const declareFoliumSecretKeys = (modId: string, keys: readonly string[]) 
 };
 
 // The listeners of each mod, fed by one bridge subscription made on first use.
-const listenersByMod = new Map<string, Set<(key: string) => void>>();
-let detachBridge: (() => void) | null = null;
+const listenersByMod = secretsRuntime.listenersByMod;
+let detachBridge: (() => void) | null = secretsRuntime.detachBridge;
 
 const ensureBridge = () => {
     if (detachBridge) return;

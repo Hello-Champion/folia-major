@@ -233,6 +233,8 @@ export default async function viteConfig(_config: ConfigEnv): Promise<UserConfig
               // own chunk so it doesn't bloat the main bundle past the PWA precache size limit (each file
               // must stay under workbox.maximumFileSizeToCacheInBytes to be cached for offline use).
               { name: 'three', test: /[\\/]node_modules[\\/]three[\\/]/ },
+              // App modules used by both the boot bundle and a lazy chunk: one real chunk, instead of
+              // rolldown copying them into both (a copied store is two stores with split state).
               // lucide's dynamicIconImports (folium.ui.icon, theme lyricsIcons) makes every icon a dynamic
               // entry, so rolldown gives each icon a chunk of its own - the ones the app imports by name
               // too, which turns them into ~200 single-file startup requests the precache leaves out.

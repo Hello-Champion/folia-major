@@ -15,15 +15,16 @@ const ASSETS = path.resolve('dist/assets');
 const MARKS = [
     { label: 'visualizer registry', marker: 'Duplicate visualizer mode', shared: 'folia.visualizerRegistryState' },
     { label: 'background registry', marker: 'Duplicate background mode', shared: 'folia.visualizerBackgroundRegistryState' },
-    { label: 'folio registry factory', marker: 'register: duplicate id' },
+    { label: 'folio registry factory', marker: 'register: duplicate id', shared: 'folia.foliumRegistryInstances' },
+    { label: 'sources registry', marker: 'sources.register: ', shared: 'folia.foliumSourcesState' },
     { label: 'scene registry', marker: 'SceneRegistry]' },
-    { label: 'ponder registry', marker: 'Duplicate target id' },
+    { label: 'ponder registry', marker: 'Duplicate target id', shared: 'folia.ponderRegistryState' },
     { label: 'visualizer service', marker: 'visualizer-unavailable-in-', shared: 'folia.foliumVisualizerService' },
-    { label: 'theme service', marker: 'theme-unavailable-in-' },
-    { label: 'equalizer service', marker: 'equalizer-unavailable-in-' },
-    { label: 'omni service', marker: 'omni-unavailable-in-' },
-    { label: 'account service', marker: 'account-unavailable-in-' },
-    { label: 'secrets bridge', marker: 'secret fields could not be declared' },
+    { label: 'theme service', marker: 'theme-unavailable-in-', shared: 'folia.foliumThemeService' },
+    { label: 'equalizer service', marker: 'equalizer-unavailable-in-', shared: 'folia.foliumEqualizerService' },
+    { label: 'omni service', marker: 'omni-unavailable-in-', shared: 'folia.foliumOmniService' },
+    { label: 'account service', marker: 'account-unavailable-in-', shared: 'folia.foliumAccount' },
+    { label: 'secrets bridge', marker: 'secret fields could not be declared', shared: 'folia.foliumSecrets' },
 ];
 
 if (!existsSync(ASSETS)) {

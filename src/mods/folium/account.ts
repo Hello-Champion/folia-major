@@ -1,4 +1,5 @@
 import type { FoliumAccountService, FoliumAccountState, FoliumContextKind } from './contract';
+import { sharedModuleState } from '../runtime/sharedModuleState';
 
 // src/mods/folium/account.ts
 // `folium.account` (Folium 1.7) and the seam it reads through. Like services.ts this module is loaded in
@@ -13,7 +14,8 @@ export interface FoliumAccountSource {
     getState(providerId?: string): FoliumAccountState | null;
 }
 
-let accountSource: FoliumAccountSource | null = null;
+const accountRuntime = sharedModuleState('folia.foliumAccount', () => ({ source: null as FoliumAccountSource | null }));
+let accountSource: FoliumAccountSource | null = accountRuntime.source;
 
 /** Installs (or with null removes) the main window's account source. */
 export const registerFoliumAccountSource = (source: FoliumAccountSource | null) => {

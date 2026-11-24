@@ -1,4 +1,5 @@
 import type { ModRuntimeInfo } from '../../types';
+import { sharedModuleState } from '../../runtime/sharedModuleState';
 import type {
     FoliumContextKind,
     FoliumEqualizerCustomId,
@@ -37,7 +38,8 @@ export interface FoliumEqualizerSource {
     releaseCurve(mod: ModRuntimeInfo): boolean;
 }
 
-let equalizerSource: FoliumEqualizerSource | null = null;
+const equalizerRuntime = sharedModuleState('folia.foliumEqualizerService', () => ({ source: null as FoliumEqualizerSource | null, countedWrites: new Map<string, number[]>() }));
+let equalizerSource: FoliumEqualizerSource | null = equalizerRuntime.source;
 
 /** Installs (or with null removes) the main window's `folium.equalizer` source. */
 export const registerFoliumEqualizerSource = (source: FoliumEqualizerSource | null) => {
@@ -70,7 +72,7 @@ const EQUALIZER_WRITES_PER_MINUTE = 20;
 const MINUTE_MS = 60_000;
 
 /** When each mod's counted writes were, within the last minute, by mod id: a reload of the mod keeps them. */
-const countedWrites = new Map<string, number[]>();
+const countedWrites = equalizerRuntime.countedWrites;
 
 /* Whether one more counted write of this mod fits its allowance now. */
 const withinAllowance = (modId: string, now: number): boolean => {

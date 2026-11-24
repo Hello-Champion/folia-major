@@ -1,4 +1,5 @@
 import { isThemeHexColor } from '@/services/themeSanitizer';
+import { sharedModuleState } from '../../runtime/sharedModuleState';
 import { generateBuiltinDualTheme } from '@/utils/builtinTheme/generateBuiltinDualTheme';
 import type { ModRuntimeInfo } from '../../types';
 import type {
@@ -41,7 +42,8 @@ export interface FoliumThemeSource {
     release(mod: ModRuntimeInfo): boolean;
 }
 
-let themeSource: FoliumThemeSource | null = null;
+const themeRuntime = sharedModuleState('folia.foliumThemeService', () => ({ source: null as FoliumThemeSource | null, countedWrites: new Map<string, number[]>() }));
+let themeSource: FoliumThemeSource | null = themeRuntime.source;
 
 /** Installs (or with null removes) the main window's `folium.theme` source. */
 export const registerFoliumThemeSource = (source: FoliumThemeSource | null) => {
@@ -65,7 +67,7 @@ const MAX_LYRICS_ICONS = 12;
 const MAX_TEXT_LENGTH = 200;
 
 /** When each mod's counted writes were, within the last minute, by mod id: a reload of the mod keeps them. */
-const countedWrites = new Map<string, number[]>();
+const countedWrites = themeRuntime.countedWrites;
 
 const withinAllowance = (modId: string, now: number): boolean => {
     const recent = (countedWrites.get(modId) ?? []).filter((at) => now - at < MINUTE_MS);

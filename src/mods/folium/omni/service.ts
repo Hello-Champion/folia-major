@@ -1,4 +1,5 @@
 import type { ModRuntimeInfo } from '../../types';
+import { sharedModuleState } from '../../runtime/sharedModuleState';
 import type {
     FoliumCollection,
     FoliumCollectionKey,
@@ -76,7 +77,8 @@ export interface FoliumOmniSource {
     getArtistAlbums(artistRef: string, page: FoliumOmniPageRequest, call: FoliumOmniCall): Promise<FoliumOmniPage<FoliumCollection>>;
 }
 
-let omniSource: FoliumOmniSource | null = null;
+const omniRuntime = sharedModuleState('folia.foliumOmniService', () => ({ source: null as FoliumOmniSource | null }));
+let omniSource: FoliumOmniSource | null = omniRuntime.source;
 
 /** Installs (or with null removes) the main window's `folium.omni` source. */
 export const registerFoliumOmniSource = (source: FoliumOmniSource | null) => {
