@@ -30,13 +30,16 @@ export const listSourceIds = (root = SOURCES_ROOT) => {
  * 不在 sources/ 里的报错（拼错了不能悄悄少带一个）。
  */
 export const selectSourceIds = (available, bundled = process.env.FOLIA_BUNDLED_SOURCES) => {
-    if (bundled === undefined) return [...available];
+    // 本分支的决定（2026-11）：不带 Apple Music 伴生宿主（Windows 要 .NET 桌面工作负载），
+    // 构建与打包都当它不存在；源码目录留着，只是不进包。
+    const considered = available.filter((id) => id !== 'appleMusic');
+    if (bundled === undefined) return [...considered];
     const wanted = bundled.split(',').map((id) => id.trim()).filter(Boolean);
-    const unknown = wanted.filter((id) => !available.includes(id));
+    const unknown = wanted.filter((id) => !considered.includes(id));
     if (unknown.length > 0) {
         throw new Error(`FOLIA_BUNDLED_SOURCES 里的 ${unknown.join('、')} 不在 sources/ 里（有的是：${available.join('、') || '无'}）`);
     }
-    return available.filter((id) => wanted.includes(id));
+    return considered.filter((id) => wanted.includes(id));
 };
 
 /**

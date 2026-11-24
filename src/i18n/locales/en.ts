@@ -1935,6 +1935,7 @@ export default {
     "selectionCount_other": "{{count}} mods selected",
     "batchEnable": "Enable",
     "batchDisable": "Disable",
+    "uninstallKeptBuiltIn": "Deleted the copy you installed; the one still listed ships with the app.",
     "runCommand": "Run",
     "exporting": "Exporting",
     "running": "Running",

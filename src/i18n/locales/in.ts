@@ -1935,6 +1935,7 @@ export default {
     "selectionCount_other": "{{count}} mod dipilih",
     "batchEnable": "Aktifkan",
     "batchDisable": "Nonaktifkan",
+    "uninstallKeptBuiltIn": "Salinan yang Anda pasang sudah dihapus; yang masih tampil adalah versi bawaan aplikasi.",
     "runCommand": "Jalankan",
     "exporting": "Mengekspor",
     "running": "Berjalan",
