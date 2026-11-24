@@ -48,12 +48,27 @@ interface FoliumSourceEntry {
     warned: Set<string>;
 }
 
-const entries = new Map<string, FoliumSourceEntry>();
-const listeners = createFoliumListeners('sources listener');
-let snapshot: readonly FoliumRegistryEntry<FoliumSourceEntry>[] = Object.freeze([]);
+/*
+ * 打包器可能把本模块复制进多个 chunk（主 bundle 与懒加载的音源面板各一份），那样模组注册进
+ * 一份、首页从另一份读，永远显示「要开启在线音源」。状态按 symbol 放在 globalThis 上，所有副本共用。
+ */
+const SOURCES_STATE_KEY = Symbol.for('folia.foliumSourcesState');
+type SourcesState = {
+    entries: Map<string, FoliumSourceEntry>;
+    listeners: ReturnType<typeof createFoliumListeners>;
+    snapshot: readonly FoliumRegistryEntry<FoliumSourceEntry>[];
+};
+const sourcesHolder = globalThis as typeof globalThis & { [SOURCES_STATE_KEY]?: SourcesState };
+const sourcesState: SourcesState = sourcesHolder[SOURCES_STATE_KEY] ?? (sourcesHolder[SOURCES_STATE_KEY] = {
+    entries: new Map<string, FoliumSourceEntry>(),
+    listeners: createFoliumListeners('sources listener'),
+    snapshot: Object.freeze([]),
+});
+const entries = sourcesState.entries;
+const listeners = sourcesState.listeners;
 
 const notify = () => {
-    snapshot = Object.freeze(Array.from(entries.values(), (entry) => ({ id: entry.hostId, modId: entry.modId, name: entry.localId, def: entry })));
+    sourcesState.snapshot = Object.freeze(Array.from(entries.values(), (entry) => ({ id: entry.hostId, modId: entry.modId, name: entry.localId, def: entry })));
     listeners.notify();
 };
 
@@ -290,7 +305,7 @@ export const sourcesRegistry: FoliumHostRegistry<FoliumSourceDef, FoliumSourceEn
     unregisterAll: (modId) => {
         Array.from(entries.values()).filter((entry) => entry.modId === modId).forEach((entry) => { remove(entry.hostId); });
     },
-    get: (id) => snapshot.find((entry) => entry.id === id) ?? null,
-    list: () => snapshot,
+    get: (id) => sourcesState.snapshot.find((entry) => entry.id === id) ?? null,
+    list: () => sourcesState.snapshot,
     subscribe: listeners.subscribe,
 };
