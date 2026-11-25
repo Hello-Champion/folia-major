@@ -1,19 +1,6 @@
 import { beatImpact, downbeatImpact } from '../../stores/motionSignals';
 import { sharedModuleState } from '../../mods/runtime/sharedModuleState';
-// 打包器会把本模块复制进多个 chunk：状态各持一份，读写两边对不上。状态放 globalThis。
-const moduleState = sharedModuleState('folia.beatFxLive', () => ({
-    state: createBeatFxClockState(),
-    intensities: { beat: 1, downbeat: 1 },
-    firedCounts: { beats: 0, downbeats: 0 },
-    trackKey: null as string | null,
-    lastStepAt: null as number | null,
-    holdUntil: 0,
-    hearing: false,
-    heardAt: null as number | null,
-    lastHeard: { key: null, time: 0 } as { key: string | null; time: number },
-    beatPeriod: DEFAULT_BEAT_PERIOD,
-    liveEffects: {} as Readonly<Record<string, number>>,
-}));
+
 import { createBeatFxClockState, stepBeatFxClock, type BeatFxEvent } from './clock';
 import type { BeatFxSourceKind } from './beatFxSource';
 
@@ -97,6 +84,22 @@ if (debug && typeof window !== 'undefined') window.__foliaBeatFx = debug;
 /** The last time heard while playing, and its track: what a pause or a picture switch leaves. */
 /** Median gap between the installed track's beats, in seconds; see `getBeatFxBeatPeriod`. */
 const DEFAULT_BEAT_PERIOD = 0.5;
+
+// 打包器会把本模块复制进多个 chunk：状态各持一份，读写两边对不上。状态放 globalThis。
+const moduleState = sharedModuleState('folia.beatFxLive', () => ({
+    state: createBeatFxClockState(),
+    intensities: { beat: 1, downbeat: 1 },
+    firedCounts: { beats: 0, downbeats: 0 },
+    trackKey: null as string | null,
+    lastStepAt: null as number | null,
+    holdUntil: 0,
+    hearing: false,
+    heardAt: null as number | null,
+    lastHeard: { key: null, time: 0 } as { key: string | null; time: number },
+    beatPeriod: 0.5,
+    liveEffects: {} as Readonly<Record<string, number>>,
+}));
+
 
 /** Median gap between consecutive events, or the default for fewer than two. */
 export const resolveBeatFxBeatPeriod = (events: readonly BeatFxEvent[]): number => {
