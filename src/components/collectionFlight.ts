@@ -1,4 +1,5 @@
 import { createStore } from 'zustand/vanilla';
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 import { useStore } from 'zustand';
 
 // src/components/collectionFlight.ts
@@ -70,18 +71,19 @@ const NO_FLIGHT: CollectionFlight = {
     planPageFromWall: () => {},
 };
 
-let installed: CollectionFlight = NO_FLIGHT;
+// 复制进两个 chunk 时，网格装进来的那一份 App 读不到，morph 的飞行就不发生。状态放 globalThis。
+const flightRuntime = sharedModuleState('folia.collectionFlight', () => ({ installed: NO_FLIGHT as CollectionFlight }));
 
 /** Called by the grid's transitions once, when they are loaded (before anything renders). */
 export const installCollectionFlight = (flight: CollectionFlight): void => {
-    installed = flight;
+    flightRuntime.installed = flight;
 };
 
-export const collectionFlight = (): CollectionFlight => installed;
+export const collectionFlight = (): CollectionFlight => flightRuntime.installed;
 
 /** A piece of the flight's state, as a hook. */
 export const useCollectionFlight = <T>(select: (state: CollectionFlightState) => T): T => (
-    useStore(installed.store, select)
+    useStore(flightRuntime.installed.store, select)
 );
 
 /**

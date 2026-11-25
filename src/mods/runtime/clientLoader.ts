@@ -1,4 +1,5 @@
 import type { ModRuntimeInfo } from '../types';
+import { sharedModuleState } from './sharedModuleState';
 import { isModsBridgeAvailable, listMods, reportFoliumSourcesRegistered, subscribeModsState } from '../ipc';
 import type { FoliumClientApi, FoliumClientModule, FoliumContextKind, FoliumDisposer } from '../folium/contract';
 import { announceFoliumSlowStart, clearFoliumIssues, reportFoliumFault, reportFoliumIssue } from './status';
@@ -76,47 +77,51 @@ const STARTING: FoliumClientStart = Object.freeze({ state: 'starting', late: fal
 const STARTING_LATE: FoliumClientStart = Object.freeze({ state: 'starting', late: true });
 const FAILED: FoliumClientStart = Object.freeze({ state: 'failed' });
 
-const activeClients = new Map<string, ActiveClient>();
-// The name each mod was last started under, for sentences that name it (the failure notice).
-const modNames = new Map<string, string>();
-const startedListeners = new Set<(modId: string) => void>();
-// Where each active client's start stands.
-const starts = new Map<string, FoliumClientStart>();
-let queue: Promise<void> = Promise.resolve();
-// Folium 1.7 (runtime/equalizer/): the mod list the main window last reconciled, and who wants to hear of a new one.
-let latestMainModList: readonly ModRuntimeInfo[] | null = null;
-const modListListeners = new Set<() => void>();
-let experimentalPromise: Promise<typeof import('../folium/experimental')> | null = null;
-// The first main-window reconcile's source group, started or past its limit; settled at once without a bridge.
-let markSourceClientsSettled: () => void = () => {};
-const sourceClientsSettled = new Promise<void>((resolve) => {
-    markSourceClientsSettled = resolve;
+// 打包器会把本模块复制进两个 chunk：各记一套「哪个模组的客户端已启动」，停用/更新/重载拆不干净。
+// 全部状态放 globalThis，全包共用。
+const loaderRuntime = sharedModuleState('folia.foliumClientLoader', () => {
+    const state = {
+        activeClients: new Map<string, ActiveClient>(),
+        modNames: new Map<string, string>(),
+        startedListeners: new Set<(modId: string) => void>(),
+        starts: new Map<string, FoliumClientStart>(),
+        queue: Promise.resolve() as Promise<void>,
+        latestMainModList: null as readonly ModRuntimeInfo[] | null,
+        modListListeners: new Set<() => void>(),
+        experimentalPromise: null as Promise<typeof import('../folium/experimental')> | null,
+        markSourceClientsSettled: (() => {}) as () => void,
+        sourceClientsSettled: Promise.resolve() as Promise<void>,
+        sourceGroupReported: false,
+        apiPromise: null as Promise<typeof import('../folium/api')> | null,
+        sourcesPromise: null as Promise<SourcesModule> | null,
+    };
+    state.sourceClientsSettled = new Promise<void>((resolve) => {
+        state.markSourceClientsSettled = resolve;
+    });
+    return state;
 });
-let sourceGroupReported = false;
-let apiPromise: Promise<typeof import('../folium/api')> | null = null;
-let sourcesPromise: Promise<SourcesModule> | null = null;
 
 const loadApi = () => {
-    apiPromise ??= import('../folium/api');
-    return apiPromise;
+    loaderRuntime.apiPromise ??= import('../folium/api');
+    return loaderRuntime.apiPromise;
 };
 
 // Experimental surfaces (Omni providers/hooks, Ponder targets): main window only, on first opt-in.
 const loadExperimental = () => {
-    experimentalPromise ??= Promise.all([import('../folium/experimental'), loadApi()]).then(([module, api]) => {
+    loaderRuntime.experimentalPromise ??= Promise.all([import('../folium/experimental'), loadApi()]).then(([module, api]) => {
         api.addFoliumTeardownRegistries(module.EXPERIMENTAL_REGISTRIES);
         return module;
     });
-    return experimentalPromise;
+    return loaderRuntime.experimentalPromise;
 };
 
 // Folium 2.0: the sources registry, main window only, on the first `folium: 2` mod.
 const loadSources = () => {
-    sourcesPromise ??= Promise.all([import('../folium/registries/sources'), loadApi()]).then(([module, api]) => {
+    loaderRuntime.sourcesPromise ??= Promise.all([import('../folium/registries/sources'), loadApi()]).then(([module, api]) => {
         api.addFoliumTeardownRegistries([module.sourcesRegistry]);
         return module;
     });
-    return sourcesPromise;
+    return loaderRuntime.sourcesPromise;
 };
 
 /*
@@ -125,8 +130,8 @@ const loadSources = () => {
  * process, which takes the source exemptions back.
  */
 const checkDeclaredSources = async (mod: ModRuntimeInfo, url: string) => {
-    if (!isFoliumSourceMod(mod) || !sourcesPromise) return;
-    const { listFoliumSourceIdsOf } = await sourcesPromise;
+    if (!isFoliumSourceMod(mod) || !loaderRuntime.sourcesPromise) return;
+    const { listFoliumSourceIdsOf } = await loaderRuntime.sourcesPromise;
     const registered = new Set(listFoliumSourceIdsOf(mod.id));
     const expected = (mod.sources ?? []).filter((source) => source.state !== 'disabled');
     const missing = expected.filter((source) => !registered.has(source.localId));
@@ -144,9 +149,9 @@ const checkDeclaredSources = async (mod: ModRuntimeInfo, url: string) => {
 
 // Only active clients are torn down, and activating one already loaded the API.
 const teardown = async (modId: string) => {
-    const active = activeClients.get(modId);
-    activeClients.delete(modId);
-    starts.delete(modId);
+    const active = loaderRuntime.activeClients.get(modId);
+    loaderRuntime.activeClients.delete(modId);
+    loaderRuntime.starts.delete(modId);
     if (active) active.stopped = true;
     if (active?.dispose) {
         callFoliumMod(modId, 'client dispose', active.dispose);
@@ -163,7 +168,7 @@ const isStopped = (record: ActiveClient): boolean => record.stopped;
 
 /*
  * The mod's own part of a start: its import and its `activate`. Never rejects.
- * It may end long after the queue stopped waiting for it, and the mod may have
+ * It may end long after the loaderRuntime.queue stopped waiting for it, and the mod may have
  * been torn down by then: a client that was stopped while its import was still
  * on the way is not activated, and a disposer that arrives for a stopped one
  * runs at once, because no teardown is left to run it. A stopped one that throws
@@ -172,7 +177,7 @@ const isStopped = (record: ActiveClient): boolean => record.stopped;
  */
 const runClient = async (mod: ModRuntimeInfo, url: string, api: FoliumClientApi, record: ActiveClient) => {
     const began = performance.now();
-    starts.set(mod.id, STARTING);
+    loaderRuntime.starts.set(mod.id, STARTING);
     let failed = false;
     try {
         // Timed and counted by the gate; a failure stays this function's to report.
@@ -207,8 +212,8 @@ const runClient = async (mod: ModRuntimeInfo, url: string, api: FoliumClientApi,
         reportFoliumFault(mod.id, 'client activate', error, 'start');
     }
     if (record.stopped) return;
-    starts.set(mod.id, failed ? FAILED : Object.freeze({ state: 'started', ms: performance.now() - began }));
-    startedListeners.forEach((listener) => {
+    loaderRuntime.starts.set(mod.id, failed ? FAILED : Object.freeze({ state: 'started', ms: performance.now() - began }));
+    loaderRuntime.startedListeners.forEach((listener) => {
         try {
             listener(mod.id);
         } catch (error) {
@@ -222,19 +227,19 @@ const activate = async (mod: ModRuntimeInfo, url: string, context: FoliumContext
     clearFoliumIssues(mod.id);
     // Folium 1.6 only: the old names its last start used (folium/deprecated/).
     clearFoliumOldNames(mod.id);
-    modNames.set(mod.id, mod.name);
+    loaderRuntime.modNames.set(mod.id, mod.name);
     // Folium 2.0: a source mod's hot-path members skip the gate (guard.ts callFoliumSourceMember).
     markFoliumSourceMod(mod.id, isFoliumSourceMod(mod));
     // Record first so a failed activation still gets torn down (partial registrations).
     const record: ActiveClient = { url, dispose: null, stopped: false, releases: [] };
-    activeClients.set(mod.id, record);
+    loaderRuntime.activeClients.set(mod.id, record);
     const stopped = (what: string) => {
         if (record.stopped) console.warn(`[Folium:${mod.id}] ${what}: this mod was stopped, the call is ignored`);
         return record.stopped;
     };
     let api: FoliumClientApi;
     try {
-        // The host's own modules. Loading them is not the mod's time, so the limit starts after.
+        // The host's own modules. Loading them is not the mod's time, so the limit loaderRuntime.starts after.
         const onRelease = (release: () => void) => { record.releases.push(release); };
         const experimental = context === 'main' && (mod.experimental ?? []).length > 0
             ? (await loadExperimental()).createFoliumExperimental(mod, stopped, onRelease)
@@ -259,15 +264,15 @@ const activate = async (mod: ModRuntimeInfo, url: string, context: FoliumContext
         // Folium 1.6 only: the client names Folium 2 removed, kept working (folium/deprecated/).
         api = await (await import('../folium/deprecated')).addOldClientNames(api, mod, context);
     } catch (error) {
-        starts.set(mod.id, FAILED);
+        loaderRuntime.starts.set(mod.id, FAILED);
         reportFoliumFault(mod.id, 'client activate', error, 'start');
         return;
     }
     await new Promise<void>((resolve) => {
         const timer = setTimeout(() => {
-            // Over the limit is slow, not failed: the queue goes on, the start does too, and the
+            // Over the limit is slow, not failed: the loaderRuntime.queue goes on, the start does too, and the
             // user is told once that this mod has not finished starting.
-            starts.set(mod.id, STARTING_LATE);
+            loaderRuntime.starts.set(mod.id, STARTING_LATE);
             announceFoliumSlowStart(mod.id);
             resolve();
         }, FOLIUM_START_LIMIT_MS);
@@ -284,11 +289,11 @@ const activate = async (mod: ModRuntimeInfo, url: string, context: FoliumContext
  * mod-id order. Per-mod failures only affect that mod.
  */
 export const reconcileFoliumClients = (mods: ModRuntimeInfo[], context: FoliumContextKind): Promise<void> => {
-    // The list itself, as it arrives and before the queue gets to it: what it says is enabled is what the
+    // The list itself, as it arrives and before the loaderRuntime.queue gets to it: what it says is enabled is what the
     // user chose, whether or not that mod's client has started (yet) here.
     if (context === 'main') {
-        latestMainModList = Object.freeze([...mods]);
-        modListListeners.forEach((listener) => {
+        loaderRuntime.latestMainModList = Object.freeze([...mods]);
+        loaderRuntime.modListListeners.forEach((listener) => {
             try {
                 listener();
             } catch (error) {
@@ -303,14 +308,14 @@ export const reconcileFoliumClients = (mods: ModRuntimeInfo[], context: FoliumCo
                 .filter((mod) => startsIn(mod, context))
                 .map((mod) => [mod.id, mod] as const),
         );
-        for (const [modId, active] of Array.from(activeClients.entries())) {
+        for (const [modId, active] of Array.from(loaderRuntime.activeClients.entries())) {
             if (desired.get(modId)?.clientUrl !== active.url) {
                 await teardown(modId);
             }
         }
         // Dependencies first: the list arrives sorted by id, the load plan is topological.
         const pending = Array.from(desired.values())
-            .filter((mod) => !activeClients.has(mod.id))
+            .filter((mod) => !loaderRuntime.activeClients.has(mod.id))
             .sort((left, right) => (
                 (left.loadOrder ?? Number.MAX_SAFE_INTEGER) - (right.loadOrder ?? Number.MAX_SAFE_INTEGER)
                 || left.id.localeCompare(right.id)
@@ -318,16 +323,16 @@ export const reconcileFoliumClients = (mods: ModRuntimeInfo[], context: FoliumCo
         // The source group first, all together; then every other client in turn.
         const sources = pending.filter(isFoliumSourceMod);
         await Promise.all(sources.map((mod) => activate(mod, mod.clientUrl as string, context)));
-        if (context === 'main' && !sourceGroupReported) {
-            sourceGroupReported = true;
-            markSourceClientsSettled();
+        if (context === 'main' && !loaderRuntime.sourceGroupReported) {
+            loaderRuntime.sourceGroupReported = true;
+            loaderRuntime.markSourceClientsSettled();
         }
         for (const mod of pending.filter((candidate) => !isFoliumSourceMod(candidate))) {
             await activate(mod, mod.clientUrl as string, context);
         }
     };
-    queue = queue.then(run, run);
-    return queue;
+    loaderRuntime.queue = loaderRuntime.queue.then(run, run);
+    return loaderRuntime.queue;
 };
 
 /*
@@ -335,7 +340,7 @@ export const reconcileFoliumClients = (mods: ModRuntimeInfo[], context: FoliumCo
  * store follows it once the panel has been opened (useModsStore.bindEvents); the main window follows it from
  * the start, so a load nobody here asked for still reaches the clients: in a development build, a rebuild of
  * dist-mods/ restarts the one built-in mod it changed (electron/modSystem/builtinBuildWatch.cjs), and its client
- * comes back under its new URL. The reconcile queue makes a second follower (the panel's) a no-op.
+ * comes back under its new URL. The reconcile loaderRuntime.queue makes a second follower (the panel's) a no-op.
  */
 const followMainProcessLoads = () => {
     try {
@@ -354,7 +359,7 @@ const followMainProcessLoads = () => {
  */
 export const initFoliumClients = async (): Promise<void> => {
     if (!isModsBridgeAvailable()) {
-        markSourceClientsSettled();
+        loaderRuntime.markSourceClientsSettled();
         return;
     }
     try {
@@ -365,7 +370,7 @@ export const initFoliumClients = async (): Promise<void> => {
         console.warn('[Folium] client bootstrap failed', error);
     } finally {
         // A bootstrap that failed before its source group ran leaves nothing to wait for.
-        markSourceClientsSettled();
+        loaderRuntime.markSourceClientsSettled();
     }
 };
 
@@ -373,7 +378,7 @@ export const initFoliumClients = async (): Promise<void> => {
 export const isFoliumSourceMod = (mod: Pick<ModRuntimeInfo, 'kind'>): boolean => mod.kind === 'source';
 
 /*
- * Whether `mod`'s client starts in `context`: never a source mod's in the export window (plan §5.2), and never
+ * Whether `mod`'s client loaderRuntime.starts in `context`: never a source mod's in the export window (plan §5.2), and never
  * in a context its manifest `contexts` leave out. Without `contexts`, everywhere, as in Folium 1.
  */
 export const startsIn = (mod: Pick<ModRuntimeInfo, 'kind' | 'contexts'>, context: FoliumContextKind): boolean => {
@@ -385,39 +390,39 @@ export const startsIn = (mod: Pick<ModRuntimeInfo, 'kind' | 'contexts'>, context
  * Resolves once the first main-window reconcile has started its source group (each client in time or past its
  * own 5 s limit), or at once where there are no mods. No cap of its own: the first screen puts one on it.
  */
-export const foliumSourceClientsSettled = (): Promise<void> => sourceClientsSettled;
+export const foliumSourceClientsSettled = (): Promise<void> => loaderRuntime.sourceClientsSettled;
 
 /**
  * Calls `listener` each time a client's start has ended (its `activate` returned or failed),
- * whether that was in time or after the queue had gone on without it. What needs a mod's
+ * whether that was in time or after the loaderRuntime.queue had gone on without it. What needs a mod's
  * registrations to be there, such as a saved selection, is redone from it.
  */
 export const onFoliumClientStarted = (listener: (modId: string) => void): (() => void) => {
-    startedListeners.add(listener);
+    loaderRuntime.startedListeners.add(listener);
     return () => {
-        startedListeners.delete(listener);
+        loaderRuntime.startedListeners.delete(listener);
     };
 };
 
 /** Where a mod's client start stands; undefined for a mod with no client running in this window. */
-export const getFoliumClientStart = (modId: string): FoliumClientStart | undefined => starts.get(modId);
+export const getFoliumClientStart = (modId: string): FoliumClientStart | undefined => loaderRuntime.starts.get(modId);
 
 /** The name a mod's client was last started under; its id when it never started here. */
-export const foliumModName = (modId: string) => modNames.get(modId) || modId;
+export const foliumModName = (modId: string) => loaderRuntime.modNames.get(modId) || modId;
 
 /** Folium 1.7 (runtime/equalizer/): the mod list the main window last reconciled; null before the first. */
-export const getFoliumModList = (): readonly ModRuntimeInfo[] | null => latestMainModList;
+export const getFoliumModList = (): readonly ModRuntimeInfo[] | null => loaderRuntime.latestMainModList;
 
 /**
  * Calls `listener` each time the main window reconciles a mod list (the first one, an enable, a disable, a
  * removal, an install, a push from the main process); read it with getFoliumModList.
  */
 export const onFoliumModListChanged = (listener: () => void): (() => void) => {
-    modListListeners.add(listener);
+    loaderRuntime.modListListeners.add(listener);
     return () => {
-        modListListeners.delete(listener);
+        loaderRuntime.modListListeners.delete(listener);
     };
 };
 
 /** Mod ids whose client is currently active (for the mods panel). */
-export const isFoliumClientActive = (modId: string) => activeClients.has(modId);
+export const isFoliumClientActive = (modId: string) => loaderRuntime.activeClients.has(modId);

@@ -1,10 +1,16 @@
 import { LyricData } from '../../types';
+import { sharedModuleState } from '../../mods/runtime/sharedModuleState';
 import type { LyricParseFormat } from './parserCore';
 import type { LyricProcessingOptions } from './types';
 
-let lyricsWorker: Worker | null = null;
-let workerRequestId = 0;
-const workerCallbacks = new Map<string, (data: LyricData | null) => void>();
+// 打包器把本模块复制进两个 chunk 时，两边各建一个 Worker：同一份歌词要解析两遍，多占一个线程。
+// Worker 与回调表放 globalThis，全包共用一个。
+const workerRuntime = sharedModuleState('folia.lyricsWorkerClient', () => ({
+    worker: null as Worker | null,
+    requestId: 0,
+    callbacks: new Map<string, (data: LyricData | null) => void>(),
+}));
+const workerCallbacks = workerRuntime.callbacks;
 
 type WorkerLyricProcessingOptions = Pick<LyricProcessingOptions, 'includeInterludes'>;
 
@@ -19,13 +25,13 @@ export const toWorkerLyricProcessingOptions = (
 };
 
 export const initLyricsWorker = (): Worker => {
-    if (!lyricsWorker) {
+    if (!workerRuntime.worker) {
         // Need to use correct relative path or alias
-        lyricsWorker = new Worker(
+        workerRuntime.worker = new Worker(
             new URL('../../workers/lyricsParser.worker.ts', import.meta.url),
             { type: 'module' }
         );
-        lyricsWorker.onmessage = (e) => {
+        workerRuntime.worker.onmessage = (e) => {
             const { type, data, requestId, message } = e.data;
             const callback = workerCallbacks.get(requestId);
             if (callback) {
@@ -39,7 +45,7 @@ export const initLyricsWorker = (): Worker => {
             }
         };
     }
-    return lyricsWorker;
+    return workerRuntime.worker;
 };
 
 export const parseLyricsAsync = (
@@ -51,7 +57,7 @@ export const parseLyricsAsync = (
 ): Promise<LyricData | null> => {
     return new Promise((resolve) => {
         const worker = initLyricsWorker();
-        const requestId = `req_${++workerRequestId}`;
+        const requestId = `req_${++workerRuntime.requestId}`;
         workerCallbacks.set(requestId, resolve);
         worker.postMessage({
             type: 'parse',

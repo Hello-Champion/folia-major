@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 
 // src/hooks/useViewportSettle.ts
 // One listener for every measured-text consumer in the app. Viewport-relative type — the poster
@@ -8,50 +9,55 @@ import { useSyncExternalStore } from 'react';
 // stops, that the new size is worth measuring against.
 
 const QUIET_MS = 140;
-let epoch = 0;
-let resizing = false;
-let snapshot = { epoch, resizing };
-let timer: ReturnType<typeof setTimeout> | undefined;
-const listeners = new Set<() => void>();
+const settleRuntime = sharedModuleState('folia.viewportSettle', () => {
+    const state = {
+        epoch: 0,
+        resizing: false,
+        snapshot: { epoch: 0, resizing: false },
+        timer: undefined as ReturnType<typeof setTimeout> | undefined,
+        listeners: new Set<() => void>(),
+    };
+    return state;
+});
 
 const publish = () => {
-    snapshot = { epoch, resizing };
-    for (const listener of listeners) listener();
+    settleRuntime.snapshot = { epoch: settleRuntime.epoch, resizing: settleRuntime.resizing };
+    for (const listener of settleRuntime.listeners) listener();
 };
 
 const onResize = () => {
-    clearTimeout(timer);
-    if (!resizing) {
-        resizing = true;
+    clearTimeout(settleRuntime.timer);
+    if (!settleRuntime.resizing) {
+        settleRuntime.resizing = true;
         publish();
     }
-    timer = setTimeout(() => {
-        resizing = false;
-        epoch += 1;
+    settleRuntime.timer = setTimeout(() => {
+        settleRuntime.resizing = false;
+        settleRuntime.epoch += 1;
         publish();
     }, QUIET_MS);
 };
 
 const subscribe = (listener: () => void) => {
-    listeners.add(listener);
-    if (listeners.size === 1 && typeof window !== 'undefined') window.addEventListener('resize', onResize);
+    settleRuntime.listeners.add(listener);
+    if (settleRuntime.listeners.size === 1 && typeof window !== 'undefined') window.addEventListener('resize', onResize);
     return () => {
-        listeners.delete(listener);
-        if (listeners.size || typeof window === 'undefined') return;
+        settleRuntime.listeners.delete(listener);
+        if (settleRuntime.listeners.size || typeof window === 'undefined') return;
         window.removeEventListener('resize', onResize);
-        clearTimeout(timer);
-        timer = undefined;
+        clearTimeout(settleRuntime.timer);
+        settleRuntime.timer = undefined;
         // The last subscriber leaving mid-drag must not strand the flag for the next one.
-        if (resizing) {
-            resizing = false;
-            snapshot = { epoch, resizing };
+        if (settleRuntime.resizing) {
+            settleRuntime.resizing = false;
+            settleRuntime.snapshot = { epoch: settleRuntime.epoch, resizing: settleRuntime.resizing };
         }
     };
 };
 
-const read = () => snapshot;
+const read = () => settleRuntime.snapshot;
 
-/** `resizing` while the window is being dragged; `epoch` increments once it comes to rest. */
+/** `settleRuntime.resizing` while the window is being dragged; `settleRuntime.epoch` increments once it comes to rest. */
 export const useViewportSettle = () => useSyncExternalStore(subscribe, read, read);
 
 export default useViewportSettle;

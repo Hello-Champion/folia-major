@@ -30,6 +30,11 @@ const MARKS = [
     { label: 'source declarations', marker: 'sourceDeclarations] a listener failed', shared: 'folia.sourceDeclarations' },
     { label: 'source readiness', marker: 'folia.sourceReadiness', shared: 'folia.sourceReadiness' },
     { label: 'wall panning flag', marker: 'folia.wallPanningState', shared: 'folia.wallPanningState' },
+    { label: 'lyrics worker client', marker: 'folia.lyricsWorkerClient', shared: 'folia.lyricsWorkerClient' },
+    { label: 'folium client loader', marker: 'folia.foliumClientLoader', shared: 'folia.foliumClientLoader' },
+    { label: 'collection morph flight', marker: 'folia.collectionFlight', shared: 'folia.collectionFlight' },
+    { label: 'wall double click', marker: 'folia.wallDoubleClick', shared: 'folia.wallDoubleClick' },
+    { label: 'viewport settle', marker: 'folia.viewportSettle', shared: 'folia.viewportSettle' },
 ];
 
 if (!existsSync(ASSETS)) {
