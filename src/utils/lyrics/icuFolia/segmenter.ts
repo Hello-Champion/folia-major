@@ -1,4 +1,9 @@
 import { CHINESE_NON_HOSTS, CHINESE_TRAILING_PARTICLES } from './lexicon';
+import { sharedModuleState } from '../../../mods/runtime/sharedModuleState';
+// 打包器会把本模块复制进多个 chunk：状态各持一份，读写两边对不上。状态放 globalThis。
+const moduleState = sharedModuleState('folia.icuSegmenter', () => ({
+    icuSegmenter: null as Intl.Segmenter | null,
+}));
 
 // src/utils/lyrics/icuFolia/segmenter.ts
 // The icu-folia pipeline, with its engines passed in so it stays pure and testable without loading them.
@@ -36,11 +41,10 @@ const HYPHEN_SPLIT = /[-‐‑]/;
 /** A word written in an alphabet, where a hyphen joins words: not Han, kana or Hangul. */
 const isAlphabeticWord = (piece: string) => ALPHABETIC_WORD.test(piece) && !NOT_ALPHABETIC.test(piece);
 
-let icuSegmenter: Intl.Segmenter | null = null;
 
 const icuWordPieces = (text: string): string[] => {
-    icuSegmenter ??= new Intl.Segmenter(undefined, { granularity: 'word' });
-    return Array.from(icuSegmenter.segment(text), part => part.segment);
+    moduleState.icuSegmenter ??= new Intl.Segmenter(undefined, { granularity: 'word' });
+    return Array.from(moduleState.icuSegmenter.segment(text), part => part.segment);
 };
 
 /** An engine's answer only counts when it rebuilds its input; anything else falls back to ICU. */

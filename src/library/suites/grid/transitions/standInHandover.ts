@@ -1,4 +1,9 @@
 import { getSizedCoverUrl } from '../../../../utils/coverUrl';
+import { sharedModuleState } from '../../../../mods/runtime/sharedModuleState';
+// 打包器会把本模块复制进多个 chunk：状态各持一份，读写两边对不上。状态放 globalThis。
+const moduleState = sharedModuleState('folia.standInHandover', () => ({
+    givingWay: [] as Animation[],
+}));
 import { HANDOVER_MS } from './morphFlight';
 import type { CollectionMorphRect } from './morphGeometry';
 import { picturesLookAlike } from './samePicture';
@@ -109,7 +114,6 @@ const pictureOf = (card: HTMLElement | null): string | null => {
 };
 
 // The animations of the handover that last began to give way: what `settleStandInHandover` ends.
-let givingWay: Animation[] = [];
 
 /**
  * Brings a handover that is under way to its end at once: the stand-in edge-on (and so gone),
@@ -118,7 +122,7 @@ let givingWay: Animation[] = [];
  * the centred card, whole).
  */
 export const settleStandInHandover = (): void => {
-    for (const animation of givingWay) {
+    for (const animation of moduleState.givingWay) {
         // Not one that was cancelled: finishing that would start it again.
         if (animation.playState === 'running') animation.finish();
     }
@@ -196,7 +200,7 @@ export const handOverStandIn = (
             )
             : null;
         animations.push(leaving, ...(arriving ? [arriving] : []));
-        givingWay = animations;
+        moduleState.givingWay = animations;
         // A card brings its picture up by a transition of its own once the picture has loaded.
         // A hero whose picture loaded a moment ago would be shown half way through that.
         for (const running of hero?.getAnimations({ subtree: true }) ?? []) {

@@ -35,6 +35,15 @@ const MARKS = [
     { label: 'collection morph flight', marker: 'folia.collectionFlight', shared: 'folia.collectionFlight' },
     { label: 'wall double click', marker: 'folia.wallDoubleClick', shared: 'folia.wallDoubleClick' },
     { label: 'viewport settle', marker: 'folia.viewportSettle', shared: 'folia.viewportSettle' },
+    { label: 'source switches', marker: 'folia.sourceSwitches', shared: 'folia.sourceSwitches' },
+    { label: 'stand-in handover', marker: 'folia.standInHandover', shared: 'folia.standInHandover' },
+    { label: 'bravais cover flight', marker: 'folia.bravaisCoverFlight', shared: 'folia.bravaisCoverFlight' },
+    { label: 'folium rpc messages', marker: 'folia.rpcMessages', shared: 'folia.rpcMessages' },
+    { label: 'icu segmenter', marker: 'folia.icuSegmenter', shared: 'folia.icuSegmenter' },
+    { label: 'icu folia engines', marker: 'folia.icuFolia', shared: 'folia.icuFolia' },
+    { label: 'beat fx live', marker: 'folia.beatFxLive', shared: 'folia.beatFxLive' },
+    { label: 'monet pipeline', marker: 'folia.monetPipeline', shared: 'folia.monetPipeline' },
+    { label: 'machi camera bar', marker: 'folia.machiCameraBar', shared: 'folia.machiCameraBar' },
 ];
 
 if (!existsSync(ASSETS)) {

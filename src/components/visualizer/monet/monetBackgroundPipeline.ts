@@ -1,4 +1,14 @@
 import type { MonetBackgroundImage, MonetBackgroundTuning, Theme } from '../../../types';
+import { sharedModuleState } from '../../../mods/runtime/sharedModuleState';
+// 打包器会把本模块复制进多个 chunk：状态各持一份，读写两边对不上。状态放 globalThis。
+const moduleState = sharedModuleState('folia.monetPipeline', () => ({
+    monetBackgroundCache: new Map<string, PictureEntry>(),
+    isCanvasFilterSupportedCached: null as boolean | null,
+    painter: null as Worker | null,
+    lastRequestId: 0,
+    painting: null as (PaintJob & { id: number }) | null,
+    queuedPaints: [] as PaintJob[],
+}));
 import type { MonetBackgroundPaintReply, MonetBackgroundPaintRequest } from './monetBackground.worker';
 
 // src/components/visualizer/monet/monetBackgroundPipeline.ts
@@ -11,7 +21,6 @@ interface PictureEntry {
     holders: number;
 }
 
-const monetBackgroundCache = new Map<string, PictureEntry>();
 
 interface BuildMonetBackgroundOptions {
     coverUrl?: string | null;
@@ -88,15 +97,14 @@ export const getMonetBackgroundCacheKey = ({
     },
 });
 
-let isCanvasFilterSupportedCached: boolean | null = null;
 
 /**
  * Checks if the browser's Canvas 2D context actually supports and applies the filter property.
  * This handles cases like iOS Safari where ctx.filter is defined but silently does nothing.
  */
 export const checkCanvasFilterSupport = (): boolean => {
-    if (isCanvasFilterSupportedCached !== null) {
-        return isCanvasFilterSupportedCached;
+    if (moduleState.isCanvasFilterSupportedCached !== null) {
+        return moduleState.isCanvasFilterSupportedCached;
     }
     if (typeof document === 'undefined') {
         return false;
@@ -107,7 +115,7 @@ export const checkCanvasFilterSupport = (): boolean => {
         canvas.height = 2;
         const ctx = canvas.getContext('2d');
         if (!ctx || typeof ctx.filter !== 'string') {
-            isCanvasFilterSupportedCached = false;
+            moduleState.isCanvasFilterSupportedCached = false;
             if (import.meta.env.DEV) {
                 console.log('[MonetBackground] Canvas filter support detection: Unsupported (ctx.filter is missing)');
             }
@@ -119,13 +127,13 @@ export const checkCanvasFilterSupport = (): boolean => {
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, 1, 1);
         const imgData = ctx.getImageData(1, 1, 1, 1);
-        isCanvasFilterSupportedCached = imgData.data[0] > 0;
+        moduleState.isCanvasFilterSupportedCached = imgData.data[0] > 0;
         if (import.meta.env.DEV) {
-            console.log(`[MonetBackground] Canvas filter support detection: ${isCanvasFilterSupportedCached ? 'Supported (native)' : 'Unsupported (CSS blur fallback will be used)'}`);
+            console.log(`[MonetBackground] Canvas filter support detection: ${moduleState.isCanvasFilterSupportedCached ? 'Supported (native)' : 'Unsupported (CSS blur fallback will be used)'}`);
         }
-        return isCanvasFilterSupportedCached;
+        return moduleState.isCanvasFilterSupportedCached;
     } catch (e) {
-        isCanvasFilterSupportedCached = false;
+        moduleState.isCanvasFilterSupportedCached = false;
         if (import.meta.env.DEV) {
             console.log('[MonetBackground] Canvas filter support detection failed:', e);
         }
@@ -141,28 +149,24 @@ interface PaintJob {
     settle: (picture: Blob | null | undefined) => void;
 }
 
-let painter: Worker | null = null;
-let lastRequestId = 0;
-let painting: (PaintJob & { id: number }) | null = null;
 // One picture at a time in the worker, the others wait here. A picture no layer wants any more by
 // its turn (a song skipped, a theme replaced within the settle time) is dropped unpainted: in the
 // worker's own queue it would be painted, 150-250 ms on slow cores, ahead of the one to be shown.
-const queuedPaints: PaintJob[] = [];
 
 const paintNext = () => {
-    while (!painting && queuedPaints.length > 0) {
-        const job = queuedPaints.shift()!;
+    while (!moduleState.painting && moduleState.queuedPaints.length > 0) {
+        const job = moduleState.queuedPaints.shift()!;
         if (!job.wanted()) {
             job.request.image.close();
             job.settle(undefined);
             continue;
         }
-        const id = (lastRequestId += 1);
-        painting = { ...job, id };
+        const id = (moduleState.lastRequestId += 1);
+        moduleState.painting = { ...job, id };
         try {
             ensurePainter().postMessage({ ...job.request, id } satisfies MonetBackgroundPaintRequest, { transfer: [job.request.image] });
         } catch {
-            painting = null;
+            moduleState.painting = null;
             job.request.image.close();
             job.settle(null);
         }
@@ -170,20 +174,20 @@ const paintNext = () => {
 };
 
 const finishPainting = (picture: Blob | null) => {
-    const job = painting;
-    painting = null;
+    const job = moduleState.painting;
+    moduleState.painting = null;
     job?.settle(picture);
     paintNext();
 };
 
 /** The worker that paints the pictures, started with the first one. */
 const ensurePainter = (): Worker => {
-    if (painter) {
-        return painter;
+    if (moduleState.painter) {
+        return moduleState.painter;
     }
     const worker = new Worker(new URL('./monetBackground.worker.ts', import.meta.url), { type: 'module' });
     worker.onmessage = (event: MessageEvent<MonetBackgroundPaintReply>) => {
-        if (event.data.id === painting?.id) {
+        if (event.data.id === moduleState.painting?.id) {
             if ('error' in event.data) {
                 console.warn('[MonetBackground] The worker could not paint the picture:', event.data.error);
             }
@@ -194,15 +198,15 @@ const ensurePainter = (): Worker => {
     // the next one starts another worker.
     worker.onerror = () => {
         worker.terminate();
-        painter = null;
+        moduleState.painter = null;
         finishPainting(null);
     };
-    painter = worker;
+    moduleState.painter = worker;
     return worker;
 };
 
 const paintOffThread = (request: PaintJob['request'], wanted: PaintJob['wanted']) => new Promise<Blob | null | undefined>((settle) => {
-    queuedPaints.push({ request, wanted, settle });
+    moduleState.queuedPaints.push({ request, wanted, settle });
     paintNext();
 });
 
@@ -253,23 +257,23 @@ const buildMonetBackgroundUrl = async ({
  */
 export const wantMonetBackgroundUrl = (options: BuildMonetBackgroundOptions): { url: Promise<string | null>; release: () => void } => {
     const cacheKey = getMonetBackgroundCacheKey(options);
-    let entry = monetBackgroundCache.get(cacheKey);
+    let entry = moduleState.monetBackgroundCache.get(cacheKey);
     if (!entry) {
         const made: PictureEntry = { url: Promise.resolve(null), holders: 0 };
         const wanted = () => {
             if (made.holders > 0) {
                 return true;
             }
-            if (monetBackgroundCache.get(cacheKey) === made) {
-                monetBackgroundCache.delete(cacheKey);
+            if (moduleState.monetBackgroundCache.get(cacheKey) === made) {
+                moduleState.monetBackgroundCache.delete(cacheKey);
             }
             return false;
         };
         // A picture that could not be made is not kept: the next layer to ask for it tries again
         // rather than showing the raw cover for as long as the app runs.
         const forget = () => {
-            if (monetBackgroundCache.get(cacheKey) === made) {
-                monetBackgroundCache.delete(cacheKey);
+            if (moduleState.monetBackgroundCache.get(cacheKey) === made) {
+                moduleState.monetBackgroundCache.delete(cacheKey);
             }
         };
         made.url = buildMonetBackgroundUrl(options, wanted).then(
@@ -283,7 +287,7 @@ export const wantMonetBackgroundUrl = (options: BuildMonetBackgroundOptions): { 
                 return null;
             },
         );
-        monetBackgroundCache.set(cacheKey, made);
+        moduleState.monetBackgroundCache.set(cacheKey, made);
         entry = made;
     }
     const held = entry;

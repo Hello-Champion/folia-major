@@ -1,4 +1,11 @@
 import type { ModRpcMessage } from '../types';
+import { sharedModuleState } from '../runtime/sharedModuleState';
+// 打包器会把本模块复制进多个 chunk：状态各持一份，读写两边对不上。状态放 globalThis。
+const moduleState = sharedModuleState('folia.rpcMessages', () => ({
+    listenersByMod: new Map<string, Map<string, Set<RpcListener>>>(),
+    listenerCount: 0,
+    unsubscribe: null as (() => void) | null,
+}));
 import { subscribeModRpcMessages } from '../ipc';
 
 // src/mods/folium/rpcMessages.ts
@@ -12,9 +19,6 @@ export const FOLIUM_RPC_NAME_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/;
 
 type RpcListener = (payload: unknown) => void;
 
-const listenersByMod = new Map<string, Map<string, Set<RpcListener>>>();
-let listenerCount = 0;
-let unsubscribe: (() => void) | null = null;
 
 /*
  * Hands one message to its mod's listeners for its name. They are the gate's wrappers (api.ts), so
@@ -25,7 +29,7 @@ const deliver = (message: ModRpcMessage) => {
     if (!message || typeof message.modId !== 'string' || typeof message.name !== 'string' || typeof message.json !== 'string') {
         return;
     }
-    const listeners = listenersByMod.get(message.modId)?.get(message.name);
+    const listeners = moduleState.listenersByMod.get(message.modId)?.get(message.name);
     if (!listeners || listeners.size === 0) return;
     for (const listener of Array.from(listeners)) {
         if (!listeners.has(listener)) continue;
@@ -47,10 +51,10 @@ const deliver = (message: ModRpcMessage) => {
  * Returns the removal; calling it again does nothing.
  */
 export const addFoliumRpcListener = (modId: string, name: string, listener: RpcListener): (() => void) => {
-    let byName = listenersByMod.get(modId);
+    let byName = moduleState.listenersByMod.get(modId);
     if (!byName) {
         byName = new Map();
-        listenersByMod.set(modId, byName);
+        moduleState.listenersByMod.set(modId, byName);
     }
     let listeners = byName.get(name);
     if (!listeners) {
@@ -60,30 +64,30 @@ export const addFoliumRpcListener = (modId: string, name: string, listener: RpcL
     // A wrapper is made per call (api.ts), so the same listener twice is two entries, as with events.on.
     const entry: RpcListener = (payload) => listener(payload);
     listeners.add(entry);
-    listenerCount += 1;
-    if (listenerCount === 1) {
-        unsubscribe = subscribeModRpcMessages(deliver);
+    moduleState.listenerCount += 1;
+    if (moduleState.listenerCount === 1) {
+        moduleState.unsubscribe = subscribeModRpcMessages(deliver);
     }
     let removed = false;
     return () => {
         if (removed) return;
         removed = true;
-        const current = listenersByMod.get(modId)?.get(name);
+        const current = moduleState.listenersByMod.get(modId)?.get(name);
         if (current?.delete(entry)) {
-            if (current.size === 0) listenersByMod.get(modId)?.delete(name);
-            if (listenersByMod.get(modId)?.size === 0) listenersByMod.delete(modId);
+            if (current.size === 0) moduleState.listenersByMod.get(modId)?.delete(name);
+            if (moduleState.listenersByMod.get(modId)?.size === 0) moduleState.listenersByMod.delete(modId);
         }
-        listenerCount -= 1;
-        if (listenerCount === 0) {
-            unsubscribe?.();
-            unsubscribe = null;
+        moduleState.listenerCount -= 1;
+        if (moduleState.listenerCount === 0) {
+            moduleState.unsubscribe?.();
+            moduleState.unsubscribe = null;
         }
     };
 };
 
 /** Whether any listener of the mod waits for messages of `name`, or of any name when it is left out. */
 export const hasFoliumRpcListeners = (modId: string, name?: string): boolean => {
-    const byName = listenersByMod.get(modId);
+    const byName = moduleState.listenersByMod.get(modId);
     if (!byName) return false;
     return name === undefined ? byName.size > 0 : (byName.get(name)?.size ?? 0) > 0;
 };

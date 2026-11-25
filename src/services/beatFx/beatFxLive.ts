@@ -1,11 +1,26 @@
 import { beatImpact, downbeatImpact } from '../../stores/motionSignals';
+import { sharedModuleState } from '../../mods/runtime/sharedModuleState';
+// 打包器会把本模块复制进多个 chunk：状态各持一份，读写两边对不上。状态放 globalThis。
+const moduleState = sharedModuleState('folia.beatFxLive', () => ({
+    state: createBeatFxClockState(),
+    intensities: { beat: 1, downbeat: 1 },
+    firedCounts: { beats: 0, downbeats: 0 },
+    trackKey: null as string | null,
+    lastStepAt: null as number | null,
+    holdUntil: 0,
+    hearing: false,
+    heardAt: null as number | null,
+    lastHeard: { key: null, time: 0 } as { key: string | null; time: number },
+    beatPeriod: DEFAULT_BEAT_PERIOD,
+    liveEffects: {} as Readonly<Record<string, number>>,
+}));
 import { createBeatFxClockState, stepBeatFxClock, type BeatFxEvent } from './clock';
 import type { BeatFxSourceKind } from './beatFxSource';
 
 // src/services/beatFx/beatFxLive.ts
 // The one live beat clock: fed the current track's beat list, stepped once per frame from the
 // existing playback RAF loop, and written into the `beatImpact` / `downbeatImpact` MotionValues.
-// No React state anywhere on this path.
+// No React moduleState.state anywhere on this path.
 //
 // The MotionValues carry the envelopes already scaled by 智能动感模式's 轻拍 / 重拍 strengths
 // (`setBeatFxIntensities`: both the strength of the beat-list effect on screen, since effects have
@@ -76,21 +91,12 @@ const debug: BeatFxDebug | null = (import.meta.env.DEV || readDebugFlag())
     : null;
 if (debug && typeof window !== 'undefined') window.__foliaBeatFx = debug;
 
-const state = createBeatFxClockState();
-let trackKey: string | null = null;
-let lastStepAt: number | null = null;
 /** `performance.now()` until which a track change counts as ready; see READY_HOLD_MS. */
-let holdUntil = 0;
 /** Whether the last step had a deck being heard; false while paused or stopped. */
-let hearing = false;
 /** The playing track's time the listener hears, seconds; null while nothing plays. */
-let heardAt: number | null = null;
 /** The last time heard while playing, and its track: what a pause or a picture switch leaves. */
-let lastHeard: { key: string | null; time: number } = { key: null, time: 0 };
-const intensities = { beat: 1, downbeat: 1 };
 /** Median gap between the installed track's beats, in seconds; see `getBeatFxBeatPeriod`. */
 const DEFAULT_BEAT_PERIOD = 0.5;
-let beatPeriod = DEFAULT_BEAT_PERIOD;
 
 /** Median gap between consecutive events, or the default for fewer than two. */
 export const resolveBeatFxBeatPeriod = (events: readonly BeatFxEvent[]): number => {
@@ -101,55 +107,53 @@ export const resolveBeatFxBeatPeriod = (events: readonly BeatFxEvent[]): number 
     const median = gaps[gaps.length >> 1];
     return median > 0 ? median : DEFAULT_BEAT_PERIOD;
 };
-const firedCounts = { beats: 0, downbeats: 0 };
 
 /** The 轻拍 / 重拍 strengths (0..2) the envelopes are scaled by from the next step on. */
 export const setBeatFxIntensities = (beat: number, downbeat: number) => {
-    intensities.beat = beat;
-    intensities.downbeat = downbeat;
+    moduleState.intensities.beat = beat;
+    moduleState.intensities.downbeat = downbeat;
 };
 
 /** The current 轻拍 / 重拍 strengths; one shared object, read it rather than keep it. */
-export const getBeatFxIntensities = (): Readonly<{ beat: number; downbeat: number }> => intensities;
+export const getBeatFxIntensities = (): Readonly<{ beat: number; downbeat: number }> => moduleState.intensities;
 
 /** The live effects on screen and their strengths (beatClockTargets.ts `liveBeatEffects`). */
-let liveEffects: Readonly<Record<string, number>> = {};
 
 /**
  * Sets which beat effects play now and how strongly (services/beatFx/beatEffects.ts), from the
  * settings and the picture on screen; a frame loop asks `getBeatEffectStrength` for its own.
  */
 export const setBeatFxLiveEffects = (strengths: Readonly<Record<string, number>>) => {
-    liveEffects = strengths;
+    moduleState.liveEffects = strengths;
 };
 
 /** The strength an effect plays at now, 0..2; 0 while it does not play (off, retired, not on screen). */
-export const getBeatEffectStrength = (id: string): number => liveEffects[id] ?? 0;
+export const getBeatEffectStrength = (id: string): number => moduleState.liveEffects[id] ?? 0;
 
 /** Whether an effect plays now, its strength turned down to 0 included (雾笺: 0 is no rain, not the fallback). */
-export const isBeatEffectPlaying = (id: string): boolean => id in liveEffects;
+export const isBeatEffectPlaying = (id: string): boolean => id in moduleState.liveEffects;
 
 /**
  * How many beats and downbeats the clock has fired since the app started - only ever growing, across
  * tracks and seeks - so a frame loop that remembers last frame's counts sees exactly the ones fired
  * since. One shared object, read it rather than keep it.
  */
-export const getBeatFxFiredCounts = (): Readonly<{ beats: number; downbeats: number }> => firedCounts;
+export const getBeatFxFiredCounts = (): Readonly<{ beats: number; downbeats: number }> => moduleState.firedCounts;
 
 /** Switches the clock to a new track; events arrive later via `setBeatFxEvents`. */
 export const beginBeatFxTrack = (key: string | null) => {
     // Held only from a track that was ready: its beats in, or itself still inside a hold. Keyed on the
     // events alone, a run of quick skips dropped the frame at the second one.
     const wasReady = isBeatFxReady();
-    holdUntil = key && wasReady ? Math.max(holdUntil, performance.now() + READY_HOLD_MS) : 0;
+    moduleState.holdUntil = key && wasReady ? Math.max(moduleState.holdUntil, performance.now() + READY_HOLD_MS) : 0;
     // Another track: where the last one was heard is not where this one is.
-    if (key !== trackKey) lastHeard = { key: null, time: 0 };
-    trackKey = key;
-    state.events = [];
-    state.cursor = 0;
-    state.lastTime = null;
-    state.lastBeat = null;
-    state.lastDownbeat = null;
+    if (key !== moduleState.trackKey) moduleState.lastHeard = { key: null, time: 0 };
+    moduleState.trackKey = key;
+    moduleState.state.events = [];
+    moduleState.state.cursor = 0;
+    moduleState.state.lastTime = null;
+    moduleState.state.lastBeat = null;
+    moduleState.state.lastDownbeat = null;
     if (debug) {
         debug.trackKey = key;
         debug.source = key ? 'loading' : 'none';
@@ -169,13 +173,13 @@ export const setBeatFxEvents = (
     note?: string,
     trackScale = 1,
 ) => {
-    if (key !== trackKey) return;
-    state.events = events;
-    state.trackScale = trackScale;
-    beatPeriod = resolveBeatFxBeatPeriod(events);
-    holdUntil = 0;
+    if (key !== moduleState.trackKey) return;
+    moduleState.state.events = events;
+    moduleState.state.trackScale = trackScale;
+    moduleState.beatPeriod = resolveBeatFxBeatPeriod(events);
+    moduleState.holdUntil = 0;
     // Resync on the next step rather than firing everything before the current position.
-    state.lastTime = null;
+    moduleState.state.lastTime = null;
     if (debug) {
         debug.source = source;
         debug.note = note ?? null;
@@ -189,33 +193,33 @@ export const setBeatFxEvents = (
  * original frame rather than a beat FX frame with nothing driving it.
  */
 export const isBeatFxReady = (): boolean =>
-    trackKey !== null && (state.events.length > 0 || (holdUntil > 0 && performance.now() < holdUntil));
+    moduleState.trackKey !== null && (moduleState.state.events.length > 0 || (moduleState.holdUntil > 0 && performance.now() < moduleState.holdUntil));
 
 /** Whether a deck was being heard at the last step; continuous effects rest while it is not. */
-export const isBeatFxHearing = (): boolean => hearing;
+export const isBeatFxHearing = (): boolean => moduleState.hearing;
 
 /** The installed track's key and the time in it the listener hears (null while nothing plays). */
-export const getBeatFxHeard = (): Readonly<{ key: string | null; time: number | null }> => ({ key: trackKey, time: heardAt });
+export const getBeatFxHeard = (): Readonly<{ key: string | null; time: number | null }> => ({ key: moduleState.trackKey, time: moduleState.heardAt });
 
 /** Where `key` was last heard playing (s), 0 if it has not been: the playhead 雾笺's vocals start from. */
-export const getBeatFxLastHeard = (key: string): number => (lastHeard.key === key ? lastHeard.time : 0);
+export const getBeatFxLastHeard = (key: string): number => (moduleState.lastHeard.key === key ? moduleState.lastHeard.time : 0);
 
 /** Stops the clock and zeroes both envelopes; called when the FX are switched off. */
 export const stopBeatFx = () => {
     beginBeatFxTrack(null);
-    state.beatImpact = 0;
-    state.downbeatImpact = 0;
+    moduleState.state.beatImpact = 0;
+    moduleState.state.downbeatImpact = 0;
     beatImpact.set(0);
     downbeatImpact.set(0);
-    lastStepAt = null;
-    hearing = false;
+    moduleState.lastStepAt = null;
+    moduleState.hearing = false;
 };
 
 /** The last fired plain beat (not a downbeat) of this track, or null. */
-export const getBeatFxLastBeat = (): BeatFxEvent | null => state.lastBeat;
+export const getBeatFxLastBeat = (): BeatFxEvent | null => moduleState.state.lastBeat;
 
 /** The last fired downbeat of this track, or null. */
-export const getBeatFxLastDownbeat = (): BeatFxEvent | null => state.lastDownbeat;
+export const getBeatFxLastDownbeat = (): BeatFxEvent | null => moduleState.state.lastDownbeat;
 
 /**
  * The installed track's whole beat list, sorted by time (empty until it is in). For a picture that
@@ -223,16 +227,16 @@ export const getBeatFxLastDownbeat = (): BeatFxEvent | null => state.lastDownbea
  * downbeat - and draws purely from the playback time. Read it rather than keep it: a new track or its
  * accents replace the list.
  */
-export const getBeatFxEvents = (): readonly BeatFxEvent[] => state.events;
+export const getBeatFxEvents = (): readonly BeatFxEvent[] => moduleState.state.events;
 
 /** The playing track's typical beat length in seconds (median gap), for effects timed in beats. */
-export const getBeatFxBeatPeriod = (): number => beatPeriod;
+export const getBeatFxBeatPeriod = (): number => moduleState.beatPeriod;
 
 /** The playing track's dynamics scale (0.45..1); 1 without accents. */
-export const getBeatFxTrackScale = (): number => state.trackScale;
+export const getBeatFxTrackScale = (): number => moduleState.state.trackScale;
 
 /** Alternating ±1 for the camera tilt; flips on every fired beat. */
-export const getBeatFxRotationSign = (): number => state.rotationSign;
+export const getBeatFxRotationSign = (): number => moduleState.state.rotationSign;
 
 /**
  * One frame of the beat clock. `audioElement` is the deck being heard, or null when nothing is
@@ -240,8 +244,8 @@ export const getBeatFxRotationSign = (): number => state.rotationSign;
  */
 export const tickBeatFx = (audioElement: HTMLMediaElement | null, context: BaseAudioContext | null | undefined) => {
     const now = performance.now();
-    const dtSec = lastStepAt === null ? 0 : Math.min(0.1, (now - lastStepAt) / 1000);
-    lastStepAt = now;
+    const dtSec = moduleState.lastStepAt === null ? 0 : Math.min(0.1, (now - moduleState.lastStepAt) / 1000);
+    moduleState.lastStepAt = now;
 
     let heardTime: number | null = null;
     if (audioElement && !audioElement.paused && !audioElement.ended) {
@@ -251,22 +255,22 @@ export const tickBeatFx = (audioElement: HTMLMediaElement | null, context: BaseA
         heardTime = audioElement.currentTime - latency;
         if (debug) debug.latencyMs = latency * 1000;
     }
-    hearing = heardTime !== null;
-    heardAt = heardTime;
-    if (heardTime !== null) lastHeard = { key: trackKey, time: heardTime };
+    moduleState.hearing = heardTime !== null;
+    moduleState.heardAt = heardTime;
+    if (heardTime !== null) moduleState.lastHeard = { key: moduleState.trackKey, time: heardTime };
 
-    stepBeatFxClock(state, heardTime, dtSec);
-    firedCounts.beats = state.firedBeats;
-    firedCounts.downbeats = state.firedDownbeats;
-    beatImpact.set(state.beatImpact * intensities.beat);
-    downbeatImpact.set(state.downbeatImpact * intensities.downbeat);
+    stepBeatFxClock(moduleState.state, heardTime, dtSec);
+    moduleState.firedCounts.beats = moduleState.state.firedBeats;
+    moduleState.firedCounts.downbeats = moduleState.state.firedDownbeats;
+    beatImpact.set(moduleState.state.beatImpact * moduleState.intensities.beat);
+    downbeatImpact.set(moduleState.state.downbeatImpact * moduleState.intensities.downbeat);
 
     if (debug) {
-        debug.beats = state.firedBeats;
-        debug.downbeats = state.firedDownbeats;
-        debug.lastT = state.lastFiredT;
+        debug.beats = moduleState.state.firedBeats;
+        debug.downbeats = moduleState.state.firedDownbeats;
+        debug.lastT = moduleState.state.lastFiredT;
         debug.heardT = heardTime;
-        debug.beatImpact = state.beatImpact;
-        debug.downbeatImpact = state.downbeatImpact;
+        debug.beatImpact = moduleState.state.beatImpact;
+        debug.downbeatImpact = moduleState.state.downbeatImpact;
     }
 };

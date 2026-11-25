@@ -1,4 +1,11 @@
 import { getCoverIdentity, getSizedCoverUrl } from '../../../utils/coverUrl';
+import { sharedModuleState } from '../../../mods/runtime/sharedModuleState';
+// 打包器会把本模块复制进多个 chunk：状态各持一份，读写两边对不上。状态放 globalThis。
+const moduleState = sharedModuleState('folia.bravaisCoverFlight', () => ({
+    current: null as Flight | null,
+    source: null as Source | null,
+    parkedBackOrigin: null as { layerKey: string; origin: BackOrigin } | null,
+}));
 
 // src/library/suites/bravais/bravaisCoverFlight.ts
 // 歌手页 ↔ 专辑页的封面飞行：点开专辑时，被点的那张专辑磁贴的封面飞到专辑海报上封面的位置（连同墙的倾斜，落到海报
@@ -72,7 +79,6 @@ export const lerpQuad = (from: BravaisQuad, to: BravaisQuad, t: number): Bravais
 const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
 
 type Flight = { stop: () => void };
-let current: Flight | null = null;
 
 /** 封面下面那道硬阴影（海报封面的墨色阴影，元素自己坐标系里的偏移）。 */
 export type BravaisHardShadow = { offset: number; color: string };
@@ -100,7 +106,7 @@ const fly = ({ url, from, target, duration, shadow, landing, ready, lost, onDone
     lost?: () => boolean;
     onDone?: () => void;
 }) => {
-    current?.stop();
+    moduleState.current?.stop();
     const image = document.createElement('div');
     image.className = 'bravais-cover-flight';
     image.setAttribute('aria-hidden', 'true');
@@ -114,7 +120,7 @@ const fly = ({ url, from, target, duration, shadow, landing, ready, lost, onDone
     let finished = false;
     const remove = () => {
         image.remove();
-        if (current === flight) current = null;
+        if (moduleState.current === flight) moduleState.current = null;
     };
     const finish = () => {
         if (finished) return;
@@ -171,7 +177,7 @@ const fly = ({ url, from, target, duration, shadow, landing, ready, lost, onDone
         else frame = requestAnimationFrame(step);
     };
     const flight: Flight = { stop: finish };
-    current = flight;
+    moduleState.current = flight;
     draw(from, 0);
     frame = requestAnimationFrame(step);
     return flight;
@@ -280,19 +286,18 @@ const tileCoverQuad = (tile: HTMLElement): BravaisQuad | null => {
 // ---- 去程：点专辑磁贴 → 专辑海报 ----
 
 type Source = { cardKey: string; slotKey: string; coverUrl: string; quad: BravaisQuad; at: number };
-let source: Source | null = null;
 
 /** 点了一张专辑磁贴：记下它此刻的样子（真正打开专辑时海报来取）。 */
 export const noteCoverFlightSource = (tile: Element, cardKey: string, slotKey: string, coverUrl: string | undefined) => {
     if (!coverUrl) return;
     const quad = tile instanceof HTMLElement ? tileCoverQuad(tile) : measureQuad(tile);
-    source = quad ? { cardKey, slotKey, coverUrl, quad, at: performance.now() } : null;
+    moduleState.source = quad ? { cardKey, slotKey, coverUrl, quad, at: performance.now() } : null;
 };
 
 /** 专辑海报挂载：封面相同、刚点过的，取走它。 */
 export const takeCoverFlightSource = (coverUrl: string | undefined): Source | null => {
-    const taken = source;
-    source = null;
+    const taken = moduleState.source;
+    moduleState.source = null;
     if (!taken || !coverUrl || reducedMotion()) return null;
     if (performance.now() - taken.at > SOURCE_TTL_MS) return null;
     return getCoverIdentity(taken.coverUrl) === getCoverIdentity(coverUrl) ? taken : null;
@@ -317,17 +322,16 @@ export const flyCoverToPoster = (from: Source, cover: HTMLElement, onLand: () =>
 // ---- 回程：专辑海报 → 墙上原来那一格 ----
 
 type BackOrigin = { slotKey: string; cardKey: string };
-let parkedBackOrigin: { layerKey: string; origin: BackOrigin } | null = null;
 
 /** 海报卸载了但还在这张专辑上（开过滤、收起缝、开面板）：记下回程的终点，海报回来时接着用。 */
 export const parkCoverBackOrigin = (layerKey: string, origin: BackOrigin) => {
-    parkedBackOrigin = { layerKey, origin };
+    moduleState.parkedBackOrigin = { layerKey, origin };
 };
 
 /** 海报挂载：同一张专辑之前记下的回程终点（换了专辑就作废）。 */
 export const takeParkedCoverBackOrigin = (layerKey: string): BackOrigin | null => {
-    const parked = parkedBackOrigin;
-    parkedBackOrigin = null;
+    const parked = moduleState.parkedBackOrigin;
+    moduleState.parkedBackOrigin = null;
     return parked?.layerKey === layerKey ? parked.origin : null;
 };
 

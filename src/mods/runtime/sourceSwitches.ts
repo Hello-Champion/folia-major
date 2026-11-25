@@ -1,4 +1,9 @@
 import type { ModClearSourceDataResult, ModSourceState, ModSourceStatesPayload } from '../types';
+import { sharedModuleState } from './sharedModuleState';
+// 打包器会把本模块复制进多个 chunk：状态各持一份，读写两边对不上。状态放 globalThis。
+const moduleState = sharedModuleState('folia.sourceSwitches', () => ({
+    stopPlayback: null as SourcePlaybackStop | null,
+}));
 import { invokeClearSourceData, invokeSetSourceState, subscribeSourcesStopping } from '../ipc';
 import { canSourceMatchOnly, setSourceStates } from '@/services/onlineMusic/sourceStates';
 import { PlayerState } from '@/types';
@@ -17,11 +22,10 @@ import { forgetOldPageKeys } from '../folium/registries/sourcePageStore';
 
 type SourcePlaybackStop = (sourceIds: readonly string[]) => void | Promise<void>;
 
-let stopPlayback: SourcePlaybackStop | null = null;
 
 /** Who stops the playback of a source that is about to be unloaded; null takes the registration away. */
 export const registerSourcePlaybackStop = (stop: SourcePlaybackStop | null): void => {
-    stopPlayback = stop;
+    moduleState.stopPlayback = stop;
 };
 
 /**
@@ -53,9 +57,9 @@ export const installSourcesStoppingListener = (): (() => void) => subscribeSourc
 export const stopPlaybackOfSources = (sourceIds: readonly string[]): Promise<void> => stopPlaybackOf(sourceIds);
 
 const stopPlaybackOf = async (sourceIds: readonly string[]) => {
-    if (!stopPlayback) return;
+    if (!moduleState.stopPlayback) return;
     try {
-        await stopPlayback(sourceIds);
+        await moduleState.stopPlayback(sourceIds);
     } catch (error) {
         console.warn('[Folium] stopping the playback of a source before its unload failed', error);
     }

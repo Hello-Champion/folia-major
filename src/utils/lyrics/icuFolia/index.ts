@@ -1,4 +1,11 @@
 import type { LyricData } from '../../../types';
+import { sharedModuleState } from '../../../mods/runtime/sharedModuleState';
+// 打包器会把本模块复制进多个 chunk：状态各持一份，读写两边对不上。状态放 globalThis。
+const moduleState = sharedModuleState('folia.icuFolia', () => ({
+    engines: null as IcuFoliaEngines | null,
+    loading: null as Promise<boolean> | null,
+    liveMemo: new Map<string, string[]>(),
+}));
 import { segmentWithIcuFolia, type IcuFoliaEngines } from './segmenter';
 
 // src/utils/lyrics/icuFolia/index.ts
@@ -7,59 +14,56 @@ import { segmentWithIcuFolia, type IcuFoliaEngines } from './segmenter';
 //
 // Its output is baked onto each Line as `autoWordSegments` by the lyric setter, rather than computed
 // where the words are read: segmentation is read on paths that run per frame, and data on the line
-// is what every layout cache and the lyric signature already key on. The engines load
+// is what every layout cache and the lyric signature already key on. The moduleState.engines load
 // asynchronously, so lyrics that arrive first are baked again when they are ready (see
 // useIcuFoliaSegmentation).
 
-let engines: IcuFoliaEngines | null = null;
-let loading: Promise<boolean> | null = null;
 
-/** Starts loading the engines once. Resolves true when they are ready, false if they failed. */
+/** Starts moduleState.loading the moduleState.engines once. Resolves true when they are ready, false if they failed. */
 export const loadIcuFolia = (
     loader: () => Promise<IcuFoliaEngines> = async () => (await import('./engines')).loadIcuFoliaEngines(),
 ): Promise<boolean> => {
-    loading ??= loader().then(
+    moduleState.loading ??= loader().then(
         loaded => {
-            engines = loaded;
+            moduleState.engines = loaded;
             return true;
         },
         error => {
             // ICU stays the default; nothing a user sees depends on this having worked.
-            console.warn('[icu-folia] engines failed to load, lyrics keep the ICU split', error);
+            console.warn('[icu-folia] moduleState.engines failed to load, lyrics keep the ICU split', error);
             return false;
         },
     );
-    return loading;
+    return moduleState.loading;
 };
 
-export const isIcuFoliaReady = () => engines !== null;
+export const isIcuFoliaReady = () => moduleState.engines !== null;
 
-/** Test seam: forget loaded engines so a test can exercise the not-ready path. */
+/** Test seam: forget loaded moduleState.engines so a test can exercise the not-ready path. */
 export const resetIcuFoliaForTests = () => {
-    engines = null;
-    loading = null;
-    liveMemo.clear();
+    moduleState.engines = null;
+    moduleState.loading = null;
+    moduleState.liveMemo.clear();
 };
 
 const LIVE_MEMO_LIMIT = 256;
-const liveMemo = new Map<string, string[]>();
 
 /**
  * icu-folia boundaries for text that has no baked line behind it (Folium mods build their own line
- * objects), or null while the engines are still loading. Memoised, because a mod may well ask every
+ * objects), or null while the moduleState.engines are still moduleState.loading. Memoised, because a mod may well ask every
  * frame; the copy keeps a caller's mutation out of the memo.
  */
 export const segmentIcuFolia = (text: string): string[] | null => {
-    if (!engines) {
+    if (!moduleState.engines) {
         return null;
     }
-    let boundaries = liveMemo.get(text);
+    let boundaries = moduleState.liveMemo.get(text);
     if (!boundaries) {
-        boundaries = segmentWithIcuFolia(text, engines);
-        if (liveMemo.size >= LIVE_MEMO_LIMIT) {
-            liveMemo.delete(liveMemo.keys().next().value as string);
+        boundaries = segmentWithIcuFolia(text, moduleState.engines);
+        if (moduleState.liveMemo.size >= LIVE_MEMO_LIMIT) {
+            moduleState.liveMemo.delete(moduleState.liveMemo.keys().next().value as string);
         }
-        liveMemo.set(text, boundaries);
+        moduleState.liveMemo.set(text, boundaries);
     }
     return [...boundaries];
 };
@@ -70,11 +74,11 @@ const sameBoundaries = (a: string[] | undefined, b: string[]) => (
 
 /**
  * Bakes icu-folia's split onto every line as `autoWordSegments`. Returns the input untouched when
- * the engines are not ready or every line already carries this exact split, so calling it again
+ * the moduleState.engines are not ready or every line already carries this exact split, so calling it again
  * (the late re-bake, a record patch) never replaces lyrics for nothing.
  */
 export const applyAutoWordSegmentation = (lyrics: LyricData | null): LyricData | null => {
-    if (!lyrics || !engines) {
+    if (!lyrics || !moduleState.engines) {
         return lyrics;
     }
 
@@ -83,7 +87,7 @@ export const applyAutoWordSegmentation = (lyrics: LyricData | null): LyricData |
         if (!line.fullText) {
             return line;
         }
-        const boundaries = segmentWithIcuFolia(line.fullText, engines);
+        const boundaries = segmentWithIcuFolia(line.fullText, moduleState.engines);
         if (sameBoundaries(line.autoWordSegments, boundaries)) {
             return line;
         }
