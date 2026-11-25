@@ -1,3 +1,15 @@
+import { sharedModuleState } from '../../mods/runtime/sharedModuleState';
+
+// 打包器会把本模块复制进多个 chunk：状态各持一份，读写两边对不上。状态放 globalThis。
+const moduleState = sharedModuleState('folia.omniState', () => ({
+    audioSourceLevels: new Map<string, HandedOutAudioSource>(),
+    audioSourceMetadataVersion: 0,
+    preferenceSaveListeners: new Set<(providerId: OmniProviderId) => void>(),
+    likePressesByProvider: new Map<OmniProviderId, LikePresses>(),
+    likedReadsBegun: new Map<OmniProviderId, number>(),
+    likedReadsApplied: new Map<OmniProviderId, number>(),
+    activeRequestGeneration: 0,
+}));
 import { EMPTY_PERSONAL_FM_CATALOG } from './fmModes';
 import type { PersonalFmCatalog } from '../../types/personalFm';
 import type { SongResult, UnifiedSong } from '../../types';
@@ -131,8 +143,6 @@ const audioQualityFor = (providerId: OmniProviderId, preference: AudioQualityPre
 // level and not known to be a clip.
 const AUDIO_SOURCE_LEVEL_LIMIT = 200;
 type HandedOutAudioSource = { level: AudioQualityPreference; preview: boolean; clipStartMs?: number };
-const audioSourceLevels = new Map<string, HandedOutAudioSource>();
-let audioSourceMetadataVersion = 0;
 // One spelling per URL: the form playback holds (`toSafePlaybackUrl`), written as the URL parser
 // writes it - a deck that has played out reports its element's `currentSrc`, which is that form.
 const audioSourceLevelKey = (url: string): string => {
@@ -145,13 +155,13 @@ const audioSourceLevelKey = (url: string): string => {
 };
 const noteAudioSourceLevel = (url: string, handedOut: HandedOutAudioSource): void => {
     const key = audioSourceLevelKey(url);
-    audioSourceLevels.delete(key);
-    audioSourceLevels.set(key, handedOut);
-    if (audioSourceLevels.size > AUDIO_SOURCE_LEVEL_LIMIT) {
-        const oldestKey = audioSourceLevels.keys().next().value;
-        if (oldestKey !== undefined) audioSourceLevels.delete(oldestKey);
+    moduleState.audioSourceLevels.delete(key);
+    moduleState.audioSourceLevels.set(key, handedOut);
+    if (moduleState.audioSourceLevels.size > AUDIO_SOURCE_LEVEL_LIMIT) {
+        const oldestKey = moduleState.audioSourceLevels.keys().next().value;
+        if (oldestKey !== undefined) moduleState.audioSourceLevels.delete(oldestKey);
     }
-    audioSourceMetadataVersion++;
+    moduleState.audioSourceMetadataVersion++;
 };
 
 // Which registered sources the interface has (Folium 2.0 plan §5.3). Only an enabled one is shown: a source used
@@ -261,10 +271,9 @@ const unsupportedPreferences = (provider: OnlineMusicProvider): OnlineProviderEr
 );
 
 /** Told which provider's account preferences were written, confirmed or not: what it recommends may differ now. */
-const preferenceSaveListeners = new Set<(providerId: OmniProviderId) => void>();
 
 const tellPreferencesSaved = (providerId: OmniProviderId) => {
-    for (const listener of preferenceSaveListeners) {
+    for (const listener of moduleState.preferenceSaveListeners) {
         try {
             listener(providerId);
         } catch (error) {
@@ -409,15 +418,14 @@ const persistProviderLikedSongIds = async (providerId: OmniProviderId): Promise<
 // The presses on hearts (likePresses.ts), one provider's songs apart from another's. What is
 // wanted for a song whose request is not settled goes into the account store (`wantedLikes`),
 // where `isSongLiked` reads it and the screen follows it.
-const likePressesByProvider = new Map<OmniProviderId, LikePresses>();
 const likePressesOf = (providerId: OmniProviderId): LikePresses => {
-    let presses = likePressesByProvider.get(providerId);
+    let presses = moduleState.likePressesByProvider.get(providerId);
     if (!presses) {
         presses = createLikePresses({
             name: providerId,
             onChange: wantedLikes => useOnlineProviderAccountStore.getState().updateAccount(providerId, { wantedLikes }),
         });
-        likePressesByProvider.set(providerId, presses);
+        moduleState.likePressesByProvider.set(providerId, presses);
     }
     return presses;
 };
@@ -485,12 +493,10 @@ export interface LikedListRead extends AccountRead {
 // How many reads of each provider's liked songs have begun, and the number of the newest whole
 // one that was applied: an answer that comes after the whole answer of a read begun later is
 // dropped. A read that was not whole only added, so it holds no other read back.
-const likedReadsBegun = new Map<OmniProviderId, number>();
-const likedReadsApplied = new Map<OmniProviderId, number>();
 
 const beginLikedRead = (providerId: OmniProviderId, userId: MediaId): LikedListRead => {
-    const order = (likedReadsBegun.get(providerId) ?? 0) + 1;
-    likedReadsBegun.set(providerId, order);
+    const order = (moduleState.likedReadsBegun.get(providerId) ?? 0) + 1;
+    moduleState.likedReadsBegun.set(providerId, order);
     return { providerId, userId, beganAt: Date.now(), order };
 };
 
@@ -516,14 +522,14 @@ const applyLikedRead = (
         notKept: notLiked,
         held,
         signedInUserId: account?.user?.id,
-        newestApplied: likedReadsApplied.get(read.providerId) ?? 0,
+        newestApplied: moduleState.likedReadsApplied.get(read.providerId) ?? 0,
         touchedSince: likePressesOf(read.providerId).touchedSince,
     });
     if ('refused' in kept) {
         console.log(`[Like] ${read.providerId}: ${what} not applied: ${kept.refused}; the liked songs stay as they were`);
         return { applied: false, changed: false, alike: false };
     }
-    if (answer.whole) likedReadsApplied.set(read.providerId, read.order);
+    if (answer.whole) moduleState.likedReadsApplied.set(read.providerId, read.order);
     console.log(`[Like] ${read.providerId}: ${what} applied: ${kept.added} added, ${kept.removed} removed, ${kept.pressed.size} kept because pressed`);
 
     const changed = kept.added > 0 || kept.removed > 0;
@@ -573,7 +579,7 @@ const readLikedSongIds = async (providerId: OmniProviderId, userId: MediaId, cou
 const accountReads = createAccountReads({
     beginLikedRead,
     applyLikedRead: applyLikedIdsRead,
-    forgetLikePresses: providerId => likePressesByProvider.get(providerId)?.forget(),
+    forgetLikePresses: providerId => moduleState.likePressesByProvider.get(providerId)?.forget(),
     // Only spans of time are measured: a clock that is set back must not hold the reads off.
     now: () => performance.now(),
 });
@@ -596,14 +602,13 @@ const accountMoments = createAccountMoments({
     now: () => performance.now(),
 });
 
-let activeRequestGeneration = 0;
 
 // Rejects late active-provider responses after an account switch transaction begins.
 const withActiveProvider = async <T>(run: (provider: OnlineMusicProvider) => Promise<T>): Promise<T> => {
     const providerId = activeProviderId();
-    const generation = activeRequestGeneration;
+    const generation = moduleState.activeRequestGeneration;
     const result = await run(requireOnlineMusicProvider(providerId));
-    if (generation !== activeRequestGeneration || providerId !== activeProviderId()) {
+    if (generation !== moduleState.activeRequestGeneration || providerId !== activeProviderId()) {
         throw new DOMException('Active online provider changed', 'AbortError');
     }
     return result;
@@ -614,11 +619,11 @@ export const PLAYLIST_ADD_BATCH = 50;
 
 export const omni = {
     invalidateActiveRequests(): void {
-        activeRequestGeneration += 1;
+        moduleState.activeRequestGeneration += 1;
     },
 
     getActiveRequestGeneration(): number {
-        return activeRequestGeneration;
+        return moduleState.activeRequestGeneration;
     },
 
     // The provider lists change at runtime: Folium mods register and remove sources, and a source is switched
@@ -1205,9 +1210,9 @@ export const omni = {
 
     /** Hears which provider's account preferences were written; a provider that fails to save is not told of. */
     subscribeRecommendationPreferenceSaves(listener: (providerId: OmniProviderId) => void): () => void {
-        preferenceSaveListeners.add(listener);
+        moduleState.preferenceSaveListeners.add(listener);
         return () => {
-            preferenceSaveListeners.delete(listener);
+            moduleState.preferenceSaveListeners.delete(listener);
         };
     },
 
@@ -1439,13 +1444,13 @@ export const omni = {
     // The level a URL handed out by `getAudioSource` was asked for at. Undefined for any other URL
     // (a local file, a Navidrome stream, a blob), and for one handed out too long ago to be remembered.
     levelOfAudioSource(url: string): AudioQualityPreference | undefined {
-        return audioSourceLevels.get(audioSourceLevelKey(url))?.level;
+        return moduleState.audioSourceLevels.get(audioSourceLevelKey(url))?.level;
     },
 
     // Whether a URL handed out by `getAudioSource` plays a preview clip of its song, as its provider
     // said. False for any other URL, as for one handed out too long ago to be remembered.
     isPreviewAudioSource(url: string): boolean {
-        return audioSourceLevels.get(audioSourceLevelKey(url))?.preview === true;
+        return moduleState.audioSourceLevels.get(audioSourceLevelKey(url))?.preview === true;
     },
 
     // The i18n key of the notice for a preview clip of a provider's song (`OnlinePlaybackProvider.previewNoticeKey`).
@@ -1455,14 +1460,14 @@ export const omni = {
 
     // Cheap invalidation for playback's small per-URL cache: a provider may reuse a URL with
     // different metadata, and the bounded registry may evict a previously remembered URL.
-    audioSourceMetadataVersion(): number {
-        return audioSourceMetadataVersion;
+    audioSourceMetadataVersion(): number  {
+        return moduleState.audioSourceMetadataVersion;
     },
 
     // Where a URL handed out by `getAudioSource` starts inside its song, for a preview clip; 0 for a
     // whole song, any other URL, and one handed out too long ago to be remembered.
     previewClipStartMsOfAudioSource(url: string): number {
-        return Math.max(0, audioSourceLevels.get(audioSourceLevelKey(url))?.clipStartMs ?? 0);
+        return Math.max(0, moduleState.audioSourceLevels.get(audioSourceLevelKey(url))?.clipStartMs ?? 0);
     },
 
     // Asked once per track, including for local and Navidrome songs, so an unsupported source is a

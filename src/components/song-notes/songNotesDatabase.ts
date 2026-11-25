@@ -1,3 +1,9 @@
+import { sharedModuleState } from '../../mods/runtime/sharedModuleState';
+
+// 打包器会把本模块复制进多个 chunk：状态各持一份，读写两边对不上。状态放 globalThis。
+const moduleState = sharedModuleState('folia.songNotesDatabase', () => ({
+    database: null as SongNotesDatabase | null,
+}));
 import Dexie, { type Table } from 'dexie';
 import type { SongNoteComment, SongNoteRow, SongNoteTag } from './songNotesModel';
 
@@ -27,15 +33,14 @@ export class SongNotesDatabase extends Dexie {
     }
 }
 
-let database: SongNotesDatabase | null = null;
 
 /** 用到时才开库。单测经 setSongNotesDatabaseForTest 换一个进来。 */
 export const songNotesDatabase = (): SongNotesDatabase => {
-    database ??= new SongNotesDatabase();
-    return database;
+    moduleState.database ??= new SongNotesDatabase();
+    return moduleState.database;
 };
 
 /** 单测用：换一个库（null：下次用到时按缺省的名字重开）。 */
 export const setSongNotesDatabaseForTest = (next: SongNotesDatabase | null): void => {
-    database = next;
+    moduleState.database = next;
 };

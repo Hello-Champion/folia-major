@@ -18,6 +18,9 @@
 //
 // A leaf on purpose - it imports nothing from the app. beatThis.ts and stems.ts both read it, and
 // stems.ts already imports beatThis.ts, so anything shared between them has to sit below both.
+import { sharedModuleState } from '../../mods/runtime/sharedModuleState';
+
+// 打包器会把本模块复制进多个 chunk：状态各持一份，读写两边对不上。状态放 globalThis。
 
 /** htdemucs_gpu: htdemucs' WebGPU export, the drum stem of 智能动感模式 (electron/analysis/modelPaths.cjs). */
 export type AutomixModelName = 'beat_this' | 'htdemucs' | 'htdemucs_gpu';
@@ -34,14 +37,17 @@ export type AutomixModelsPresent = Readonly<Record<AutomixModelName, boolean>>;
  */
 const ABSENT: AutomixModelsPresent = Object.freeze({ beat_this: false, htdemucs: false, htdemucs_gpu: false });
 
-let present: AutomixModelsPresent = ABSENT;
+const moduleState = sharedModuleState('folia.modelAvailability', () => ({
+    present: ABSENT as AutomixModelsPresent,
+    listeners: new Set<() => void>(),
+}));
 
-const listeners = new Set<() => void>();
+
 
 /** Subscribe/getSnapshot in the shape `useSyncExternalStore` wants. */
 export const subscribeModelAvailability = (listener: () => void): (() => void) => {
-    listeners.add(listener);
-    return () => { listeners.delete(listener); };
+    moduleState.listeners.add(listener);
+    return () => { moduleState.listeners.delete(listener); };
 };
 
 /**
@@ -50,14 +56,14 @@ export const subscribeModelAvailability = (listener: () => void): (() => void) =
  * The returned object is only replaced when a value actually changed, which is what lets it be a
  * `useSyncExternalStore` snapshot without re-rendering on every refresh.
  */
-export const modelsPresent = (): AutomixModelsPresent => present;
+export const modelsPresent = (): AutomixModelsPresent => moduleState.present;
 
 /**
  * Whether this model can run right now. Its weights being on disk is the whole of the question.
  *
  * There is deliberately no "this runtime refused, give up for the session" latch on top of this.
  * That latch was safe only while the weights shipped inside the installer: a run that came back
- * empty with the files present had no explanation left but a runtime that would not start. Once the
+ * empty with the files moduleState.present had no explanation left but a runtime that would not start. Once the
  * weights became an optional download the same empty answer started arriving for an ordinary reason
  * - the host restarts the worker on every folder switch and every finished download, and an
  * in-flight request cut off by one of those comes back with nothing. Telling the two apart after the
@@ -67,7 +73,7 @@ export const modelsPresent = (): AutomixModelsPresent => present;
  * that genuinely failed, which is that same protection without the false positive - so this stays a
  * single question about the files.
  */
-export const modelCanRun = (name: AutomixModelName): boolean => present[name];
+export const modelCanRun = (name: AutomixModelName): boolean => moduleState.present[name];
 
 /**
  * Re-asks the main process. Safe to call at any time and from anywhere; failures leave the last
@@ -75,27 +81,27 @@ export const modelCanRun = (name: AutomixModelName): boolean => present[name];
  */
 export const refreshModelAvailability = async (): Promise<AutomixModelsPresent> => {
     const ask = typeof window !== 'undefined' ? window.electron?.getAutomixModelsPresent : undefined;
-    if (typeof ask !== 'function') return present;
+    if (typeof ask !== 'function') return moduleState.present;
 
     let answer: { beat_this: boolean; htdemucs: boolean; htdemucs_gpu?: boolean } | null = null;
     try {
         answer = await ask();
     } catch (error) {
         console.warn('[Analysis] could not check which models are installed', error);
-        return present;
+        return moduleState.present;
     }
-    if (!answer) return present;
+    if (!answer) return moduleState.present;
 
     const next: AutomixModelsPresent = {
         beat_this: answer.beat_this === true,
         htdemucs: answer.htdemucs === true,
         htdemucs_gpu: answer.htdemucs_gpu === true,
     };
-    if (next.beat_this === present.beat_this && next.htdemucs === present.htdemucs && next.htdemucs_gpu === present.htdemucs_gpu) return present;
+    if (next.beat_this === moduleState.present.beat_this && next.htdemucs === moduleState.present.htdemucs && next.htdemucs_gpu === moduleState.present.htdemucs_gpu) return moduleState.present;
 
-    present = Object.freeze(next);
-    for (const listener of listeners) listener();
-    return present;
+    moduleState.present = Object.freeze(next);
+    for (const listener of moduleState.listeners) listener();
+    return moduleState.present;
 };
 
 /**
