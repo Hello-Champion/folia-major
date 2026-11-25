@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useRef } from 'react';
+import { useScratchpadSettingsStore } from '../../../stores/useScratchpadSettingsStore';
 import { useTranslation } from 'react-i18next';
 import { ArrowUpDown, FileMusic, ListPlus, NotebookPen, type LucideIcon } from 'lucide-react';
 import type { LocalLibraryGroup, LocalSong } from '../../../types';
@@ -68,7 +69,8 @@ export const BravaisHomeFolia: React.FC<{
     const { snapshot: actionState } = useLibraryHomeActions(homeActions);
     const canImport = common.declaredActions.actions.includes('home-import-playlist');
     // 标签页签只留「打开速记簿」（新建、排序、导入是歌单的事）。
-    const foliaActions = resolveFoliaHomeActions({ reorderableCount: folia.reorderableCount, importingPlaylist: actionState.importingPlaylist })
+    const scratchpadEnabled = useScratchpadSettingsStore(state => state.enabled);
+    const foliaActions = resolveFoliaHomeActions({ reorderableCount: folia.reorderableCount, importingPlaylist: actionState.importingPlaylist, scratchpadEnabled })
         .filter(action => action.id !== 'folia-import-playlist' || canImport)
         .filter(action => !onTags || action.id === 'folia-open-scratchpad');
     const runAction = (id: string) => {

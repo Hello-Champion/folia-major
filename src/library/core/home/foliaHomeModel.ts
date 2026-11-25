@@ -48,8 +48,8 @@ export type FoliaHomeActionId = 'folia-new-playlist' | 'folia-reorder-playlists'
  * 导入进行中时导入那一项转圈并禁用。
  */
 export const resolveFoliaHomeActions = (
-    state: { reorderableCount: number; importingPlaylist: boolean },
-): (LibraryHomeListAction & { id: FoliaHomeActionId })[] => [
+    state: { reorderableCount: number; importingPlaylist: boolean; scratchpadEnabled?: boolean },
+): (LibraryHomeListAction & { id: FoliaHomeActionId })[] => ([
     { id: 'folia-new-playlist', labelKey: 'localMusic.createPlaylist', pending: false, disabled: false },
     { id: 'folia-reorder-playlists', labelKey: 'home.foliaReorderPlaylists', pending: false, disabled: state.reorderableCount < 2 },
     {
@@ -60,4 +60,4 @@ export const resolveFoliaHomeActions = (
         disabled: state.importingPlaylist,
     },
     { id: 'folia-open-scratchpad', labelKey: 'scratchpad.open', pending: false, disabled: false },
-];
+] as (LibraryHomeListAction & { id: FoliaHomeActionId })[]).filter(action => action.id !== 'folia-open-scratchpad' || state.scratchpadEnabled !== false);

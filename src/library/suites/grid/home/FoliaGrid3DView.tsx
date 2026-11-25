@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import { useScratchpadSettingsStore } from '../../../../stores/useScratchpadSettingsStore';
 import { useTranslation } from 'react-i18next';
 import { ArrowUpDown, FileUp, Hash, ListMusic, ListPlus, Loader2, NotebookPen } from 'lucide-react';
 import DesktopGrid3DSurface, { type DesktopGrid3DAction } from './DesktopGrid3DSurface';
@@ -88,7 +89,8 @@ export const FoliaGrid3DView: React.FC<FoliaGrid3DViewProps> = ({
         else if (id === 'folia-open-scratchpad') useScratchpadStore.getState().setOpen(true);
     };
     // 标签页签只留「打开速记簿」（新建、排序、导入是歌单的事）。
-    const foliaActions = resolveFoliaHomeActions({ reorderableCount: folia.reorderableCount, importingPlaylist: actionState.importingPlaylist })
+    const scratchpadEnabled = useScratchpadSettingsStore(state => state.enabled);
+    const foliaActions = resolveFoliaHomeActions({ reorderableCount: folia.reorderableCount, importingPlaylist: actionState.importingPlaylist, scratchpadEnabled })
         .filter(action => !onTags || action.id === 'folia-open-scratchpad');
     const tabs: DesktopGrid3DAction[] = FOLIA_HOME_SECTIONS.map(entry => ({
         id: entry.key,
