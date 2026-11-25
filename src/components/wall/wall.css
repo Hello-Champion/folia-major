@@ -182,20 +182,6 @@
    每换一张都要重画一次滤镜 / 缩放，是拖动时最没必要的逐帧开销。停手 160ms 后标记摘掉，悬浮照旧。 */
 .lattice-field[data-wall-panning] .lattice-poster:hover { filter: none; }
 
-/* 平移中把逐张卡片的绘制成本压到最低：新滑进来的那一带要在合成器里重新栅格化，卡上的阴影、滤镜
-   （bravais 的双色调 / 不可用灰）、backdrop 与过渡全关掉，栅格就只剩一张封面。停手 160ms 后标记
-   摘掉，原样式回来。 */
-.lattice-field[data-wall-panning] .lattice-poster,
-.lattice-field[data-wall-panning] .lattice-poster *,
-.lattice-field[data-wall-panning] .bravais-tile-face,
-.lattice-field[data-wall-panning] .bravais-tile-face * {
-    box-shadow: none !important;
-    filter: none !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    transition: none !important;
-}
-
 .lattice-field[data-wall-panning] .bravais-tile:hover > .bravais-tile-face:not(.is-wall):not(.is-expanded) {
     transform: none;
 }
