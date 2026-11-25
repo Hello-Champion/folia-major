@@ -29,6 +29,7 @@ const MARKS = [
     { label: 'source states', marker: 'sourceStates] a listener failed', shared: 'folia.sourceStates' },
     { label: 'source declarations', marker: 'sourceDeclarations] a listener failed', shared: 'folia.sourceDeclarations' },
     { label: 'source readiness', marker: 'folia.sourceReadiness', shared: 'folia.sourceReadiness' },
+    { label: 'wall panning flag', marker: 'folia.wallPanningState', shared: 'folia.wallPanningState' },
 ];
 
 if (!existsSync(ASSETS)) {

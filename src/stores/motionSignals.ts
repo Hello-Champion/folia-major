@@ -1,4 +1,5 @@
 import { motionValue, type MotionValue } from 'framer-motion';
+import { sharedModuleState } from '../mods/runtime/sharedModuleState';
 import { PLAYER_BOTTOM_BAR_BASE_OFFSET_PX } from '../utils/playerBottomBarLayout';
 
 // src/stores/motionSignals.ts
@@ -18,6 +19,44 @@ import { PLAYER_BOTTOM_BAR_BASE_OFFSET_PX } from '../utils/playerBottomBarLayout
 // down: every consumer then had to be given the instance as a prop, and the instances had to sit
 // in dependency arrays that could never actually change.
 
+// 打包器会把本模块复制进多个 chunk；每份各建一套 MotionValue，读写两边落在不同实例上，
+// 值就成了两套。实例放 globalThis，全包共用。
+const runtime = sharedModuleState('folia.motionSignalsState', () => ({
+    currentTime: motionValue(0),
+    lyricCurrentTime: motionValue(0),
+    handoffProgress: motionValue(0),
+    handoffLyricCurrentTime: motionValue(0),
+    audioPower: motionValue(0),
+    bass: motionValue(0),
+    lowMid: motionValue(0),
+    mid: motionValue(0),
+    vocal: motionValue(0),
+    treble: motionValue(0),
+    spectrum: motionValue(new Uint8Array(0)),
+    beatImpact: motionValue(0),
+    downbeatImpact: motionValue(0),
+    playerBottomBarLiveOffset: motionValue(PLAYER_BOTTOM_BAR_BASE_OFFSET_PX),
+    ponderPointerX: motionValue(0),
+    ponderPointerY: motionValue(0),
+}));
+
+export const currentTime = runtime.currentTime;
+export const lyricCurrentTime = runtime.lyricCurrentTime;
+export const handoffProgress = runtime.handoffProgress;
+export const handoffLyricCurrentTime = runtime.handoffLyricCurrentTime;
+export const audioPower = runtime.audioPower;
+export const bass = runtime.bass;
+export const lowMid = runtime.lowMid;
+export const mid = runtime.mid;
+export const vocal = runtime.vocal;
+export const treble = runtime.treble;
+export const spectrum = runtime.spectrum;
+export const beatImpact = runtime.beatImpact;
+export const downbeatImpact = runtime.downbeatImpact;
+export const playerBottomBarLiveOffset = runtime.playerBottomBarLiveOffset;
+export const ponderPointerX = runtime.ponderPointerX;
+export const ponderPointerY = runtime.ponderPointerY;
+
 export type AudioBandSignals = {
     bass: MotionValue<number>;
     lowMid: MotionValue<number>;
@@ -28,28 +67,28 @@ export type AudioBandSignals = {
 };
 
 /** Playback position of the deck the listener actually hears, in seconds. */
-export const currentTime = motionValue(0);
+
 
 /** The lyric clock. Separate from `currentTime`: it carries the per-song timeline offset. */
-export const lyricCurrentTime = motionValue(0);
+
 
 /**
  * The song hand-off of an automix/crossfade blend, as the main window's visualizer draws it: how far
  * it has come (0..1, transitionCue's getTransitionHandoffProgress), and the incoming track's lyric
  * clock. Written by the visualizer bridge while a blend holds the picture on the outgoing track.
  */
-export const handoffProgress = motionValue(0);
-export const handoffLyricCurrentTime = motionValue(0);
+
+
 
 /** Overall analyser energy, 0..1. */
-export const audioPower = motionValue(0);
 
-export const bass = motionValue(0);
-export const lowMid = motionValue(0);
-export const mid = motionValue(0);
-export const vocal = motionValue(0);
-export const treble = motionValue(0);
-export const spectrum = motionValue(new Uint8Array(0));
+
+
+
+
+
+
+
 
 /**
  * Beat-synchronous impact envelopes, decaying after each beat / downbeat of the playing track:
@@ -57,14 +96,14 @@ export const spectrum = motionValue(new Uint8Array(0));
  * something on screen draws beat FX (see src/services/beatFx); they stay at 0 otherwise, so
  * consumers can read them unconditionally.
  */
-export const beatImpact = motionValue(0);
-export const downbeatImpact = motionValue(0);
+
+
 
 /** The band set as one stable object, so it can be passed straight to a visualizer. */
 export const audioBands: AudioBandSignals = { bass, lowMid, mid, vocal, treble, spectrum };
 
 /** Global bottom baseline offset in px; positioning writes it at pointer-move frequency. */
-export const playerBottomBarLiveOffset = motionValue(PLAYER_BOTTOM_BAR_BASE_OFFSET_PX);
+
 
 /**
  * 思索提示胶囊跟随的光标位置，px。
@@ -73,5 +112,6 @@ export const playerBottomBarLiveOffset = motionValue(PLAYER_BOTTOM_BAR_BASE_OFFS
  * usePonderStore，理由和上面那条底部基线一样：它是每帧值，进 React state 就等于
  * 让整棵树按指针移动频率重渲染。store 那边只留「悬停的是哪个目标」这个离散事实。
  */
-export const ponderPointerX = motionValue(0);
-export const ponderPointerY = motionValue(0);
+
+
+

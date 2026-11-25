@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { COVER_MAX_SIZE, COVER_SIZE_STEPS, getOriginalCoverUrl, getSizedCoverUrl, resolveCoverSizeStep } from '../../utils/coverUrl';
+import { sharedModuleState } from '../../mods/runtime/sharedModuleState';
 import { isWallPanning, subscribeWallPanning } from './wallPanning';
 
 // src/components/wall/useWallPosterArtwork.ts
@@ -15,9 +16,15 @@ import { isWallPanning, subscribeWallPanning } from './wallPanning';
  * recorded, so this stays far smaller than the number of posters on screen.
  */
 const MAX_TRACKED_VARIANTS = 600;
-const decodedVariants = new Map<string, true>();
+// 同一张封面会被墙上的多份实例、以及被复制进不同 chunk 的这份模块同时请求；缓存放 globalThis，
+// 全包只解码一次（各 chunk 各一份时会在拖动中重复解码同图）。
+const artworkRuntime = sharedModuleState('folia.wallArtworkCache', () => ({
+    decoded: new Map<string, true>(),
+    decoding: new Map<string, Promise<boolean>>(),
+}));
+const decodedVariants = artworkRuntime.decoded;
 /** In-flight decodes, so one URL is fetched once however many posters want it at the same moment. */
-const decodingVariants = new Map<string, Promise<boolean>>();
+const decodingVariants = artworkRuntime.decoding;
 /**
  * Variants that would not load. A local cover whose binary is missing from the asset store answers
  * 404 for every size, and without this a card would ask again on each gear change and each press.
