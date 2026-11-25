@@ -1455,7 +1455,7 @@ export default function App() {
         cachedCoverUrl: displayCoverUrl ?? cachedCoverUrl,
         playerState: displayPlayerState,
         isNowPlayingStageActive,
-        unknownArtistLabel: t('ui.unknownArtist'),
+        unknownArtistLabel: t('player.unknownArtist'),
         mediaSessionPlayRef,
         mediaSessionPauseRef,
         mediaSessionPrevRef,
