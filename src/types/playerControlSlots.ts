@@ -95,7 +95,8 @@ export const normalizeCapsuleIsland = (
     const seen = new Set<string>(slots);
     const island: PlayerControlSlotActionId[] = [];
     for (const entry of source) {
-        if (!isPlayerControlSlotActionId(entry) || seen.has(entry)) continue;
+        // 浮岛里不该出现「隐藏」：它不是控件。
+        if (entry === 'hidden' || !isPlayerControlSlotActionId(entry) || seen.has(entry)) continue;
         seen.add(entry);
         island.push(entry);
         if (island.length >= CAPSULE_ISLAND_MAX) break;
@@ -124,6 +125,10 @@ export const placePlayerControl = (
     id: PlayerControlSlotActionId,
     placement: PlayerControlPlacement,
 ): PlayerControlLayout | null => {
+    // 「隐藏」不是一个可摆放的控件：放进槽位就是把那一侧清空，另一边与浮岛都不动。
+    if (id === 'hidden') {
+        return placement.kind === 'slot' ? { ...layout, [placement.slot]: 'hidden' } : null;
+    }
     const from = locatePlayerControl(layout, id);
     switch (placement.kind) {
         case 'slot': {

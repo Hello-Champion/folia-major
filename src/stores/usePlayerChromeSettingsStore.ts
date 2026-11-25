@@ -393,7 +393,8 @@ export const usePlayerChromeSettingsStore = sharedModuleState('folia.store.src/s
     },
     handleSetPlayerControlLayout: (layout) => {
         if (!isPlayerControlSlotActionId(layout.primary) || !isPlayerControlSlotActionId(layout.secondary)
-            || layout.primary === layout.secondary) {
+            // 两侧都选「隐藏」是合法的：相等只在两个真实动作时才算冲突。
+            || (layout.primary === layout.secondary && layout.primary !== 'hidden')) {
             return;
         }
         const next: PlayerControlLayout = {
