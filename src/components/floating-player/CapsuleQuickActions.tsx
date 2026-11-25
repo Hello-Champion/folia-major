@@ -65,7 +65,8 @@ const CapsuleQuickActions: React.FC<CapsuleQuickActionsProps> = ({
     // 不可用的在截断之前就去掉：灰掉的按钮占着位置，还会把能用的挤出这一排。
     const actions = useMemo(() => resolveCapsuleQuickActions({
         island,
-        slots: [slotPrimary, slotSecondary],
+        // 「隐藏」不是动作：解析器没有它的分支，留着会在读 .disabled 时崩（黑屏）。
+        slots: [slotPrimary, slotSecondary].filter(id => id !== 'hidden'),
         isAvailable: id => !resolvePlayerControlSlot(id, context).disabled,
         touch,
         limit,

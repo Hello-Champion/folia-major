@@ -38,14 +38,6 @@ const PlayerControlSlotButton: React.FC<PlayerControlSlotButtonProps> = ({
     onCustomize,
 }) => {
     const { t } = useTranslation();
-    // 「隐藏」槽位不占位、不渲染，直接让这个按钮从布局里消失。
-    if (actionId === 'hidden') {
-        return null;
-    }
-    const slot = resolvePlayerControlSlot(actionId, context);
-    const Icon = slot.icon;
-    const disabled = slot.disabled || controlsDisabled;
-    const label = t(slot.labelKey);
     const longPressRef = useRef<{ timer: number; x: number; y: number; } | null>(null);
     // 长按已经打开了浮层，紧跟着的那次 click 和 contextmenu 不能再当成一次点按。
     const suppressClickRef = useRef(false);
@@ -61,6 +53,15 @@ const PlayerControlSlotButton: React.FC<PlayerControlSlotButtonProps> = ({
         setIsPressing(false);
     };
     useEffect(() => cancelLongPress, []);
+    // 「隐藏」槽位不占位、不渲染。这个判断必须放在所有 hook 之后：早退会让两次渲染的 hook 数量不同
+    // （React #300，整个界面黑掉）。
+    if (actionId === 'hidden') {
+        return null;
+    }
+    const slot = resolvePlayerControlSlot(actionId, context);
+    const Icon = slot.icon;
+    const disabled = slot.disabled || controlsDisabled;
+    const label = t(slot.labelKey);
 
     // 三段视觉：已开启（循环非 off / 已喜爱）高亮，不可用压暗，其余是低透明度的常态。
     const stateClass = disabled
