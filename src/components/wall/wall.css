@@ -182,19 +182,13 @@
    每换一张都要重画一次滤镜 / 缩放，是拖动时最没必要的逐帧开销。停手 160ms 后标记摘掉，悬浮照旧。 */
 .lattice-field[data-wall-panning] .lattice-poster:hover { filter: none; }
 
-/* 平移中把逐张卡片的绘制成本压到最低：新滑进来的那一带要在合成器里重新栅格化，卡上的阴影、滤镜
-   （bravais 的双色调 / 不可用灰）、backdrop 与过渡全关掉，栅格就只剩一张封面。停手 160ms 后标记
-   摘掉，原样式回来。 */
-.lattice-field[data-wall-panning] .lattice-poster,
-.lattice-field[data-wall-panning] .lattice-poster *,
-.lattice-field[data-wall-panning] .bravais-tile-face,
-.lattice-field[data-wall-panning] .bravais-tile-face * {
-    box-shadow: none !important;
-    filter: none !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    transition: none !important;
+/* 只在拖动/滚动的那一小段时间给两半墙挂 will-change：上面的常驻警告（栅格倍率被抬到 1x、tile 内存
+   变成约 3.7 倍）只在拖动期间成立，停手 160ms 就摘掉。换来平移时不再逐帧重画整片的卡片阴影 / 滤镜，
+   外观不动。 */
+.lattice-field[data-wall-panning] .lattice-world {
+    will-change: transform;
 }
+
 
 .lattice-field[data-wall-panning] .bravais-tile:hover > .bravais-tile-face:not(.is-wall):not(.is-expanded) {
     transform: none;
