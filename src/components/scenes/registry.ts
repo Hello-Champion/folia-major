@@ -1,3 +1,4 @@
+import { sharedModuleState } from '../../mods/runtime/sharedModuleState';
 import { useSyncExternalStore } from 'react';
 import { assertBuiltinSceneList, BUILTIN_SCENE_IDS, sceneIdKind } from '../../types/sceneIds';
 import { checkSceneManifest, type SceneDefinition, type SceneEntryModule } from './definition';
@@ -28,18 +29,21 @@ export const buildBuiltinScenes = (modules: SceneModules, declared: readonly str
 
 const byOrder = (left: SceneDefinition, right: SceneDefinition) => (left.manifest.order ?? 0) - (right.manifest.order ?? 0);
 
-let scenes: SceneDefinition[] = buildBuiltinScenes(import.meta.glob<SceneEntryModule>('./*/entry.ts', { eager: true })).sort(byOrder);
-const listeners = new Set<() => void>();
+// 复制进多个 chunk 时模组注册进一份、界面读另一份。状态放 globalThis。
+const sceneRuntime = sharedModuleState('folia.sceneRegistry', () => ({
+    scenes: buildBuiltinScenes(import.meta.glob<SceneEntryModule>('./*/entry.ts', { eager: true })).sort(byOrder),
+    listeners: new Set<() => void>(),
+}));
 
 const publish = (next: SceneDefinition[]) => {
-    scenes = next.sort(byOrder);
-    listeners.forEach(listener => listener());
+    sceneRuntime.scenes = next.sort(byOrder);
+    sceneRuntime.listeners.forEach(listener => listener());
 };
 
-export const listScenes = (): readonly SceneDefinition[] => scenes;
+export const listScenes = (): readonly SceneDefinition[] => sceneRuntime.scenes;
 
 export const getScene = (id: string | null | undefined): SceneDefinition | null =>
-    (id ? scenes.find(scene => scene.manifest.id === id) : undefined) ?? null;
+    (id ? sceneRuntime.scenes.find(scene => scene.manifest.id === id) : undefined) ?? null;
 
 /**
  * Adds a mod's or a data package's scene (`mod:` / `pkg:` id) to the live list. Refused, with the reason
@@ -54,21 +58,21 @@ export const registerScene = (definition: SceneDefinition): boolean => {
         console.warn('[SceneRegistry] scene refused', id, problems);
         return false;
     }
-    publish([...scenes, definition]);
+    publish([...sceneRuntime.scenes, definition]);
     console.info('[SceneRegistry] scene registered', id);
     return true;
 };
 
-/** Removes a scene registerScene added. Built-in scenes stay. */
+/** Removes a scene registerScene added. Built-in sceneRuntime.scenes stay. */
 export const unregisterScene = (id: string): boolean => {
     if (sceneIdKind(id) === 'builtin' || !getScene(id)) return false;
-    publish(scenes.filter(scene => scene.manifest.id !== id));
+    publish(sceneRuntime.scenes.filter(scene => scene.manifest.id !== id));
     return true;
 };
 
 const subscribe = (listener: () => void) => {
-    listeners.add(listener);
-    return () => { listeners.delete(listener); };
+    sceneRuntime.listeners.add(listener);
+    return () => { sceneRuntime.listeners.delete(listener); };
 };
 
 /** The live list, re-rendering when a mod adds or removes a scene. */

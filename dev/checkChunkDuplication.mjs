@@ -17,7 +17,7 @@ const MARKS = [
     { label: 'background registry', marker: 'Duplicate background mode', shared: 'folia.visualizerBackgroundRegistryState' },
     { label: 'folio registry factory', marker: 'register: duplicate id', shared: 'folia.foliumRegistryInstances' },
     { label: 'sources registry', marker: 'sources.register: ', shared: 'folia.foliumSourcesState' },
-    { label: 'scene registry', marker: 'SceneRegistry]' },
+    { label: 'scene registry', marker: 'SceneRegistry]', shared: 'folia.sceneRegistry' },
     { label: 'ponder registry', marker: 'Duplicate target id', shared: 'folia.ponderRegistryState' },
     { label: 'visualizer service', marker: 'visualizer-unavailable-in-', shared: 'folia.foliumVisualizerService' },
     { label: 'theme service', marker: 'theme-unavailable-in-', shared: 'folia.foliumThemeService' },
