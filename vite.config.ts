@@ -285,6 +285,9 @@ export default async function viteConfig(_config: ConfigEnv): Promise<UserConfig
       nebbiaStrokesPlugin(),
       react(),
       VitePWA({
+        // 桌面版从 file:// 加载，Service Worker 的预缓存 fetch 在这种来源下必然失败（控制台里
+        // workbox 的 'Failed to fetch'）。本地文件本来就不需要离线缓存，桌面构建直接不生成 SW。
+        disable: process.env.ELECTRON === 'true',
         registerType: 'autoUpdate',
         includeAssets: ['icon.svg'],
         devOptions: {
