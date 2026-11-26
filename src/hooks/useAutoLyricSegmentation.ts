@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import i18n from '../i18n/config';
 import type { VisualizerMode } from '../types';
 import type { LyricSegmentationActions } from '../components/app/playback/createLyricSegmentationActions';
 import { getVisualizerRegistryEntry } from '../components/visualizer/registry';
@@ -9,7 +8,6 @@ import { isLyricSegmentationAiAvailable } from '../services/aiText';
 import { useLyricSegmentationStore } from '../stores/useLyricSegmentationStore';
 import { useLyricSettingsStore } from '../stores/useLyricSettingsStore';
 import { usePlaybackStore } from '../stores/usePlaybackStore';
-import { setStatusMessage } from '../stores/useStatusMessageStore';
 import { getPlaybackSongKey } from '../utils/appPlaybackGuards';
 import { countAppliedSegmentationLines, createLyricSegmentationRecord, getLyricLineSegmentationKey } from '../utils/lyrics/lyricSegmentationRecord';
 import { pickAutoSegmentationLines } from '../utils/lyrics/autoLyricSegmentation';
@@ -46,9 +44,6 @@ export function useAutoLyricSegmentation({ visualizerMode, isLyricsLoading, save
     const attemptedSongKeysRef = useRef(new Set<string>());
     // Bumped when a run gives its song's try back, so the start effect looks again.
     const [retryTick, setRetryTick] = useState(0);
-    // An error is said once until a run succeeds: with no model configured every song would fail
-    // the same way, but a failure after the user fixed the settings is news again.
-    const reportedFailureRef = useRef(false);
     const saveRef = useRef(save);
     saveRef.current = save;
 
@@ -122,7 +117,6 @@ export function useAutoLyricSegmentation({ visualizerMode, isLyricsLoading, save
                     if (failures.length > 0) {
                         console.warn('[AutoLyricSegmentation] Some batches failed; those lines keep the default split', failures);
                     }
-                    reportedFailureRef.current = false;
                     const playing = usePlaybackStore.getState().currentSong;
                     if (!playing || getPlaybackSongKey(playing) !== songKey) {
                         // The song ended while this ran: keep the paid answer for it on disk, where
@@ -160,11 +154,8 @@ export function useAutoLyricSegmentation({ visualizerMode, isLyricsLoading, save
                     if (error instanceof DOMException && error.name === 'AbortError') {
                         return;
                     }
+                    // 自动分词在后台跑，失败只记控制台：不弹气泡（开着但没配 AI 时会每首歌都弹一次）。
                     console.warn('[AutoLyricSegmentation] Segmentation failed', error);
-                    if (!reportedFailureRef.current) {
-                        reportedFailureRef.current = true;
-                        setStatusMessage({ type: 'error', text: i18n.t('lyricSegmentation.autoFailed') });
-                    }
                 } finally {
                     if (inFlightRef.current.get(songKey) === controller) {
                         inFlightRef.current.delete(songKey);
